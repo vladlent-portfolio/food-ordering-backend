@@ -1,23 +1,21 @@
 package main
 
 import (
-	"food_ordering_backend/categories"
-	"food_ordering_backend/db"
+	"food_ordering_backend/category"
+	"food_ordering_backend/database"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	r := gin.Default()
-	r.GET("/ping", pong)
+	db := database.MustGet()
+	db.AutoMigrate(&category.Category{})
 
-	d := db.MustGet()
-	d.AutoMigrate(&categories.Category{})
+	categoryAPI := &category.API{&category.Service{&category.Repository{DB: db}}}
+
+	r := gin.Default()
+
+	r.POST("/categories", categoryAPI.Create)
+	r.GET("/categories", categoryAPI.FindAll)
 
 	r.Run()
-}
-func pong(c *gin.Context) {
-
-	c.JSON(200, gin.H{
-		"message": "pong",
-	})
 }

@@ -1,13 +1,23 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"food_ordering_backend/categories"
+	"food_ordering_backend/db"
+	"github.com/gin-gonic/gin"
+)
 
 func main() {
 	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
+	r.GET("/ping", pong)
+
+	d := db.MustGet()
+	d.AutoMigrate(&categories.Category{})
+
+	r.Run()
+}
+func pong(c *gin.Context) {
+
+	c.JSON(200, gin.H{
+		"message": "pong",
 	})
-	r.Run() // listen and serve on 0.0.0.0:8080
 }

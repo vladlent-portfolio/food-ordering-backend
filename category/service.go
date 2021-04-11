@@ -4,6 +4,10 @@ type Service struct {
 	Repository *Repository
 }
 
+func ProvideService(r *Repository) *Service {
+	return &Service{r}
+}
+
 func (s *Service) Save(c Category) Category {
 	return s.Repository.Save(c)
 }

@@ -9,6 +9,10 @@ type API struct {
 	Service *Service
 }
 
+func ProvideAPI(s *Service) *API {
+	return &API{s}
+}
+
 func (api *API) Create(c *gin.Context) {
 	var dto DTO
 	err := c.BindJSON(&dto)

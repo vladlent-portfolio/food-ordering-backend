@@ -22,9 +22,9 @@ func (api *API) Create(c *gin.Context) {
 		return
 	}
 
-	category := api.Service.Save(ToCategory(dto))
+	category := api.Service.Create(ToCategory(dto))
 
-	c.JSON(http.StatusOK, gin.H{"category": ToDTO(category)})
+	c.JSON(http.StatusOK, ToDTO(category))
 }
 
 func (api *API) FindAll(c *gin.Context) {

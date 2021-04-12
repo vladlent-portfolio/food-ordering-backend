@@ -198,6 +198,39 @@ func TestCategories(t *testing.T) {
 
 		runFindByIDTests(t)
 	})
+
+	t.Run("DELETE /categories/:id", func(t *testing.T) {
+		t.Cleanup(cleanup)
+		sendWithParam := func(id uint) *httptest.ResponseRecorder {
+			param := strconv.Itoa(int(id))
+			return sendReq(http.MethodDelete, "/categories/"+param)("")
+		}
+
+		t.Run("should removed a category with provided ID from db", func(t *testing.T) {
+			cleanup()
+			it := assert.New(t)
+			var categories []category.Category
+
+			db.Find(&categories)
+			require.Len(t, categories, 0)
+
+			db.Create(&testCategories)
+			db.Find(&categories)
+			require.Len(t, categories, len(testCategories))
+
+			testCat := testCategories[len(testCategories)/2]
+			resp := sendWithParam(testCat.ID)
+
+			it.Equal(http.StatusOK, resp.Code)
+
+			db.Find(&categories)
+			it.Len(categories, len(testCategories)-1)
+
+			for _, c := range categories {
+				it.NotEqual(c.ID, testCat.ID)
+			}
+		})
+	})
 }
 
 func runFindByIDTests(t *testing.T) {

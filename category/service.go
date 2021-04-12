@@ -23,3 +23,7 @@ func (s *Service) FindByID(id uint) (Category, error) {
 func (s *Service) FindAll() []Category {
 	return s.Repository.FindAll()
 }
+
+func (s *Service) Delete(c Category) (Category, error) {
+	return s.Repository.Delete(c)
+}

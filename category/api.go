@@ -77,6 +77,23 @@ func (api *API) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, ToDTO(cat))
 }
 
+func (api *API) Delete(c *gin.Context) {
+	cat, err := api.findByID(c)
+
+	if err != nil {
+		return
+	}
+
+	cat, err = api.Service.Delete(cat)
+
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.JSON(http.StatusOK, ToDTO(cat))
+}
+
 func (api *API) bindJSON(c *gin.Context) (DTO, error) {
 	var dto DTO
 	err := c.BindJSON(&dto)

@@ -31,3 +31,8 @@ func (r *Repository) FindAll() []Category {
 	r.DB.Find(&categories)
 	return categories
 }
+
+func (r *Repository) Delete(c Category) (Category, error) {
+	err := r.DB.Delete(&c).Error
+	return c, err
+}

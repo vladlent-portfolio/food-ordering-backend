@@ -16,6 +16,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 		cat.GET("/:id", catAPI.FindByID)
 		cat.POST("", catAPI.Create)
 		cat.PUT("/:id", catAPI.Update)
+		cat.DELETE("/:id", catAPI.Delete)
 	}
 
 	return r

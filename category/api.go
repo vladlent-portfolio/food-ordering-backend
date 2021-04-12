@@ -1,6 +1,7 @@
 package category
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -19,6 +20,7 @@ func (api *API) Create(c *gin.Context) {
 	err := c.BindJSON(&dto)
 
 	if err != nil {
+		fmt.Println(err)
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
@@ -30,7 +32,7 @@ func (api *API) Create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, ToDTO(category))
+	c.JSON(http.StatusCreated, ToDTO(category))
 }
 
 func (api *API) FindByID(c *gin.Context) {

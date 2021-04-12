@@ -13,6 +13,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	{
 		catAPI := category.InitAPI(db)
 		cat.GET("", catAPI.FindAll)
+		cat.GET("/:id", catAPI.FindByID)
 		cat.POST("", catAPI.Create)
 	}
 

@@ -10,14 +10,20 @@ func ProvideRepository(db *gorm.DB) *Repository {
 	return &Repository{db}
 }
 
-func (r *Repository) Create(c Category) Category {
-	r.DB.Create(&c)
-	return c
+func (r *Repository) Create(c Category) (Category, error) {
+	err := r.DB.Create(&c).Error
+	return c, err
 }
 
-func (r *Repository) Save(c Category) Category {
-	r.DB.Save(&c)
-	return c
+func (r *Repository) Save(c Category) (Category, error) {
+	err := r.DB.Save(&c).Error
+	return c, err
+}
+
+func (r *Repository) FindByID(id uint) (Category, error) {
+	var c Category
+	err := r.DB.First(&c, id).Error
+	return c, err
 }
 
 func (r *Repository) FindAll() []Category {

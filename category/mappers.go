@@ -11,7 +11,7 @@ func ToDTO(c Category) DTO {
 	return DTO{ID: c.ID, Title: c.Title, Removable: c.Removable}
 }
 
-func ToCategoriesDTOs(categories []Category) []DTO {
+func ToDTOs(categories []Category) []DTO {
 	dtos := make([]DTO, len(categories))
 
 	for i, c := range categories {

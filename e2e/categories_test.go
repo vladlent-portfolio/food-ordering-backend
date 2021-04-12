@@ -20,6 +20,7 @@ func TestCategories(t *testing.T) {
 	db := database.MustGetTest()
 	r := router.Setup(db)
 
+	cleanup(db)
 	t.Cleanup(cleanup(db))
 
 	t.Run("GET /categories", func(t *testing.T) {

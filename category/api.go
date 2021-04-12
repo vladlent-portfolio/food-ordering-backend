@@ -3,6 +3,7 @@ package category
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
 type API struct {
@@ -22,13 +23,35 @@ func (api *API) Create(c *gin.Context) {
 		return
 	}
 
-	category := api.Service.Create(ToCategory(dto))
+	category, err := api.Service.Create(ToCategory(dto))
+
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
 
 	c.JSON(http.StatusOK, ToDTO(category))
 }
 
+func (api *API) FindByID(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	cat, err := api.Service.FindByID(uint(id))
+
+	if err != nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	c.JSON(http.StatusOK, ToDTO(cat))
+}
+
 func (api *API) FindAll(c *gin.Context) {
 	categories := api.Service.FindAll()
-
-	c.JSON(http.StatusOK, ToCategoriesDTOs(categories))
+	c.JSON(http.StatusOK, ToDTOs(categories))
 }

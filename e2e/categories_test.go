@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -22,6 +23,7 @@ var r = router.Setup(db)
 func TestCategories(t *testing.T) {
 	cleanup()
 	t.Cleanup(cleanup)
+	db.Logger.LogMode(logger.Silent)
 
 	t.Run("GET /categories", func(t *testing.T) {
 		send := sendReq(http.MethodGet, "/categories")
@@ -151,16 +153,48 @@ func TestCategories(t *testing.T) {
 
 		t.Run("should update category in db based on provided json", func(t *testing.T) {
 			cleanup()
+			t.Cleanup(cleanup)
 			it := assert.New(t)
 			testCategory := testCategories[0]
-			updateJson := `{"id":1,"title":"Sushi","removable":true}`
+			updateJSON := `{"title":"Sushi","removable":true}`
 
 			c := setup(t, testCategory)
 
-			resp := sendWithParam(c.ID, updateJson)
+			resp := sendWithParam(c.ID, updateJSON)
 			it.Equal(http.StatusOK, resp.Code)
-			it.Equal(updateJson, resp.Body.String())
+			it.Equal(fmt.Sprintf(`{"id":%d,"title":"Sushi","removable":true}`, testCategory.ID), resp.Body.String())
 		})
+
+		t.Run("should ignore id in provided json", func(t *testing.T) {
+			cleanup()
+			t.Cleanup(cleanup)
+			it := assert.New(t)
+			testCategory := testCategories[0]
+			updateJSON := `{"id":420,"title":"Sushi","removable":true}`
+			require.NotEqual(t, testCategory.ID, 420)
+
+			c := setup(t, testCategory)
+
+			resp := sendWithParam(c.ID, updateJSON)
+			it.Equal(http.StatusOK, resp.Code)
+			it.Equal(fmt.Sprintf(`{"id":%d,"title":"Sushi","removable":true}`, testCategory.ID), resp.Body.String())
+		})
+
+		// Leave this for PATCH request
+		//t.Run("should only update title", func(t *testing.T) {
+		//	cleanup()
+		//	it := assert.New(t)
+		//	testCategory := testCategories[0]
+		//	updateJSON := `{"title":"Sushi"}`
+		//	expected := `{"id":1,"title":"Sushi","removable":true}`
+		//
+		//	testCategory.Removable = true
+		//
+		//	c := setup(t, testCategory)
+		//	resp := sendWithParam(c.ID, updateJSON)
+		//	it.Equal(http.StatusOK, resp.Code)
+		//	it.Equal(expected, resp.Body.String())
+		//})
 
 		runFindByIDTests(t)
 	})

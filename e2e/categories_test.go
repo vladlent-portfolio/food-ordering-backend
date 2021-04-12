@@ -59,19 +59,21 @@ func TestCategories(t *testing.T) {
 			t.Cleanup(cleanup)
 			cleanup()
 			it := assert.New(t)
-			cat := testCategories[0]
 
-			db.Create(&cat)
-			var c category.Category
-			db.First(&c, cat.ID)
-			require.Equal(t, c.ID, cat.ID)
+			db.Create(&testCategories)
+			var categories []category.Category
+			db.Find(&categories)
+			require.Len(t, categories, len(testCategories))
 
-			resp := sendWithParam(cat.ID)
-			it.Equal(http.StatusOK, resp.Code)
-			it.Equal(
-				fmt.Sprintf(`{"id":%d,"title":%q,"removable":%t}`, cat.ID, cat.Title, cat.Removable),
-				resp.Body.String(),
-			)
+			for _, cat := range categories {
+				resp := sendWithParam(cat.ID)
+				it.Equal(http.StatusOK, resp.Code)
+				it.Equal(
+					fmt.Sprintf(`{"id":%d,"title":%q,"removable":%t}`, cat.ID, cat.Title, cat.Removable),
+					resp.Body.String(),
+				)
+			}
+
 		})
 	})
 

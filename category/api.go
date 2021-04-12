@@ -16,11 +16,9 @@ func ProvideAPI(s *Service) *API {
 }
 
 func (api *API) Create(c *gin.Context) {
-	var dto DTO
-	err := c.BindJSON(&dto)
+	dto, err := api.bindJSON(c)
 
 	if err != nil {
-		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -39,17 +37,9 @@ func (api *API) Create(c *gin.Context) {
 }
 
 func (api *API) FindByID(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+	cat, err := api.findByID(c)
 
 	if err != nil {
-		c.Status(http.StatusBadRequest)
-		return
-	}
-
-	cat, err := api.Service.FindByID(uint(id))
-
-	if err != nil {
-		c.Status(http.StatusNotFound)
 		return
 	}
 
@@ -59,4 +49,61 @@ func (api *API) FindByID(c *gin.Context) {
 func (api *API) FindAll(c *gin.Context) {
 	categories := api.Service.FindAll()
 	c.JSON(http.StatusOK, ToDTOs(categories))
+}
+
+func (api *API) Update(c *gin.Context) {
+	cat, err := api.findByID(c)
+
+	if err != nil {
+		return
+	}
+
+	dto, err := api.bindJSON(c)
+
+	if err != nil {
+		return
+	}
+
+	cat.Title = dto.Title
+	cat.Removable = dto.Removable
+
+	cat, err = api.Service.Save(cat)
+
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.JSON(http.StatusOK, ToDTO(cat))
+}
+
+func (api *API) bindJSON(c *gin.Context) (DTO, error) {
+	var dto DTO
+	err := c.BindJSON(&dto)
+
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return dto, err
+	}
+
+	return dto, nil
+}
+
+func (api *API) findByID(c *gin.Context) (Category, error) {
+	var cat Category
+	id, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+		return cat, err
+	}
+
+	cat, err = api.Service.FindByID(uint(id))
+
+	if err != nil {
+		c.Status(http.StatusNotFound)
+		return cat, err
+	}
+
+	return cat, nil
 }

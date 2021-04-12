@@ -75,6 +75,8 @@ func TestCategories(t *testing.T) {
 			}
 
 		})
+
+		runFindByIDTests(t)
 	})
 
 	t.Run("POST /categories", func(t *testing.T) {
@@ -110,6 +112,7 @@ func TestCategories(t *testing.T) {
 
 		t.Run("should return 400 if provided json isn't correct", func(t *testing.T) {
 			cleanup()
+			t.Cleanup(cleanup)
 			it := assert.New(t)
 			json := `{"title": 123}`
 
@@ -119,6 +122,7 @@ func TestCategories(t *testing.T) {
 
 		t.Run("should return 409 if category already exists", func(t *testing.T) {
 			cleanup()
+			t.Cleanup(cleanup)
 			it := assert.New(t)
 			json := `{"id":1,"title":"Salads","removable":false}`
 
@@ -128,6 +132,57 @@ func TestCategories(t *testing.T) {
 			resp = send(json)
 			it.Equal(http.StatusConflict, resp.Code)
 		})
+	})
+
+	t.Run("PUT /categories/:id", func(t *testing.T) {
+		t.Cleanup(cleanup)
+		sendWithParam := func(id uint, body string) *httptest.ResponseRecorder {
+			param := strconv.Itoa(int(id))
+			return sendReq(http.MethodPut, "/categories/"+param)(body)
+		}
+
+		setup := func(t *testing.T, initial category.Category) category.Category {
+			var c category.Category
+			db.Create(&initial)
+			db.First(&c, initial.ID)
+			require.Equal(t, c.ID, initial.ID)
+			return c
+		}
+
+		t.Run("should update category in db based on provided json", func(t *testing.T) {
+			cleanup()
+			it := assert.New(t)
+			testCategory := testCategories[0]
+			updateJson := `{"id":1,"title":"Sushi","removable":true}`
+
+			c := setup(t, testCategory)
+
+			resp := sendWithParam(c.ID, updateJson)
+			it.Equal(http.StatusOK, resp.Code)
+			it.Equal(updateJson, resp.Body.String())
+		})
+
+		runFindByIDTests(t)
+	})
+}
+
+func runFindByIDTests(t *testing.T) {
+	t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
+		t.Cleanup(cleanup)
+		cleanup()
+		resp := sendReq(http.MethodGet, "/categories/jafsdklfjskldjf")("")
+		assert.Equal(t, http.StatusBadRequest, resp.Code)
+	})
+
+	t.Run("should return 404 if category with provided id doesn't exist", func(t *testing.T) {
+		t.Cleanup(cleanup)
+		cleanup()
+		var categories []category.Category
+		db.Find(&categories)
+		require.Len(t, categories, 0)
+
+		resp := sendReq(http.MethodGet, "/categories/69")("")
+		assert.Equal(t, http.StatusNotFound, resp.Code)
 	})
 }
 

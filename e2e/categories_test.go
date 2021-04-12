@@ -80,6 +80,7 @@ func TestCategories(t *testing.T) {
 		send := sendReq(http.MethodPost, "/categories")
 
 		t.Run("should add category to db and return it", func(t *testing.T) {
+			cleanup()
 			t.Cleanup(cleanup)
 			it := assert.New(t)
 
@@ -106,11 +107,24 @@ func TestCategories(t *testing.T) {
 		})
 
 		t.Run("should return 400 if provided json isn't correct", func(t *testing.T) {
+			cleanup()
 			it := assert.New(t)
 			json := `{"title": 123}`
 
 			resp := send(json)
 			it.Equal(http.StatusBadRequest, resp.Code)
+		})
+
+		t.Run("should return 409 if category already exists", func(t *testing.T) {
+			cleanup()
+			it := assert.New(t)
+			json := `{"id":1,"title":"Salads","removable":false}`
+
+			resp := send(json)
+			it.Equal(http.StatusCreated, resp.Code)
+
+			resp = send(json)
+			it.Equal(http.StatusConflict, resp.Code)
 		})
 	})
 }

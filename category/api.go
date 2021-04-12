@@ -1,7 +1,7 @@
 package category
 
 import (
-	"fmt"
+	"food_ordering_backend/common"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -20,7 +20,6 @@ func (api *API) Create(c *gin.Context) {
 	err := c.BindJSON(&dto)
 
 	if err != nil {
-		fmt.Println(err)
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
@@ -28,7 +27,11 @@ func (api *API) Create(c *gin.Context) {
 	category, err := api.Service.Create(ToCategory(dto))
 
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		if common.IsDuplicateKeyErr(err) {
+			c.Status(http.StatusConflict)
+		} else {
+			c.Status(http.StatusInternalServerError)
+		}
 		return
 	}
 

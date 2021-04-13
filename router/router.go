@@ -12,11 +12,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	cat := r.Group("/categories")
 	{
 		catAPI := category.InitAPI(db)
-		cat.GET("", catAPI.FindAll)
-		cat.GET("/:id", catAPI.FindByID)
-		cat.POST("", catAPI.Create)
-		cat.PUT("/:id", catAPI.Update)
-		cat.DELETE("/:id", catAPI.Delete)
+		catAPI.Register(cat)
 	}
 
 	return r

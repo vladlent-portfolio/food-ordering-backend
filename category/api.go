@@ -15,6 +15,14 @@ func ProvideAPI(s *Service) *API {
 	return &API{s}
 }
 
+func (api *API) Register(router *gin.RouterGroup) {
+	router.GET("", api.FindAll)
+	router.GET("/:id", api.FindByID)
+	router.POST("", api.Create)
+	router.PUT("/:id", api.Update)
+	router.DELETE("/:id", api.Delete)
+}
+
 func (api *API) Create(c *gin.Context) {
 	dto, err := api.bindJSON(c)
 

@@ -1,7 +1,7 @@
 package router
 
 import (
-	"food_ordering_backend/category"
+	"food_ordering_backend/controllers/category"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )

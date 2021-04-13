@@ -1,7 +1,7 @@
 package dish
 
 import (
-	"food_ordering_backend/category"
+	"food_ordering_backend/controllers/category"
 	"gorm.io/gorm"
 )
 

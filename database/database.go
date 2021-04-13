@@ -1,8 +1,8 @@
 package database
 
 import (
-	"food_ordering_backend/category"
-	"food_ordering_backend/dish"
+	"food_ordering_backend/controllers/category"
+	"food_ordering_backend/controllers/dish"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"

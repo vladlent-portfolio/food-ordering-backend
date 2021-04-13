@@ -2,7 +2,7 @@ package e2e
 
 import (
 	"fmt"
-	"food_ordering_backend/category"
+	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/database"
 	"food_ordering_backend/router"
 	"github.com/stretchr/testify/assert"

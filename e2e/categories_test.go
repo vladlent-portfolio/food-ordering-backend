@@ -16,7 +16,7 @@ import (
 	"testing"
 )
 
-var testCategories = []category.Category{{Model: gorm.Model{ID: 1}, Title: "Salads"}, {Model: gorm.Model{ID: 2}, Title: "Burgers"}, {Model: gorm.Model{ID: 3}, Title: "Pizza"}, {Model: gorm.Model{ID: 4}, Title: "Drinks"}}
+var testCategories = []category.Category{{Model: gorm.Model{ID: 1}, Title: "Salads", Removable: true}, {Model: gorm.Model{ID: 2}, Title: "Burgers", Removable: true}, {Model: gorm.Model{ID: 3}, Title: "Pizza", Removable: true}, {Model: gorm.Model{ID: 4}, Title: "Drinks", Removable: true}}
 var db = database.MustGetTest()
 var r = router.Setup(db)
 
@@ -44,7 +44,7 @@ func TestCategories(t *testing.T) {
 			it.Equal(http.StatusOK, resp.Code)
 			it.Contains(resp.Header().Get("Content-Type"), "application/json")
 			it.Equal(
-				`[{"id":1,"title":"Salads","removable":false},{"id":2,"title":"Burgers","removable":false},{"id":3,"title":"Pizza","removable":false},{"id":4,"title":"Drinks","removable":false}]`,
+				`[{"id":1,"title":"Salads","removable":true},{"id":2,"title":"Burgers","removable":true},{"id":3,"title":"Pizza","removable":true},{"id":4,"title":"Drinks","removable":true}]`,
 				resp.Body.String(),
 			)
 		})
@@ -207,6 +207,7 @@ func TestCategories(t *testing.T) {
 		}
 
 		t.Run("should removed a category with provided ID from db", func(t *testing.T) {
+			t.Cleanup(cleanup)
 			cleanup()
 			it := assert.New(t)
 			var categories []category.Category
@@ -230,6 +231,18 @@ func TestCategories(t *testing.T) {
 				it.NotEqual(c.ID, testCat.ID)
 			}
 		})
+
+		t.Run("should return 403 if category isn't removable", func(t *testing.T) {
+			t.Cleanup(cleanup)
+			cleanup()
+			it := assert.New(t)
+			c := category.Category{Title: "Fish", Removable: false}
+
+			db.Create(&c)
+
+			resp := sendWithParam(c.ID)
+			it.Equal(http.StatusForbidden, resp.Code)
+		})
 	})
 }
 
@@ -237,7 +250,7 @@ func runFindByIDTests(t *testing.T) {
 	t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
 		t.Cleanup(cleanup)
 		cleanup()
-		resp := sendReq(http.MethodGet, "/categories/jafsdklfjskldjf")("")
+		resp := sendReq(http.MethodGet, "/categories/some-random-id")("")
 		assert.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
@@ -263,5 +276,5 @@ func sendReq(method, target string) func(body string) *httptest.ResponseRecorder
 }
 
 func cleanup() {
-	db.Exec("TRUNCATE categories;")
+	db.Exec("TRUNCATE categories CASCADE;")
 }

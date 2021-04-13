@@ -85,12 +85,15 @@ func (api *API) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, ToDTO(cat))
 }
 
-// TODO: Add removable check
-
 func (api *API) Delete(c *gin.Context) {
 	cat, err := api.findByID(c)
 
 	if err != nil {
+		return
+	}
+
+	if !cat.Removable {
+		c.Status(http.StatusForbidden)
 		return
 	}
 

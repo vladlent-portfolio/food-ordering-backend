@@ -30,7 +30,7 @@ func (api *API) Create(c *gin.Context) {
 		return
 	}
 
-	category, err := api.Service.Create(ToCategory(dto))
+	category, err := api.Service.Create(ToModel(dto))
 
 	if err != nil {
 		if common.IsDuplicateKeyErr(err) {

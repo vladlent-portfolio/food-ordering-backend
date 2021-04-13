@@ -2,7 +2,7 @@ package category
 
 import "gorm.io/gorm"
 
-func ToCategory(dto DTO) Category {
+func ToModel(dto DTO) Category {
 	model := gorm.Model{ID: dto.ID}
 	return Category{Model: model, Title: dto.Title, Removable: dto.Removable}
 }

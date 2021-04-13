@@ -5,13 +5,13 @@ import (
 	"gorm.io/gorm"
 )
 
-func ToDish(dto DTO) Dish {
+func ToModel(dto DTO) Dish {
 	return Dish{
 		Model:      gorm.Model{ID: dto.ID},
 		Title:      dto.Title,
 		CategoryID: dto.CategoryID,
 		Price:      dto.Price,
-		Category:   category.ToCategory(dto.Category),
+		Category:   category.ToModel(dto.Category),
 	}
 }
 

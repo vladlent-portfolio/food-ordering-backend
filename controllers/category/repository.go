@@ -33,6 +33,6 @@ func (r *Repository) FindAll() []Category {
 }
 
 func (r *Repository) Delete(c Category) (Category, error) {
-	err := r.DB.Delete(&c).Error
+	err := r.DB.Unscoped().Delete(&c).Error
 	return c, err
 }

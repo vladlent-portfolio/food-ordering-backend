@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	db := database.MustGetTest()
+	db := database.MustGet()
 	r := router.Setup(db)
 
 	log.Panicln(r.Run())

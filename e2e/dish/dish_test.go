@@ -1,8 +1,9 @@
-package e2e
+package dish_test
 
 import (
 	"fmt"
 	"food_ordering_backend/controllers/category"
+	"food_ordering_backend/controllers/dish"
 	"food_ordering_backend/database"
 	"food_ordering_backend/router"
 	"github.com/stretchr/testify/assert"
@@ -16,62 +17,68 @@ import (
 	"testing"
 )
 
-var testCategories = []category.Category{{Model: gorm.Model{ID: 1}, Title: "Salads", Removable: true}, {Model: gorm.Model{ID: 2}, Title: "Burgers", Removable: true}, {Model: gorm.Model{ID: 3}, Title: "Pizza", Removable: true}, {Model: gorm.Model{ID: 4}, Title: "Drinks", Removable: true}}
 var db = database.MustGetTest()
 var r = router.Setup(db)
+var testCategories = []category.Category{
+	{Model: gorm.Model{ID: 1}, Title: "Salads", Removable: true},
+	{Model: gorm.Model{ID: 2}, Title: "Burgers", Removable: true},
+	{Model: gorm.Model{ID: 3}, Title: "Pizza", Removable: true},
+	{Model: gorm.Model{ID: 4}, Title: "Drinks", Removable: true},
+}
+var testDishes = []dish.Dish{
+	{Model: gorm.Model{ID: 1}, Title: "Fresh and Healthy Salad", Price: 2.65, CategoryID: 1},
+	{Model: gorm.Model{ID: 2}, Title: "Crunchy Cashew Salad", Price: 3.22, CategoryID: 1},
+	{Model: gorm.Model{ID: 3}, Title: "Hamburger", Price: 1.99, CategoryID: 2},
+	{Model: gorm.Model{ID: 4}, Title: "Cheeseburger", Price: 2.28, CategoryID: 2},
+	{Model: gorm.Model{ID: 5}, Title: "Margherita", Price: 4.20, CategoryID: 3},
+	{Model: gorm.Model{ID: 6}, Title: "4 Cheese", Price: 4.69, CategoryID: 3},
+	{Model: gorm.Model{ID: 7}, Title: "Pepsi 2L", Price: 1.50, CategoryID: 4},
+	{Model: gorm.Model{ID: 8}, Title: "Orange Juice 2L", Price: 2, CategoryID: 4},
+}
 
-func TestCategories(t *testing.T) {
+var testCategoriesJSON = `[{"id":1,"title":"Salads","removable":true},{"id":2,"title":"Burgers","removable":true},{"id":3,"title":"Pizza","removable":true},{"id":4,"title":"Drinks","removable":true}]`
+var testDishesJSON = `[{"id":1,"title":"Fresh and Healthy Salad","price":2.65,"category_id":1,"category":{"id":1,"title":"Salads","removable":true}},{"id":2,"title":"Crunchy Cashew Salad","price":3.22,"category_id":1,"category":{"id":1,"title":"Salads","removable":true}},{"id":3,"title":"Hamburger","price":1.99,"category_id":2,"category":{"id":2,"title":"Burgers","removable":true}},{"id":4,"title":"Cheeseburger","price":2.28,"category_id":2,"category":{"id":2,"title":"Burgers","removable":true}},{"id":5,"title":"Margherita","price":4.2,"category_id":3,"category":{"id":3,"title":"Pizza","removable":true}},{"id":6,"title":"4 Cheese","price":4.69,"category_id":3,"category":{"id":3,"title":"Pizza","removable":true}},{"id":7,"title":"Pepsi 2L","price":1.5,"category_id":4,"category":{"id":4,"title":"Drinks","removable":true}},{"id":8,"title":"Orange Juice 2L","price":2,"category_id":4,"category":{"id":4,"title":"Drinks","removable":true}}]`
+
+func TestDishes(t *testing.T) {
 	cleanup()
 	t.Cleanup(cleanup)
 	db.Logger.LogMode(logger.Silent)
 
-	t.Run("GET /categories", func(t *testing.T) {
-		send := sendReq(http.MethodGet, "/categories")
+	t.Run("GET /dishes", func(t *testing.T) {
+		send := sendReq(http.MethodGet, "/dishes")
 		t.Run("should return JSON array of categories", func(t *testing.T) {
-			t.Cleanup(cleanup)
+			setupDB(t)
 			it := assert.New(t)
-			var categories []category.Category
-
-			db.Find(&categories)
-			require.Len(t, categories, 0)
-
-			db.Create(&testCategories)
-			db.Find(&categories)
-			require.Len(t, categories, len(testCategories))
-
 			resp := send("")
 
 			it.Equal(http.StatusOK, resp.Code)
 			it.Contains(resp.Header().Get("Content-Type"), "application/json")
 			it.Equal(
-				`[{"id":1,"title":"Salads","removable":true},{"id":2,"title":"Burgers","removable":true},{"id":3,"title":"Pizza","removable":true},{"id":4,"title":"Drinks","removable":true}]`,
+				testDishesJSON,
 				resp.Body.String(),
 			)
 		})
 	})
 
 	t.Run("GET /categories/:id", func(t *testing.T) {
-		t.Cleanup(cleanup)
 		sendWithParam := func(id uint) *httptest.ResponseRecorder {
 			param := strconv.Itoa(int(id))
-			return sendReq(http.MethodGet, "/categories/"+param)("")
+			return sendReq(http.MethodGet, "/dishes/"+param)("")
 		}
 
 		t.Run("should return category with provided id", func(t *testing.T) {
-			t.Cleanup(cleanup)
-			cleanup()
+			setupDB(t)
 			it := assert.New(t)
 
-			db.Create(&testCategories)
-			var categories []category.Category
-			db.Find(&categories)
-			require.Len(t, categories, len(testCategories))
-
-			for _, cat := range categories {
-				resp := sendWithParam(cat.ID)
+			for i, testDish := range testDishes {
+				resp := sendWithParam(testDish.ID)
+				testCat := testCategories[i/2]
 				it.Equal(http.StatusOK, resp.Code)
 				it.Equal(
-					fmt.Sprintf(`{"id":%d,"title":%q,"removable":%t}`, cat.ID, cat.Title, cat.Removable),
+					fmt.Sprintf(
+						`{"id":%d,"title":%q,"price":%v,"category_id":%d,"category":{"id":%d,"title":%q,"removable":%t}}`,
+						testDish.ID, testDish.Title, testDish.Price, testDish.CategoryID, testCat.ID, testCat.Title, testCat.Removable,
+					),
 					resp.Body.String(),
 				)
 			}
@@ -180,22 +187,6 @@ func TestCategories(t *testing.T) {
 			it.Equal(fmt.Sprintf(`{"id":%d,"title":"Sushi","removable":true}`, testCategory.ID), resp.Body.String())
 		})
 
-		// Leave this for PATCH request
-		//t.Run("should only update title", func(t *testing.T) {
-		//	cleanup()
-		//	it := assert.New(t)
-		//	testCategory := testCategories[0]
-		//	updateJSON := `{"title":"Sushi"}`
-		//	expected := `{"id":1,"title":"Sushi","removable":true}`
-		//
-		//	testCategory.Removable = true
-		//
-		//	c := setup(t, testCategory)
-		//	resp := sendWithParam(c.ID, updateJSON)
-		//	it.Equal(http.StatusOK, resp.Code)
-		//	it.Equal(expected, resp.Body.String())
-		//})
-
 		runFindByIDTests(t)
 	})
 
@@ -248,22 +239,25 @@ func TestCategories(t *testing.T) {
 
 func runFindByIDTests(t *testing.T) {
 	t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
-		t.Cleanup(cleanup)
-		cleanup()
-		resp := sendReq(http.MethodGet, "/categories/some-random-id")("")
+		setupDB(t)
+		resp := sendReq(http.MethodGet, "/dishes/some-random-id")("")
 		assert.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
 	t.Run("should return 404 if category with provided id doesn't exist", func(t *testing.T) {
-		t.Cleanup(cleanup)
-		cleanup()
-		var categories []category.Category
-		db.Find(&categories)
-		require.Len(t, categories, 0)
-
-		resp := sendReq(http.MethodGet, "/categories/69")("")
+		setupDB(t)
+		resp := sendReq(http.MethodGet, "/dishes/69")("")
 		assert.Equal(t, http.StatusNotFound, resp.Code)
 	})
+}
+
+func setupDB(t *testing.T) {
+	t.Cleanup(cleanup)
+	cleanup()
+	req := require.New(t)
+
+	req.NoError(db.Create(&testCategories).Error)
+	req.NoError(db.Create(&testDishes).Error)
 }
 
 func sendReq(method, target string) func(body string) *httptest.ResponseRecorder {

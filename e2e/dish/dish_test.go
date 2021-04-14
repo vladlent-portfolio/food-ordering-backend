@@ -10,11 +10,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 var db = database.MustGetTest()
@@ -194,45 +196,25 @@ func TestDishes(t *testing.T) {
 	t.Run("DELETE /dishes/:id", func(t *testing.T) {
 		sendWithParam := func(id uint) *httptest.ResponseRecorder {
 			param := strconv.Itoa(int(id))
-			return sendReq(http.MethodDelete, "/categories/"+param)("")
+			return sendReq(http.MethodDelete, "/dishes/"+param)("")
 		}
 
-		t.Run("should removed a category with provided ID from db", func(t *testing.T) {
-			t.Cleanup(cleanup)
-			cleanup()
+		t.Run("should remove a dish with provided ID from db", func(t *testing.T) {
+			setupDB(t)
 			it := assert.New(t)
-			var categories []category.Category
-
-			db.Find(&categories)
-			require.Len(t, categories, 0)
-
-			db.Create(&testCategories)
-			db.Find(&categories)
-			require.Len(t, categories, len(testCategories))
-
-			testCat := testCategories[len(testCategories)/2]
-			resp := sendWithParam(testCat.ID)
+			randomIndex := rand.New(rand.NewSource(time.Now().UnixNano())).Intn(len(testDishes))
+			testDish := testDishes[randomIndex]
+			resp := sendWithParam(testDish.ID)
 
 			it.Equal(http.StatusOK, resp.Code)
+			var dishes []dish.Dish
 
-			db.Find(&categories)
-			it.Len(categories, len(testCategories)-1)
+			db.Find(&dishes)
+			it.Len(dishes, len(testDishes)-1)
 
-			for _, c := range categories {
-				it.NotEqual(c.ID, testCat.ID)
+			for _, d := range dishes {
+				it.NotEqual(d.ID, testDish.ID)
 			}
-		})
-
-		t.Run("should return 403 if category isn't removable", func(t *testing.T) {
-			t.Cleanup(cleanup)
-			cleanup()
-			it := assert.New(t)
-			c := category.Category{Title: "Fish", Removable: false}
-
-			db.Create(&c)
-
-			resp := sendWithParam(c.ID)
-			it.Equal(http.StatusForbidden, resp.Code)
 		})
 	})
 }

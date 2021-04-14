@@ -149,55 +149,49 @@ func TestDishes(t *testing.T) {
 		})
 	})
 
-	t.Run("PUT /categories/:id", func(t *testing.T) {
-		t.Cleanup(cleanup)
+	t.Run("PUT /dishes/:id", func(t *testing.T) {
 		sendWithParam := func(id uint, body string) *httptest.ResponseRecorder {
 			param := strconv.Itoa(int(id))
-			return sendReq(http.MethodPut, "/categories/"+param)(body)
-		}
-
-		setup := func(t *testing.T, initial category.Category) category.Category {
-			var c category.Category
-			db.Create(&initial)
-			db.First(&c, initial.ID)
-			require.Equal(t, c.ID, initial.ID)
-			return c
+			return sendReq(http.MethodPut, "/dishes/"+param)(body)
 		}
 
 		t.Run("should update category in db based on provided json", func(t *testing.T) {
-			cleanup()
-			t.Cleanup(cleanup)
+			setupDB(t)
 			it := assert.New(t)
-			testCategory := testCategories[0]
-			updateJSON := `{"title":"Sushi","removable":true}`
+			updateJSON := `{"title":"Double Cheeseburger","price":4.56,"category_id":2}`
+			respJSON := `{"id":4,"title":"Double Cheeseburger","price":4.56,"category_id":2,"category":{"id":2,"title":"Burgers","removable":true}}`
 
-			c := setup(t, testCategory)
-
-			resp := sendWithParam(c.ID, updateJSON)
+			resp := sendWithParam(4, updateJSON)
 			it.Equal(http.StatusOK, resp.Code)
-			it.Equal(fmt.Sprintf(`{"id":%d,"title":"Sushi","removable":true}`, testCategory.ID), resp.Body.String())
+			it.Equal(respJSON, resp.Body.String())
 		})
 
 		t.Run("should ignore id in provided json", func(t *testing.T) {
-			cleanup()
-			t.Cleanup(cleanup)
+			setupDB(t)
 			it := assert.New(t)
-			testCategory := testCategories[0]
-			updateJSON := `{"id":420,"title":"Sushi","removable":true}`
-			require.NotEqual(t, testCategory.ID, 420)
+			updateJSON := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2}`
+			respJSON := `{"id":4,"title":"Double Cheeseburger","price":4.56,"category_id":2,"category":{"id":2,"title":"Burgers","removable":true}}`
 
-			c := setup(t, testCategory)
-
-			resp := sendWithParam(c.ID, updateJSON)
+			resp := sendWithParam(4, updateJSON)
 			it.Equal(http.StatusOK, resp.Code)
-			it.Equal(fmt.Sprintf(`{"id":%d,"title":"Sushi","removable":true}`, testCategory.ID), resp.Body.String())
+			it.Equal(respJSON, resp.Body.String())
+		})
+
+		t.Run("should correctly handle category change", func(t *testing.T) {
+			setupDB(t)
+			it := assert.New(t)
+			updateJSON := `{"id":69,"title":"Meat Supreme","price":3.22,"category_id":3}`
+			respJSON := `{"id":4,"title":"Meat Supreme","price":3.22,"category_id":3,"category":{"id":3,"title":"Pizza","removable":true}}`
+
+			resp := sendWithParam(4, updateJSON)
+			it.Equal(http.StatusOK, resp.Code)
+			it.Equal(respJSON, resp.Body.String())
 		})
 
 		runFindByIDTests(t)
 	})
 
-	t.Run("DELETE /categories/:id", func(t *testing.T) {
-		t.Cleanup(cleanup)
+	t.Run("DELETE /dishes/:id", func(t *testing.T) {
 		sendWithParam := func(id uint) *httptest.ResponseRecorder {
 			param := strconv.Itoa(int(id))
 			return sendReq(http.MethodDelete, "/categories/"+param)("")

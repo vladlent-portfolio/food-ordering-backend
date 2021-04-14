@@ -73,8 +73,9 @@ func (api *API) Update(c *gin.Context) {
 	}
 
 	dish.Title = dto.Title
-	dish.CategoryID = dto.CategoryID
 	dish.Price = dto.Price
+	dish.CategoryID = dto.CategoryID
+	dish.Category.ID = dto.CategoryID
 
 	dish, err = api.Service.Save(dish)
 

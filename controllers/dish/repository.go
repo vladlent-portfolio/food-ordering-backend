@@ -23,7 +23,13 @@ func (r *Repository) Create(d Dish) (Dish, error) {
 }
 
 func (r *Repository) Save(d Dish) (Dish, error) {
-	err := r.preload().Save(&d).Error
+	err := r.DB.Save(&d).Error
+
+	if err != nil {
+		return d, err
+	}
+
+	err = r.preload().First(&d).Error
 	return d, err
 }
 

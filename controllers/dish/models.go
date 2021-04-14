@@ -8,7 +8,7 @@ import (
 type Dish struct {
 	gorm.Model
 	Title      string  `gorm:"size:100"`
-	Price      float64 `gorm:"check:price > 0"`
+	Price      float64 `gorm:"check:price >= 0"`
 	CategoryID uint
 	Category   category.Category `gorm:"constraint:OnDelete:CASCADE,OnUpdate:CASCADE"`
 }

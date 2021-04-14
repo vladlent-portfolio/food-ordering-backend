@@ -132,12 +132,6 @@ func TestDishes(t *testing.T) {
 			it.Equal(http.StatusBadRequest, resp.Code)
 		})
 
-		// TODO: Add test for negative price
-		//t.Run("should ", func(t *testing.T) {
-		//    it := assert.New(t)
-		//
-		//})
-
 		t.Run("should return 409 if dish already exists", func(t *testing.T) {
 			setupDB(t)
 			it := assert.New(t)
@@ -149,6 +143,8 @@ func TestDishes(t *testing.T) {
 			resp = send(json)
 			it.Equal(http.StatusConflict, resp.Code)
 		})
+
+		negativePriceTest(t, http.MethodPost)
 	})
 
 	t.Run("PUT /dishes/:id", func(t *testing.T) {
@@ -191,6 +187,7 @@ func TestDishes(t *testing.T) {
 		})
 
 		runFindByIDTests(t)
+		negativePriceTest(t, http.MethodPut)
 	})
 
 	t.Run("DELETE /dishes/:id", func(t *testing.T) {
@@ -230,6 +227,23 @@ func runFindByIDTests(t *testing.T) {
 		setupDB(t)
 		resp := sendReq(http.MethodGet, "/dishes/69")("")
 		assert.Equal(t, http.StatusNotFound, resp.Code)
+	})
+}
+
+func negativePriceTest(t *testing.T, method string) {
+	t.Run("should return 400 if price is < 0", func(t *testing.T) {
+		setupDB(t)
+		it := assert.New(t)
+		json := `{"id":1,"title":"Meat Supreme","price":-3.22,"category_id":3}`
+		var resp *httptest.ResponseRecorder
+
+		if method == http.MethodPost {
+			resp = sendReq(method, "/dishes")(json)
+		} else {
+			resp = sendReq(method, "/dishes/1")(json)
+		}
+
+		it.Equal(http.StatusBadRequest, resp.Code)
 	})
 }
 

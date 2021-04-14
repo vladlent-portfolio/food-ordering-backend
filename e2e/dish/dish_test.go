@@ -46,7 +46,7 @@ func TestDishes(t *testing.T) {
 
 	t.Run("GET /dishes", func(t *testing.T) {
 		send := sendReq(http.MethodGet, "/dishes")
-		t.Run("should return JSON array of categories", func(t *testing.T) {
+		t.Run("should return JSON array of dishes with their respective categories", func(t *testing.T) {
 			setupDB(t)
 			it := assert.New(t)
 			resp := send("")
@@ -60,13 +60,13 @@ func TestDishes(t *testing.T) {
 		})
 	})
 
-	t.Run("GET /categories/:id", func(t *testing.T) {
+	t.Run("GET /dishes/:id", func(t *testing.T) {
 		sendWithParam := func(id uint) *httptest.ResponseRecorder {
 			param := strconv.Itoa(int(id))
 			return sendReq(http.MethodGet, "/dishes/"+param)("")
 		}
 
-		t.Run("should return category with provided id", func(t *testing.T) {
+		t.Run("should return dish with provided id", func(t *testing.T) {
 			setupDB(t)
 			it := assert.New(t)
 
@@ -88,40 +88,41 @@ func TestDishes(t *testing.T) {
 		runFindByIDTests(t)
 	})
 
-	t.Run("POST /categories", func(t *testing.T) {
-		t.Cleanup(cleanup)
-		send := sendReq(http.MethodPost, "/categories")
+	t.Run("POST /dishes", func(t *testing.T) {
+		send := sendReq(http.MethodPost, "/dishes")
 
-		t.Run("should add category to db and return it", func(t *testing.T) {
-			cleanup()
-			t.Cleanup(cleanup)
+		t.Run("should add dish to db and return it", func(t *testing.T) {
+			setupDB(t)
 			it := assert.New(t)
+			initialLen := len(testDishes)
+			reqJSON := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2}`
+			respJSON := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2,"category":{"id":2,"title":"Burgers","removable":true}}`
 
-			var categories []category.Category
-			db.Find(&categories)
-			initialLen := len(categories)
-			json := `{"id":69,"title":"Pizza","removable":false}`
-
-			resp := send(json)
+			resp := send(reqJSON)
 
 			it.Equal(http.StatusCreated, resp.Code)
 			it.Contains(resp.Header().Get("Content-Type"), "application/json")
-			it.Equal(json, resp.Body.String())
+			it.Equal(respJSON, resp.Body.String())
 
-			var last category.Category
+			var last dish.Dish
+			var dishes []dish.Dish
 
-			db.Last(&last)
-			it.False(last.Removable)
-			it.Equal(last.Title, "Pizza")
-			it.Equal(last.ID, uint(69))
+			err := db.Preload("Category").Last(&last).Error
+			require.NoError(t, err)
 
-			db.Find(&categories)
-			it.Len(categories, initialLen+1)
+			it.Equal(4.56, last.Price)
+			it.Equal("Double Cheeseburger", last.Title)
+			it.Equal(uint(69), last.ID)
+			it.Equal(uint(2), last.CategoryID)
+			it.Equal(uint(2), last.Category.ID)
+			it.Equal("Burgers", last.Category.Title)
+			it.True(last.Category.Removable)
+
+			db.Find(&dishes)
+			it.Len(dishes, initialLen+1)
 		})
 
 		t.Run("should return 400 if provided json isn't correct", func(t *testing.T) {
-			cleanup()
-			t.Cleanup(cleanup)
 			it := assert.New(t)
 			json := `{"title": 123}`
 
@@ -129,11 +130,16 @@ func TestDishes(t *testing.T) {
 			it.Equal(http.StatusBadRequest, resp.Code)
 		})
 
-		t.Run("should return 409 if category already exists", func(t *testing.T) {
-			cleanup()
-			t.Cleanup(cleanup)
+		// TODO: Add test for negative price
+		//t.Run("should ", func(t *testing.T) {
+		//    it := assert.New(t)
+		//
+		//})
+
+		t.Run("should return 409 if dish already exists", func(t *testing.T) {
+			setupDB(t)
 			it := assert.New(t)
-			json := `{"id":1,"title":"Salads","removable":false}`
+			json := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2}`
 
 			resp := send(json)
 			it.Equal(http.StatusCreated, resp.Code)

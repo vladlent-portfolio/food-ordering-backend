@@ -40,7 +40,7 @@ func (r *Repository) FindAll() []Dish {
 }
 
 func (r *Repository) Delete(d Dish) (Dish, error) {
-	err := r.preload().Delete(&d).Error
+	err := r.preload().Unscoped().Delete(&d).Error
 	return d, err
 }
 

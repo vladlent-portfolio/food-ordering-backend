@@ -3,19 +3,21 @@ package router
 import (
 	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/controllers/dish"
+	"food_ordering_backend/controllers/user"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-type controller interface {
+type Controller interface {
 	Register(g *gin.RouterGroup)
 }
 
 func Setup(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
-	routes := map[string]controller{
+	routes := map[string]Controller{
 		"/categories": category.InitAPI(db),
 		"/dishes":     dish.InitAPI(db),
+		"/users":      user.InitAPI(db),
 	}
 
 	for route, api := range routes {

@@ -3,6 +3,7 @@ package database
 import (
 	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/controllers/dish"
+	"food_ordering_backend/controllers/user"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
@@ -65,6 +66,7 @@ func initDB(connStr string) error {
 
 	db.AutoMigrate(&category.Category{})
 	db.AutoMigrate(&dish.Dish{})
+	db.AutoMigrate(&user.User{})
 
 	database = db
 	return nil

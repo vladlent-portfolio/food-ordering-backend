@@ -90,6 +90,18 @@ func TestDishes(t *testing.T) {
 				}
 			}
 		})
+
+		t.Run("should return 400 if provided category id isn't a number", func(t *testing.T) {
+			resp := sendReq(http.MethodGet, "/dishes?cid=hello")("")
+			assert.Equal(t, http.StatusBadRequest, resp.Code)
+		})
+
+		t.Run("should return an empty array if category doesn't exist", func(t *testing.T) {
+			it := assert.New(t)
+			resp := sendReq(http.MethodGet, "/dishes?cid=228")("")
+			it.Equal(http.StatusOK, resp.Code)
+			it.Equal("[]", resp.Body.String())
+		})
 	})
 
 	t.Run("GET /dishes/:id", func(t *testing.T) {

@@ -1,6 +1,7 @@
 package dish_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/controllers/dish"
@@ -28,14 +29,14 @@ var testCategories = []category.Category{
 	{Model: gorm.Model{ID: 4}, Title: "Drinks", Removable: true},
 }
 var testDishes = []dish.Dish{
-	{Model: gorm.Model{ID: 1}, Title: "Fresh and Healthy Salad", Price: 2.65, CategoryID: 1},
-	{Model: gorm.Model{ID: 2}, Title: "Crunchy Cashew Salad", Price: 3.22, CategoryID: 1},
-	{Model: gorm.Model{ID: 3}, Title: "Hamburger", Price: 1.99, CategoryID: 2},
-	{Model: gorm.Model{ID: 4}, Title: "Cheeseburger", Price: 2.28, CategoryID: 2},
-	{Model: gorm.Model{ID: 5}, Title: "Margherita", Price: 4.20, CategoryID: 3},
-	{Model: gorm.Model{ID: 6}, Title: "4 Cheese", Price: 4.69, CategoryID: 3},
-	{Model: gorm.Model{ID: 7}, Title: "Pepsi 2L", Price: 1.50, CategoryID: 4},
-	{Model: gorm.Model{ID: 8}, Title: "Orange Juice 2L", Price: 2, CategoryID: 4},
+	{Model: gorm.Model{ID: 1}, Title: "Fresh and Healthy Salad", Price: 2.65, CategoryID: 1, Category: testCategories[0]},
+	{Model: gorm.Model{ID: 2}, Title: "Crunchy Cashew Salad", Price: 3.22, CategoryID: 1, Category: testCategories[0]},
+	{Model: gorm.Model{ID: 3}, Title: "Hamburger", Price: 1.99, CategoryID: 2, Category: testCategories[1]},
+	{Model: gorm.Model{ID: 4}, Title: "Cheeseburger", Price: 2.28, CategoryID: 2, Category: testCategories[1]},
+	{Model: gorm.Model{ID: 5}, Title: "Margherita", Price: 4.20, CategoryID: 3, Category: testCategories[2]},
+	{Model: gorm.Model{ID: 6}, Title: "4 Cheese", Price: 4.69, CategoryID: 3, Category: testCategories[2]},
+	{Model: gorm.Model{ID: 7}, Title: "Pepsi 2L", Price: 1.50, CategoryID: 4, Category: testCategories[3]},
+	{Model: gorm.Model{ID: 8}, Title: "Orange Juice 2L", Price: 2, CategoryID: 4, Category: testCategories[3]},
 }
 
 var testCategoriesJSON = `[{"id":1,"title":"Salads","removable":true},{"id":2,"title":"Burgers","removable":true},{"id":3,"title":"Pizza","removable":true},{"id":4,"title":"Drinks","removable":true}]`
@@ -59,6 +60,35 @@ func TestDishes(t *testing.T) {
 				testDishesJSON,
 				resp.Body.String(),
 			)
+		})
+
+		t.Run("should return dishes filtered by provided category id", func(t *testing.T) {
+			setupDB(t)
+			it := assert.New(t)
+
+			for i, c := range testCategories {
+				dishes := testDishes[i*2 : i*2+2]
+				resp := sendReq(http.MethodGet, fmt.Sprintf("/dishes?cid=%d", c.ID))("")
+
+				it.Equal(http.StatusOK, resp.Code)
+				it.Contains(resp.Header().Get("Content-Type"), "application/json")
+
+				var dtos []dish.DTO
+				err := json.NewDecoder(resp.Body).Decode(&dtos)
+				require.NoError(t, err)
+				require.Len(t, dtos, len(dishes))
+
+				for i, d := range dishes {
+					dto := dtos[i]
+					it.Equal(d.ID, dto.ID)
+					it.Equal(d.Title, dto.Title)
+					it.Equal(d.Price, dto.Price)
+					it.Equal(d.CategoryID, dto.CategoryID)
+					it.Equal(d.Category.ID, dto.Category.ID)
+					it.Equal(d.Category.Title, dto.Category.Title)
+					it.Equal(d.Category.Removable, dto.Category.Removable)
+				}
+			}
 		})
 	})
 

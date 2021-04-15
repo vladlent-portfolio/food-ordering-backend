@@ -55,7 +55,22 @@ func (api *API) FindByID(c *gin.Context) {
 }
 
 func (api *API) FindAll(c *gin.Context) {
-	dishes := api.Service.FindAll()
+	var dishes []Dish
+	cidq := c.Query("cid")
+
+	if cidq == "" {
+		dishes = api.Service.FindAll(0)
+	} else {
+		cid, err := strconv.ParseUint(cidq, 10, 64)
+
+		if err != nil {
+			c.Status(http.StatusBadRequest)
+			return
+		}
+
+		dishes = api.Service.FindAll(uint(cid))
+	}
+
 	c.JSON(http.StatusOK, ToDTOs(dishes))
 }
 

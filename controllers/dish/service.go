@@ -20,8 +20,8 @@ func (s *Service) FindByID(id uint) (Dish, error) {
 	return s.Repository.FindByID(id)
 }
 
-func (s *Service) FindAll() []Dish {
-	return s.Repository.FindAll()
+func (s *Service) FindAll(cid uint) []Dish {
+	return s.Repository.FindAll(cid)
 }
 
 func (s *Service) Delete(d Dish) (Dish, error) {

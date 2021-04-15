@@ -1,6 +1,8 @@
 package dish
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type Repository struct {
 	DB *gorm.DB
@@ -23,7 +25,7 @@ func (r *Repository) Create(d Dish) (Dish, error) {
 }
 
 func (r *Repository) Save(d Dish) (Dish, error) {
-	err := r.DB.Save(&d).Error
+	err := r.preload().Save(&d).Error
 
 	if err != nil {
 		return d, err
@@ -39,9 +41,15 @@ func (r *Repository) FindByID(id uint) (Dish, error) {
 	return d, err
 }
 
-func (r *Repository) FindAll() []Dish {
+func (r *Repository) FindAll(cid uint) []Dish {
 	var dishes []Dish
-	r.preload().Find(&dishes)
+
+	if cid == 0 {
+		r.preload().Find(&dishes)
+	} else {
+		r.preload().Where("category_id = ?", cid).Find(&dishes)
+	}
+
 	return dishes
 }
 
@@ -51,5 +59,5 @@ func (r *Repository) Delete(d Dish) (Dish, error) {
 }
 
 func (r *Repository) preload() *gorm.DB {
-	return r.DB.Preload("Category")
+	return r.DB.Joins("Category")
 }

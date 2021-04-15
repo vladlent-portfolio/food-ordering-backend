@@ -1,7 +1,5 @@
 package user
 
-import "golang.org/x/crypto/bcrypt"
-
 type Service struct {
 	Repository *Repository
 }
@@ -11,15 +9,15 @@ func ProvideService(r *Repository) *Service {
 }
 
 func (s *Service) Create(dto AuthDTO) (User, error) {
-	var user User
-	hashedPass, err := bcrypt.GenerateFromPassword([]byte(dto.Password), bcrypt.MinCost)
+	user, err := CreateFromDTO(dto)
 
 	if err != nil {
 		return user, err
 	}
 
-	user.Email = dto.Email
-	user.PasswordHash = hashedPass
-
 	return s.Repository.Create(user)
+}
+
+func (s *Service) FindAll() []User {
+	return s.Repository.FindAll()
 }

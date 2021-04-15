@@ -17,8 +17,8 @@ func ProvideAPI(s *Service) *API {
 }
 
 func (api *API) Register(router *gin.RouterGroup) {
+	router.GET("", api.FindAll)
 	router.POST("", api.Create)
-
 }
 
 func (api *API) Create(c *gin.Context) {
@@ -44,4 +44,9 @@ func (api *API) Create(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, ToResponseDTO(user))
+}
+
+func (api *API) FindAll(c *gin.Context) {
+	users := api.Service.FindAll()
+	c.JSON(http.StatusOK, ToResponseDTOs(users))
 }

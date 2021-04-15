@@ -7,19 +7,19 @@ import (
 	"gorm.io/gorm"
 )
 
+type controller interface {
+	Register(g *gin.RouterGroup)
+}
+
 func Setup(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
-
-	cat := r.Group("/categories")
-	{
-		catAPI := category.InitAPI(db)
-		catAPI.Register(cat)
+	routes := map[string]controller{
+		"/categories": category.InitAPI(db),
+		"/dishes":     dish.InitAPI(db),
 	}
 
-	d := r.Group("/dishes")
-	{
-		dishesAPI := dish.InitAPI(db)
-		dishesAPI.Register(d)
+	for route, api := range routes {
+		api.Register(r.Group(route))
 	}
 
 	return r

@@ -63,9 +63,10 @@ func (api *API) Login(c *gin.Context) {
 	session, err := api.Service.Login(dto)
 
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) || errors.Is(err, ErrInvalidPassword) {
+		switch {
+		case errors.Is(err, gorm.ErrRecordNotFound) || errors.Is(err, ErrInvalidPassword):
 			c.Status(http.StatusForbidden)
-		} else {
+		default:
 			c.Status(http.StatusInternalServerError)
 		}
 		return
@@ -76,6 +77,7 @@ func (api *API) Login(c *gin.Context) {
 		Value:    session.Token,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
+		Path:     "/",
 	}
 
 	http.SetCookie(c.Writer, cookie)

@@ -1,6 +1,10 @@
 package user
 
-import "github.com/dgrijalva/jwt-go/v4"
+import (
+	"github.com/dgrijalva/jwt-go/v4"
+)
+
+const JWTSecret = "secret string"
 
 type Service struct {
 	Repository *Repository
@@ -26,9 +30,9 @@ func (s *Service) FindAll() []User {
 
 func (s *Service) Login(dto AuthDTO) (Session, error) {
 	var session Session
-	u := User{Email: dto.Email}
+	u, err := s.Repository.FindByEmail(dto.Email)
 
-	if err := s.Repository.Find(&u); err != nil {
+	if err != nil {
 		return session, err
 	}
 
@@ -37,10 +41,11 @@ func (s *Service) Login(dto AuthDTO) (Session, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"uid": u.ID})
+	ss, _ := token.SignedString([]byte(JWTSecret))
 
 	session.UserID = u.ID
 	session.User = u
-	session.Token = token.Raw
+	session.Token = ss
 
 	if err := s.Repository.CreateSession(session); err != nil {
 		return session, err

@@ -111,25 +111,29 @@ func TestAPI(t *testing.T) {
 			t.Run("should sign in a user and add session to db", func(t *testing.T) {
 				setupDB(t)
 				it := assert.New(t)
-				u := testUsersDTOs[0]
-				resp := login(u)
 
-				it.Equal(http.StatusOK, resp.Code)
+				for i, dto := range testUsersDTOs {
+					resp := login(dto)
 
-				c := findCookieByName(resp.Result(), user.SessionCookieName)
+					it.Equal(http.StatusOK, resp.Code)
 
-				if assert.NotNil(t, c) {
-					it.NotZero(t, c.Value)
-					it.True(c.HttpOnly)
-					it.Equal(http.SameSiteLaxMode, c.SameSite)
+					c := findCookieByName(resp.Result(), user.SessionCookieName)
+
+					if assert.NotNil(t, c) {
+						it.NotZero(t, c.Value)
+						it.True(c.HttpOnly)
+						it.Equal(http.SameSiteLaxMode, c.SameSite)
+						it.Equal("/", c.Path)
+					}
+
+					var sessions []user.Session
+					db.Find(&sessions)
+
+					if it.Len(sessions, i+1) {
+						it.Equal(sessions[i].Token, c.Value)
+					}
 				}
 
-				var sessions []user.Session
-				db.Find(&sessions)
-
-				if it.Len(sessions, 1) {
-					it.Equal(sessions[0].Token, c.Value)
-				}
 			})
 
 			t.Run("should return 403 if provided email or password is incorrect", func(t *testing.T) {
@@ -155,7 +159,6 @@ func TestAPI(t *testing.T) {
 func setupDB(t *testing.T) {
 	cleanup()
 	t.Cleanup(cleanup)
-
 	db.Create(&testUsers)
 }
 

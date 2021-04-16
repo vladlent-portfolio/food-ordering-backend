@@ -73,6 +73,12 @@ func TestAPI(t *testing.T) {
 
 			it.Equal("example@user.com", newUser.Email)
 			it.NotZero(newUser.ID)
+
+			var u user.User
+			if it.NoError(db.Last(&u).Error) {
+				it.NotEmpty(u.PasswordHash)
+				it.Equal(newUser.Email, u.Email)
+			}
 		})
 
 		t.Run("should return 422 if json is invalid", func(t *testing.T) {
@@ -101,8 +107,9 @@ func TestAPI(t *testing.T) {
 				return sendReq(http.MethodPost, "/users/signin")(string(data))
 			}
 
-			t.Run("should sign in a user", func(t *testing.T) {
-				it := require.New(t)
+			t.Run("should sign in a user and add session to db", func(t *testing.T) {
+				setupDB(t)
+				it := assert.New(t)
 				u := testUsersDTOs[0]
 				resp := login(u)
 
@@ -114,6 +121,13 @@ func TestAPI(t *testing.T) {
 					t.Log("cookie:", c)
 					it.NotZero(t, c.Value)
 					it.True(c.HttpOnly)
+				}
+
+				var sessions []user.Session
+				db.Find(&sessions)
+
+				if it.Len(sessions, 1) {
+					it.Equal(sessions[0].Token, c.Value)
 				}
 			})
 		})
@@ -147,5 +161,5 @@ func findCookieByName(resp *http.Response, name string) *http.Cookie {
 }
 
 func cleanup() {
-	db.Exec("TRUNCATE users;")
+	db.Exec("TRUNCATE users, sessions;")
 }

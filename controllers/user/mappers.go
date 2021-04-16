@@ -1,17 +1,14 @@
 package user
 
-import "golang.org/x/crypto/bcrypt"
-
 func CreateFromDTO(dto AuthDTO) (User, error) {
 	var user User
-	hashedPass, err := bcrypt.GenerateFromPassword([]byte(dto.Password), bcrypt.MinCost)
+	err := user.SetPassword(dto.Password)
 
 	if err != nil {
 		return user, err
 	}
 
 	user.Email = dto.Email
-	user.PasswordHash = hashedPass
 
 	return user, nil
 }

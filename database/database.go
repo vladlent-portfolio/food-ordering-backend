@@ -67,6 +67,7 @@ func initDB(connStr string) error {
 	db.AutoMigrate(&category.Category{})
 	db.AutoMigrate(&dish.Dish{})
 	db.AutoMigrate(&user.User{})
+	db.AutoMigrate(&user.Session{})
 
 	database = db
 	return nil

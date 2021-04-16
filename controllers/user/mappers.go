@@ -2,13 +2,9 @@ package user
 
 func CreateFromDTO(dto AuthDTO) (User, error) {
 	var user User
-	err := user.SetPassword(dto.Password)
-
-	if err != nil {
-		return user, err
-	}
 
 	user.Email = dto.Email
+	user.SetPassword(dto.Password)
 
 	return user, nil
 }

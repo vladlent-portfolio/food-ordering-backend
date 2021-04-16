@@ -17,18 +17,13 @@ type Session struct {
 	User   User `gorm:"constraint:OnDelete:CASCADE,OnUpdate:CASCADE"`
 }
 
-func (u *User) SetPassword(password string) error {
-	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
-
-	if err != nil {
-		return err
-	}
-
+func (u *User) SetPassword(password string) {
+	// Basically, an error can only occur if we provide an invalid cost so we ignore it.
+	hashedPass, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 	u.PasswordHash = hashedPass
-
-	return nil
 }
 
-//func (u *User) ValidatePassword(password string) bool {
-//
-//}
+func (u *User) ValidatePassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword(u.PasswordHash, []byte(password))
+	return err != nil
+}

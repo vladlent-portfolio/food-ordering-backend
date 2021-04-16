@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-const SessionCookieName = "session-id"
+const SessionCookieName = "access_token"
 
 type API struct {
 	Service *Service
@@ -25,10 +25,9 @@ func (api *API) Register(router *gin.RouterGroup) {
 }
 
 func (api *API) Create(c *gin.Context) {
-	var dto AuthDTO
+	dto, err := api.bindAuthDTO(c)
 
-	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.Status(http.StatusUnprocessableEntity)
+	if err != nil {
 		return
 	}
 
@@ -55,5 +54,39 @@ func (api *API) FindAll(c *gin.Context) {
 }
 
 func (api *API) Login(c *gin.Context) {
+	dto, err := api.bindAuthDTO(c)
 
+	if err != nil {
+		return
+	}
+
+	session, err := api.Service.Login(dto)
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) || errors.Is(err, ErrInvalidPassword) {
+			c.Status(http.StatusForbidden)
+		} else {
+			c.Status(http.StatusInternalServerError)
+		}
+		return
+	}
+
+	cookie := &http.Cookie{
+		Name:     SessionCookieName,
+		Value:    session.Token,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	http.SetCookie(c.Writer, cookie)
+	c.Status(http.StatusOK)
+}
+
+func (api *API) bindAuthDTO(c *gin.Context) (AuthDTO, error) {
+	var dto AuthDTO
+	if err := c.ShouldBindJSON(&dto); err != nil {
+		c.Status(http.StatusUnprocessableEntity)
+		return dto, err
+	}
+	return dto, nil
 }

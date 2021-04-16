@@ -1,5 +1,7 @@
 package user
 
+import "github.com/dgrijalva/jwt-go/v4"
+
 type Service struct {
 	Repository *Repository
 }
@@ -25,9 +27,22 @@ func (s *Service) FindAll() []User {
 func (s *Service) Login(dto AuthDTO) (Session, error) {
 	var session Session
 	u := User{Email: dto.Email}
-	err := s.Repository.Find(&u)
 
-	if err != nil {
+	if err := s.Repository.Find(&u); err != nil {
+		return session, err
+	}
+
+	if err := u.ValidatePassword(dto.Password); err != nil {
+		return session, err
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"uid": u.ID})
+
+	session.UserID = u.ID
+	session.User = u
+	session.Token = token.Raw
+
+	if err := s.Repository.CreateSession(session); err != nil {
 		return session, err
 	}
 

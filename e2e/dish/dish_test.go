@@ -3,6 +3,7 @@ package dish_test
 import (
 	"encoding/json"
 	"fmt"
+	"food_ordering_backend/common"
 	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/controllers/dish"
 	"food_ordering_backend/database"
@@ -11,13 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 )
 
 var db = database.MustGetTest()
@@ -241,7 +240,7 @@ func TestDishes(t *testing.T) {
 		t.Run("should remove a dish with provided ID from db", func(t *testing.T) {
 			setupDB(t)
 			it := assert.New(t)
-			randomIndex := rand.New(rand.NewSource(time.Now().UnixNano())).Intn(len(testDishes))
+			randomIndex := common.RandomInt(len(testDishes))
 			testDish := testDishes[randomIndex]
 			resp := sendWithParam(testDish.ID)
 

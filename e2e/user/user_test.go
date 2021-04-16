@@ -2,6 +2,7 @@ package user_test
 
 import (
 	"encoding/json"
+	"food_ordering_backend/common"
 	"food_ordering_backend/controllers/user"
 	"food_ordering_backend/database"
 	"food_ordering_backend/router"
@@ -118,9 +119,9 @@ func TestAPI(t *testing.T) {
 				c := findCookieByName(resp.Result(), user.SessionCookieName)
 
 				if assert.NotNil(t, c) {
-					t.Log("cookie:", c)
 					it.NotZero(t, c.Value)
 					it.True(c.HttpOnly)
+					it.Equal(http.SameSiteLaxMode, c.SameSite)
 				}
 
 				var sessions []user.Session
@@ -129,6 +130,22 @@ func TestAPI(t *testing.T) {
 				if it.Len(sessions, 1) {
 					it.Equal(sessions[0].Token, c.Value)
 				}
+			})
+
+			t.Run("should return 403 if provided email or password is incorrect", func(t *testing.T) {
+				setupDB(t)
+				it := assert.New(t)
+				u1 := testUsersDTOs[common.RandomInt(len(testUsersDTOs))]
+				u2 := testUsersDTOs[common.RandomInt(len(testUsersDTOs))]
+
+				u1.Email = "email@not.exist"
+
+				resp := login(u1)
+				it.Equal(http.StatusForbidden, resp.Code)
+
+				u2.Password = "some-random-pass"
+				resp = login(u2)
+				it.Equal(http.StatusForbidden, resp.Code)
 			})
 		})
 	})

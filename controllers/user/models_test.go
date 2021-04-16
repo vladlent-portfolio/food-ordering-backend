@@ -30,20 +30,20 @@ func TestUser_SetPassword(t *testing.T) {
 }
 
 func TestUser_ValidatePassword(t *testing.T) {
-	t.Run("should return true if provided password is correct", func(t *testing.T) {
+	t.Run("should return nil if provided password is correct", func(t *testing.T) {
 		it := assert.New(t)
 		var user User
 		password := "password"
 
 		user.SetPassword(password)
-		it.True(user.ValidatePassword(password))
+		it.NoError(user.ValidatePassword(password))
 	})
 
-	t.Run("should return true if provided password is incorrect", func(t *testing.T) {
+	t.Run("should return error if provided password is incorrect", func(t *testing.T) {
 		it := assert.New(t)
 		var user User
 
 		user.SetPassword("pass")
-		it.False(user.ValidatePassword("notpass"))
+		it.ErrorIs(user.ValidatePassword("notpass"), ErrInvalidPassword)
 	})
 }

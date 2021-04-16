@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -17,13 +18,17 @@ type Session struct {
 	User   User `gorm:"constraint:OnDelete:CASCADE,OnUpdate:CASCADE"`
 }
 
+var ErrInvalidPassword = errors.New("invalid password")
+
 func (u *User) SetPassword(password string) {
 	// Basically, an error can only occur if we provide an invalid cost so we ignore it.
 	hashedPass, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 	u.PasswordHash = hashedPass
 }
 
-func (u *User) ValidatePassword(password string) bool {
-	err := bcrypt.CompareHashAndPassword(u.PasswordHash, []byte(password))
-	return err == nil
+func (u *User) ValidatePassword(password string) error {
+	if err := bcrypt.CompareHashAndPassword(u.PasswordHash, []byte(password)); err != nil {
+		return ErrInvalidPassword
+	}
+	return nil
 }

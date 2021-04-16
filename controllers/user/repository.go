@@ -15,8 +15,16 @@ func (r *Repository) Create(u User) (User, error) {
 	return u, err
 }
 
+func (r *Repository) Find(u *User) error {
+	return r.DB.Find(&u).Error
+}
+
 func (r *Repository) FindAll() []User {
 	var users []User
 	r.DB.Find(&users)
 	return users
+}
+
+func (r *Repository) CreateSession(s Session) error {
+	return r.DB.Create(&s).Error
 }

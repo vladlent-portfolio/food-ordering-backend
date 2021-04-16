@@ -16,16 +16,15 @@ import (
 
 var db = database.MustGetTest()
 var r = router.Setup(db)
+var testUsersDTOs = []user.AuthDTO{
+	{Email: "Kallie_Larson@hotmail.com", Password: "_GIGcnAkjjsbkzk"},
+	{Email: "Hellen_Bogan26@hotmail.com", Password: "sgDOB7qIseBkpS3"},
+	{Email: "Stella.Wolff@yahoo.com", Password: "kn_yt5XoDIexljw"},
+}
 var testUsers = make([]user.User, 3)
 
 func init() {
-	dtos := []user.AuthDTO{
-		{Email: "Kallie_Larson@hotmail.com", Password: "_GIGcnAkjjsbkzk"},
-		{Email: "Hellen_Bogan26@hotmail.com", Password: "sgDOB7qIseBkpS3"},
-		{Email: "Stella.Wolff@yahoo.com", Password: "kn_yt5XoDIexljw"},
-	}
-
-	for i, dto := range dtos {
+	for i, dto := range testUsersDTOs {
 		u, err := user.CreateFromDTO(dto)
 
 		if err != nil {
@@ -95,7 +94,31 @@ func TestAPI(t *testing.T) {
 			resp = send(`{"email":"example@user.com", "password": "secretpass"}`)
 			require.Equal(t, http.StatusConflict, resp.Code)
 		})
+
+		t.Run("POST /users/signin", func(t *testing.T) {
+			login := func(dto user.AuthDTO) *httptest.ResponseRecorder {
+				data, _ := json.Marshal(&dto)
+				return sendReq(http.MethodPost, "/users/signin")(string(data))
+			}
+
+			t.Run("should sign in a user", func(t *testing.T) {
+				it := require.New(t)
+				u := testUsersDTOs[0]
+				resp := login(u)
+
+				it.Equal(http.StatusOK, resp.Code)
+
+				c := findCookieByName(resp.Result(), user.SessionCookieName)
+
+				if assert.NotNil(t, c) {
+					t.Log("cookie:", c)
+					it.NotZero(t, c.Value)
+					it.True(c.HttpOnly)
+				}
+			})
+		})
 	})
+
 }
 
 func setupDB(t *testing.T) {
@@ -112,6 +135,15 @@ func sendReq(method, target string) func(body string) *httptest.ResponseRecorder
 		r.ServeHTTP(w, req)
 		return w
 	}
+}
+
+func findCookieByName(resp *http.Response, name string) *http.Cookie {
+	for _, c := range resp.Cookies() {
+		if c.Name == name {
+			return c
+		}
+	}
+	return nil
 }
 
 func cleanup() {

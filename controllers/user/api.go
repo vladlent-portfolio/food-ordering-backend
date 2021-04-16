@@ -8,6 +8,8 @@ import (
 	"net/http"
 )
 
+const SessionCookieName = "session-id"
+
 type API struct {
 	Service *Service
 }
@@ -19,6 +21,7 @@ func ProvideAPI(s *Service) *API {
 func (api *API) Register(router *gin.RouterGroup) {
 	router.GET("", api.FindAll)
 	router.POST("", api.Create)
+	router.POST("/signin", api.Login)
 }
 
 func (api *API) Create(c *gin.Context) {
@@ -49,4 +52,8 @@ func (api *API) Create(c *gin.Context) {
 func (api *API) FindAll(c *gin.Context) {
 	users := api.Service.FindAll()
 	c.JSON(http.StatusOK, ToResponseDTOs(users))
+}
+
+func (api *API) Login(c *gin.Context) {
+
 }

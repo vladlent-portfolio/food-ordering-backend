@@ -7,3 +7,13 @@ type User struct {
 	Email        string `gorm:"size:255;uniqueIndex;not null"`
 	PasswordHash []byte `gorm:"not null"`
 }
+
+type Session struct {
+	Token  string `gorm:"primaryKey"`
+	UserID uint
+	User   User
+}
+
+//func (u *User) ValidatePassword(password string) bool {
+//
+//}

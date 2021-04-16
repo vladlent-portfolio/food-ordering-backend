@@ -21,3 +21,7 @@ func (s *Service) Create(dto AuthDTO) (User, error) {
 func (s *Service) FindAll() []User {
 	return s.Repository.FindAll()
 }
+
+//func (s *Service) Login(dto AuthDTO) (string, error) {
+//
+//}

@@ -22,6 +22,14 @@ func (s *Service) FindAll() []User {
 	return s.Repository.FindAll()
 }
 
-//func (s *Service) Login(dto AuthDTO) (string, error) {
-//
-//}
+func (s *Service) Login(dto AuthDTO) (Session, error) {
+	var session Session
+	u := User{Email: dto.Email}
+	err := s.Repository.Find(&u)
+
+	if err != nil {
+		return session, err
+	}
+
+	return session, nil
+}

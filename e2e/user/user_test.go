@@ -25,15 +25,7 @@ var testUsersDTOs = []user.AuthDTO{
 var testUsers = make([]user.User, 3)
 
 func init() {
-	for i, dto := range testUsersDTOs {
-		u, err := user.CreateFromDTO(dto)
-
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		testUsers[i] = u
-	}
+	populateTestUsers()
 }
 
 func TestAPI(t *testing.T) {
@@ -56,6 +48,37 @@ func TestAPI(t *testing.T) {
 				it.Equal(testUsers[i].ID, u.ID)
 				it.Equal(testUsers[i].Email, u.Email)
 			}
+		})
+
+		t.Run("GET /users/me", func(t *testing.T) {
+			sendWithCookie := func(c *http.Cookie) *httptest.ResponseRecorder {
+				w := httptest.NewRecorder()
+				req := httptest.NewRequest(http.MethodGet, "/users/me", nil)
+				req.AddCookie(c)
+				r.ServeHTTP(w, req)
+				return w
+			}
+			t.Run("should return info about authorized user", func(t *testing.T) {
+				setupDB(t)
+				it := assert.New(t)
+				dto, c := loginAsRandomUser(t)
+				resp := sendWithCookie(c)
+
+				if it.Equal(http.StatusOK, resp.Code) {
+					var respDTO user.ResponseDTO
+					err := json.NewDecoder(resp.Body).Decode(&respDTO)
+
+					if it.NoError(err) {
+						it.NotZero(respDTO.ID)
+						it.Equal(respDTO.Email, dto.Email)
+					}
+				}
+			})
+
+			t.Run("should return 401 if there is no session cookie in the request", func(t *testing.T) {
+				resp := sendReq(http.MethodGet, "/users/me")("")
+				assert.Equal(t, http.StatusUnauthorized, resp.Code)
+			})
 		})
 	})
 
@@ -104,10 +127,6 @@ func TestAPI(t *testing.T) {
 		})
 
 		t.Run("POST /users/signin", func(t *testing.T) {
-			login := func(dto user.AuthDTO) *httptest.ResponseRecorder {
-				data, _ := json.Marshal(&dto)
-				return sendReq(http.MethodPost, "/users/signin")(string(data))
-			}
 
 			t.Run("should sign in a user and add session to db", func(t *testing.T) {
 				setupDB(t)
@@ -164,12 +183,39 @@ func setupDB(t *testing.T) {
 	require.NoError(t, db.Create(&testUsers).Error)
 }
 
+func login(dto user.AuthDTO) *httptest.ResponseRecorder {
+	data, _ := json.Marshal(&dto)
+	return sendReq(http.MethodPost, "/users/signin")(string(data))
+}
+
+func loginAsRandomUser(t *testing.T) (user.AuthDTO, *http.Cookie) {
+	randomIndex := common.RandomInt(len(testUsersDTOs))
+	dto := testUsersDTOs[randomIndex]
+	resp := login(dto)
+	authCookie := findCookieByName(resp.Result(), user.SessionCookieName)
+
+	require.NotEmpty(t, authCookie)
+	return dto, authCookie
+}
+
 func sendReq(method, target string) func(body string) *httptest.ResponseRecorder {
 	return func(body string) *httptest.ResponseRecorder {
 		w := httptest.NewRecorder()
 		req := httptest.NewRequest(method, target, strings.NewReader(body))
 		r.ServeHTTP(w, req)
 		return w
+	}
+}
+
+func populateTestUsers() {
+	for i, dto := range testUsersDTOs {
+		u, err := user.CreateFromDTO(dto)
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		testUsers[i] = u
 	}
 }
 

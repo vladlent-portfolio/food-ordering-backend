@@ -3,7 +3,7 @@ package user
 import "gorm.io/gorm"
 
 type Repository struct {
-	DB *gorm.DB
+	db *gorm.DB
 }
 
 func ProvideRepository(db *gorm.DB) *Repository {
@@ -11,22 +11,22 @@ func ProvideRepository(db *gorm.DB) *Repository {
 }
 
 func (r *Repository) Create(u User) (User, error) {
-	err := r.DB.Create(&u).Error
+	err := r.db.Create(&u).Error
 	return u, err
 }
 
 func (r *Repository) FindByEmail(email string) (User, error) {
 	var u User
-	err := r.DB.Where("email = ?", email).Find(&u).Error
+	err := r.db.Where("email = ?", email).Find(&u).Error
 	return u, err
 }
 
 func (r *Repository) FindAll() []User {
 	var users []User
-	r.DB.Find(&users)
+	r.db.Find(&users)
 	return users
 }
 
 func (r *Repository) CreateSession(s Session) error {
-	return r.DB.Create(&s).Error
+	return r.db.Create(&s).Error
 }

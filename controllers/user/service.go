@@ -7,7 +7,7 @@ import (
 const JWTSecret = "secret string"
 
 type Service struct {
-	Repository *Repository
+	repo *Repository
 }
 
 func ProvideService(r *Repository) *Service {
@@ -21,16 +21,16 @@ func (s *Service) Create(dto AuthDTO) (User, error) {
 		return user, err
 	}
 
-	return s.Repository.Create(user)
+	return s.repo.Create(user)
 }
 
 func (s *Service) FindAll() []User {
-	return s.Repository.FindAll()
+	return s.repo.FindAll()
 }
 
 func (s *Service) Login(dto AuthDTO) (Session, error) {
 	var session Session
-	u, err := s.Repository.FindByEmail(dto.Email)
+	u, err := s.repo.FindByEmail(dto.Email)
 
 	if err != nil {
 		return session, err
@@ -47,7 +47,7 @@ func (s *Service) Login(dto AuthDTO) (Session, error) {
 	session.User = u
 	session.Token = ss
 
-	if err := s.Repository.CreateSession(session); err != nil {
+	if err := s.repo.CreateSession(session); err != nil {
 		return session, err
 	}
 

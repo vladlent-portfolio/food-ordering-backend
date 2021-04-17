@@ -11,7 +11,7 @@ import (
 const SessionCookieName = "access_token"
 
 type API struct {
-	Service *Service
+	service *Service
 }
 
 func ProvideAPI(s *Service) *API {
@@ -31,7 +31,7 @@ func (api *API) Create(c *gin.Context) {
 		return
 	}
 
-	user, err := api.Service.Create(dto)
+	user, err := api.service.Create(dto)
 
 	if err != nil {
 		switch {
@@ -49,7 +49,7 @@ func (api *API) Create(c *gin.Context) {
 }
 
 func (api *API) FindAll(c *gin.Context) {
-	users := api.Service.FindAll()
+	users := api.service.FindAll()
 	c.JSON(http.StatusOK, ToResponseDTOs(users))
 }
 
@@ -60,7 +60,7 @@ func (api *API) Login(c *gin.Context) {
 		return
 	}
 
-	session, err := api.Service.Login(dto)
+	session, err := api.service.Login(dto)
 
 	if err != nil {
 		switch {

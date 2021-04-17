@@ -15,6 +15,14 @@ func (r *Repository) Create(u User) (User, error) {
 	return u, err
 }
 
+func (r *Repository) FindByID(id uint) (User, error) {
+	var u User
+	if err := r.db.Find(&u, id).Error; err != nil {
+		return u, err
+	}
+	return u, nil
+}
+
 func (r *Repository) FindByEmail(email string) (User, error) {
 	var u User
 	err := r.db.Where("email = ?", email).Find(&u).Error

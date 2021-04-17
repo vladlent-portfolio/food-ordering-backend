@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"github.com/dgrijalva/jwt-go/v4"
 )
 
@@ -11,7 +12,11 @@ type AuthClaims struct {
 	UserID uint `json:"uid"`
 }
 
-func (c *AuthClaims) Valid() error {
+func (c AuthClaims) Valid(v *jwt.ValidationHelper) error {
+	if c.UserID == 0 {
+		return errors.New("invalid user id")
+	}
+
 	return nil
 }
 
@@ -37,6 +42,10 @@ func (s *Service) FindAll() []User {
 	return s.repo.FindAll()
 }
 
+func (s *Service) FindByID(id uint) (User, error) {
+	return s.repo.FindByID(id)
+}
+
 func (s *Service) Login(dto AuthDTO) (Session, error) {
 	var session Session
 	u, err := s.repo.FindByEmail(dto.Email)
@@ -49,7 +58,7 @@ func (s *Service) Login(dto AuthDTO) (Session, error) {
 		return session, err
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{JWTUserIDKey: u.ID})
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, AuthClaims{UserID: u.ID})
 	ss, _ := token.SignedString([]byte(JWTSecret))
 
 	session.UserID = u.ID

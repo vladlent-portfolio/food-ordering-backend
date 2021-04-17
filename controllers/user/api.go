@@ -20,7 +20,7 @@ func ProvideAPI(s *Service) *API {
 
 func (api *API) Register(router *gin.RouterGroup) {
 	router.GET("", api.FindAll)
-	router.GET("/me", api.Info)
+	router.GET("/me", AuthMiddleware(), api.Info)
 	router.POST("", api.Create)
 	router.POST("/signin", api.Login)
 }
@@ -86,7 +86,15 @@ func (api *API) Login(c *gin.Context) {
 }
 
 func (api *API) Info(c *gin.Context) {
+	uid := c.MustGet(JWTUserIDKey).(uint)
+	u, err := api.service.FindByID(uid)
 
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.JSON(http.StatusOK, ToResponseDTO(u))
 }
 
 func (api *API) bindAuthDTO(c *gin.Context) (AuthDTO, error) {

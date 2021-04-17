@@ -169,12 +169,12 @@ func TestCategories(t *testing.T) {
 		t.Run("should return 403 if category isn't removable", func(t *testing.T) {
 			setupDB(t)
 			it := assert.New(t)
-			c := category.Category{Title: "Fish", Removable: false}
+			c := category.Category{ID: 69, Title: "Seafood", Removable: false}
 
-			db.Create(&c)
-
-			resp := sendWithParam(c.ID)
-			it.Equal(http.StatusForbidden, resp.Code)
+			if it.NoError(db.Create(&c).Error) {
+				resp := sendWithParam(c.ID)
+				it.Equal(http.StatusForbidden, resp.Code)
+			}
 		})
 	})
 }

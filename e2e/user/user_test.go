@@ -159,7 +159,7 @@ func TestAPI(t *testing.T) {
 func setupDB(t *testing.T) {
 	cleanup()
 	t.Cleanup(cleanup)
-	db.Create(&testUsers)
+	require.NoError(t, db.Create(&testUsers).Error)
 }
 
 func sendReq(method, target string) func(body string) *httptest.ResponseRecorder {

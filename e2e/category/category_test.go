@@ -197,7 +197,7 @@ func runFindByIDTests(t *testing.T) {
 func setupDB(t *testing.T) {
 	cleanup()
 	t.Cleanup(cleanup)
-	db.Create(&testCategories)
+	require.NoError(t, db.Create(&testCategories).Error)
 }
 
 func sendReq(method, target string) func(body string) *httptest.ResponseRecorder {

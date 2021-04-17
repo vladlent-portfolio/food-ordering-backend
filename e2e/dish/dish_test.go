@@ -289,8 +289,8 @@ func negativePriceTest(t *testing.T, method string) {
 }
 
 func setupDB(t *testing.T) {
-	t.Cleanup(cleanup)
 	cleanup()
+	t.Cleanup(cleanup)
 	req := require.New(t)
 
 	req.NoError(db.Create(&testCategories).Error)

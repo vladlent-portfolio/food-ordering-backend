@@ -10,7 +10,6 @@ import (
 	"food_ordering_backend/router"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"net/http"
 	"net/http/httptest"
@@ -22,20 +21,20 @@ import (
 var db = database.MustGetTest()
 var r = router.Setup(db)
 var testCategories = []category.Category{
-	{Model: gorm.Model{ID: 1}, Title: "Salads", Removable: true},
-	{Model: gorm.Model{ID: 2}, Title: "Burgers", Removable: true},
-	{Model: gorm.Model{ID: 3}, Title: "Pizza", Removable: true},
-	{Model: gorm.Model{ID: 4}, Title: "Drinks", Removable: true},
+	{ID: 1, Title: "Salads", Removable: true},
+	{ID: 2, Title: "Burgers", Removable: true},
+	{ID: 3, Title: "Pizza", Removable: true},
+	{ID: 4, Title: "Drinks", Removable: true},
 }
 var testDishes = []dish.Dish{
-	{Model: gorm.Model{ID: 1}, Title: "Fresh and Healthy Salad", Price: 2.65, CategoryID: 1, Category: testCategories[0]},
-	{Model: gorm.Model{ID: 2}, Title: "Crunchy Cashew Salad", Price: 3.22, CategoryID: 1, Category: testCategories[0]},
-	{Model: gorm.Model{ID: 3}, Title: "Hamburger", Price: 1.99, CategoryID: 2, Category: testCategories[1]},
-	{Model: gorm.Model{ID: 4}, Title: "Cheeseburger", Price: 2.28, CategoryID: 2, Category: testCategories[1]},
-	{Model: gorm.Model{ID: 5}, Title: "Margherita", Price: 4.20, CategoryID: 3, Category: testCategories[2]},
-	{Model: gorm.Model{ID: 6}, Title: "4 Cheese", Price: 4.69, CategoryID: 3, Category: testCategories[2]},
-	{Model: gorm.Model{ID: 7}, Title: "Pepsi 2L", Price: 1.50, CategoryID: 4, Category: testCategories[3]},
-	{Model: gorm.Model{ID: 8}, Title: "Orange Juice 2L", Price: 2, CategoryID: 4, Category: testCategories[3]},
+	{ID: 1, Title: "Fresh and Healthy Salad", Price: 2.65, CategoryID: 1, Category: testCategories[0]},
+	{ID: 2, Title: "Crunchy Cashew Salad", Price: 3.22, CategoryID: 1, Category: testCategories[0]},
+	{ID: 3, Title: "Hamburger", Price: 1.99, CategoryID: 2, Category: testCategories[1]},
+	{ID: 4, Title: "Cheeseburger", Price: 2.28, CategoryID: 2, Category: testCategories[1]},
+	{ID: 5, Title: "Margherita", Price: 4.20, CategoryID: 3, Category: testCategories[2]},
+	{ID: 6, Title: "4 Cheese", Price: 4.69, CategoryID: 3, Category: testCategories[2]},
+	{ID: 7, Title: "Pepsi 2L", Price: 1.50, CategoryID: 4, Category: testCategories[3]},
+	{ID: 8, Title: "Orange Juice 2L", Price: 2, CategoryID: 4, Category: testCategories[3]},
 }
 
 var testCategoriesJSON = `[{"id":1,"title":"Salads","removable":true},{"id":2,"title":"Burgers","removable":true},{"id":3,"title":"Pizza","removable":true},{"id":4,"title":"Drinks","removable":true}]`

@@ -7,7 +7,6 @@ import (
 	"food_ordering_backend/router"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"net/http"
 	"net/http/httptest"
@@ -16,7 +15,7 @@ import (
 	"testing"
 )
 
-var testCategories = []category.Category{{Model: gorm.Model{ID: 1}, Title: "Salads", Removable: true}, {Model: gorm.Model{ID: 2}, Title: "Burgers", Removable: true}, {Model: gorm.Model{ID: 3}, Title: "Pizza", Removable: true}, {Model: gorm.Model{ID: 4}, Title: "Drinks", Removable: true}}
+var testCategories = []category.Category{{ID: 1, Title: "Salads", Removable: true}, {ID: 2, Title: "Burgers", Removable: true}, {ID: 3, Title: "Pizza", Removable: true}, {ID: 4, Title: "Drinks", Removable: true}}
 var db = database.MustGetTest()
 var r = router.Setup(db)
 

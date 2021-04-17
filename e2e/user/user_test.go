@@ -79,6 +79,7 @@ func TestAPI(t *testing.T) {
 			if it.NoError(db.Last(&u).Error) {
 				it.NotEmpty(u.PasswordHash)
 				it.Equal(newUser.Email, u.Email)
+				it.False(u.CreatedAt.IsZero())
 			}
 		})
 
@@ -131,6 +132,7 @@ func TestAPI(t *testing.T) {
 
 					if it.Len(sessions, i+1) {
 						it.Equal(sessions[i].Token, c.Value)
+						it.False(sessions[i].CreatedAt.IsZero())
 					}
 				}
 

@@ -3,19 +3,21 @@ package user
 import (
 	"errors"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
+	"time"
 )
 
 type User struct {
-	gorm.Model
+	ID           uint `gorm:"primaryKey"`
+	CreatedAt    time.Time
 	Email        string `gorm:"size:255;uniqueIndex;not null"`
 	PasswordHash []byte `gorm:"not null"`
 }
 
 type Session struct {
-	Token  string `gorm:"primaryKey"`
-	UserID uint
-	User   User `gorm:"constraint:OnDelete:CASCADE,OnUpdate:CASCADE"`
+	Token     string `gorm:"primaryKey"`
+	UserID    uint
+	CreatedAt time.Time
+	User      User `gorm:"constraint:OnDelete:CASCADE,OnUpdate:CASCADE"`
 }
 
 var ErrInvalidPassword = errors.New("invalid password")

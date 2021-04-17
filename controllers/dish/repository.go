@@ -54,7 +54,7 @@ func (r *Repository) FindAll(cid uint) []Dish {
 }
 
 func (r *Repository) Delete(d Dish) (Dish, error) {
-	err := r.preload().Unscoped().Delete(&d).Error
+	err := r.preload().Delete(&d).Error
 	return d, err
 }
 

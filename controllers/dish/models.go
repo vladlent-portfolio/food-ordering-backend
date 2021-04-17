@@ -2,11 +2,10 @@ package dish
 
 import (
 	"food_ordering_backend/controllers/category"
-	"gorm.io/gorm"
 )
 
 type Dish struct {
-	gorm.Model
+	ID         uint    `gorm:"primaryKey"`
 	Title      string  `gorm:"size:100"`
 	Price      float64 `gorm:"check:price >= 0"`
 	CategoryID uint

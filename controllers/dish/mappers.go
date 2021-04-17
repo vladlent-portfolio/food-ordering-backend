@@ -2,12 +2,11 @@ package dish
 
 import (
 	"food_ordering_backend/controllers/category"
-	"gorm.io/gorm"
 )
 
 func ToModel(dto DTO) Dish {
 	return Dish{
-		Model:      gorm.Model{ID: dto.ID},
+		ID:         dto.ID,
 		Title:      dto.Title,
 		CategoryID: dto.CategoryID,
 		Price:      dto.Price,

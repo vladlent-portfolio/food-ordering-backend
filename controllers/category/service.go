@@ -1,7 +1,7 @@
 package category
 
 type Service struct {
-	Repository *Repository
+	repo *Repository
 }
 
 func ProvideService(r *Repository) *Service {
@@ -9,21 +9,21 @@ func ProvideService(r *Repository) *Service {
 }
 
 func (s *Service) Create(c Category) (Category, error) {
-	return s.Repository.Create(c)
+	return s.repo.Create(c)
 }
 
 func (s *Service) Save(c Category) (Category, error) {
-	return s.Repository.Save(c)
+	return s.repo.Save(c)
 }
 
 func (s *Service) FindByID(id uint) (Category, error) {
-	return s.Repository.FindByID(id)
+	return s.repo.FindByID(id)
 }
 
 func (s *Service) FindAll() []Category {
-	return s.Repository.FindAll()
+	return s.repo.FindAll()
 }
 
 func (s *Service) Delete(c Category) (Category, error) {
-	return s.Repository.Delete(c)
+	return s.repo.Delete(c)
 }

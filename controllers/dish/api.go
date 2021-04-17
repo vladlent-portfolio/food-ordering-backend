@@ -8,7 +8,7 @@ import (
 )
 
 type API struct {
-	Service *Service
+	service *Service
 }
 
 func ProvideAPI(s *Service) *API {
@@ -30,7 +30,7 @@ func (api *API) Create(c *gin.Context) {
 		return
 	}
 
-	dish, err := api.Service.Create(ToModel(dto))
+	dish, err := api.service.Create(ToModel(dto))
 
 	if err != nil {
 		if common.IsDuplicateKeyErr(err) {
@@ -59,7 +59,7 @@ func (api *API) FindAll(c *gin.Context) {
 	cidq := c.Query("cid")
 
 	if cidq == "" {
-		dishes = api.Service.FindAll(0)
+		dishes = api.service.FindAll(0)
 	} else {
 		cid, err := strconv.ParseUint(cidq, 10, 64)
 
@@ -68,7 +68,7 @@ func (api *API) FindAll(c *gin.Context) {
 			return
 		}
 
-		dishes = api.Service.FindAll(uint(cid))
+		dishes = api.service.FindAll(uint(cid))
 	}
 
 	c.JSON(http.StatusOK, ToDTOs(dishes))
@@ -92,7 +92,7 @@ func (api *API) Update(c *gin.Context) {
 	dish.CategoryID = dto.CategoryID
 	dish.Category.ID = dto.CategoryID
 
-	dish, err = api.Service.Save(dish)
+	dish, err = api.service.Save(dish)
 
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
@@ -109,7 +109,7 @@ func (api *API) Delete(c *gin.Context) {
 		return
 	}
 
-	dish, err = api.Service.Delete(dish)
+	dish, err = api.service.Delete(dish)
 
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
@@ -140,7 +140,7 @@ func (api *API) findByID(c *gin.Context) (Dish, error) {
 		return dish, err
 	}
 
-	dish, err = api.Service.FindByID(uint(id))
+	dish, err = api.service.FindByID(uint(id))
 
 	if err != nil {
 		c.Status(http.StatusNotFound)

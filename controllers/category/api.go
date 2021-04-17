@@ -8,7 +8,7 @@ import (
 )
 
 type API struct {
-	Service *Service
+	service *Service
 }
 
 func ProvideAPI(s *Service) *API {
@@ -30,7 +30,7 @@ func (api *API) Create(c *gin.Context) {
 		return
 	}
 
-	category, err := api.Service.Create(ToModel(dto))
+	category, err := api.service.Create(ToModel(dto))
 
 	if err != nil {
 		if common.IsDuplicateKeyErr(err) {
@@ -55,7 +55,7 @@ func (api *API) FindByID(c *gin.Context) {
 }
 
 func (api *API) FindAll(c *gin.Context) {
-	categories := api.Service.FindAll()
+	categories := api.service.FindAll()
 	c.JSON(http.StatusOK, ToDTOs(categories))
 }
 
@@ -75,7 +75,7 @@ func (api *API) Update(c *gin.Context) {
 	cat.Title = dto.Title
 	cat.Removable = dto.Removable
 
-	cat, err = api.Service.Save(cat)
+	cat, err = api.service.Save(cat)
 
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
@@ -97,7 +97,7 @@ func (api *API) Delete(c *gin.Context) {
 		return
 	}
 
-	cat, err = api.Service.Delete(cat)
+	cat, err = api.service.Delete(cat)
 
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
@@ -128,7 +128,7 @@ func (api *API) findByID(c *gin.Context) (Category, error) {
 		return cat, err
 	}
 
-	cat, err = api.Service.FindByID(uint(id))
+	cat, err = api.service.FindByID(uint(id))
 
 	if err != nil {
 		c.Status(http.StatusNotFound)

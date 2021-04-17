@@ -5,7 +5,7 @@ import (
 )
 
 type Repository struct {
-	DB *gorm.DB
+	db *gorm.DB
 }
 
 func ProvideRepository(db *gorm.DB) *Repository {
@@ -13,7 +13,7 @@ func ProvideRepository(db *gorm.DB) *Repository {
 }
 
 func (r *Repository) Create(d Dish) (Dish, error) {
-	err := r.DB.Create(&d).Error
+	err := r.db.Create(&d).Error
 
 	if err != nil {
 		return d, err
@@ -59,5 +59,5 @@ func (r *Repository) Delete(d Dish) (Dish, error) {
 }
 
 func (r *Repository) preload() *gorm.DB {
-	return r.DB.Joins("Category")
+	return r.db.Joins("Category")
 }

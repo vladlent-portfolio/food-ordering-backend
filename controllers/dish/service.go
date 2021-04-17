@@ -1,7 +1,7 @@
 package dish
 
 type Service struct {
-	Repository *Repository
+	repo *Repository
 }
 
 func ProvideService(r *Repository) *Service {
@@ -9,21 +9,21 @@ func ProvideService(r *Repository) *Service {
 }
 
 func (s *Service) Create(d Dish) (Dish, error) {
-	return s.Repository.Create(d)
+	return s.repo.Create(d)
 }
 
 func (s *Service) Save(d Dish) (Dish, error) {
-	return s.Repository.Save(d)
+	return s.repo.Save(d)
 }
 
 func (s *Service) FindByID(id uint) (Dish, error) {
-	return s.Repository.FindByID(id)
+	return s.repo.FindByID(id)
 }
 
 func (s *Service) FindAll(cid uint) []Dish {
-	return s.Repository.FindAll(cid)
+	return s.repo.FindAll(cid)
 }
 
 func (s *Service) Delete(d Dish) (Dish, error) {
-	return s.Repository.Delete(d)
+	return s.repo.Delete(d)
 }

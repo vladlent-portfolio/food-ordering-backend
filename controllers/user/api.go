@@ -20,6 +20,7 @@ func ProvideAPI(s *Service) *API {
 
 func (api *API) Register(router *gin.RouterGroup) {
 	router.GET("", api.FindAll)
+	router.GET("/me", api.Info)
 	router.POST("", api.Create)
 	router.POST("/signin", api.Login)
 }
@@ -82,6 +83,10 @@ func (api *API) Login(c *gin.Context) {
 
 	http.SetCookie(c.Writer, cookie)
 	c.Status(http.StatusOK)
+}
+
+func (api *API) Info(c *gin.Context) {
+
 }
 
 func (api *API) bindAuthDTO(c *gin.Context) (AuthDTO, error) {

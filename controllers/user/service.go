@@ -5,6 +5,15 @@ import (
 )
 
 const JWTSecret = "secret string"
+const JWTUserIDKey = "uid"
+
+type AuthClaims struct {
+	UserID uint `json:"uid"`
+}
+
+func (c *AuthClaims) Valid() error {
+	return nil
+}
 
 type Service struct {
 	repo *Repository
@@ -40,7 +49,7 @@ func (s *Service) Login(dto AuthDTO) (Session, error) {
 		return session, err
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"uid": u.ID})
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{JWTUserIDKey: u.ID})
 	ss, _ := token.SignedString([]byte(JWTSecret))
 
 	session.UserID = u.ID

@@ -1,31 +1,12 @@
 package user
 
-import (
-	"errors"
-	"github.com/dgrijalva/jwt-go/v4"
-)
-
-const JWTSecret = "secret string"
-const JWTUserIDKey = "uid"
-
-type AuthClaims struct {
-	UserID uint `json:"uid"`
-}
-
-func (c AuthClaims) Valid(v *jwt.ValidationHelper) error {
-	if c.UserID == 0 {
-		return errors.New("invalid user id")
-	}
-
-	return nil
-}
-
 type Service struct {
-	repo *Repository
+	jwtService *JWTService
+	repo       *Repository
 }
 
-func ProvideService(r *Repository) *Service {
-	return &Service{r}
+func ProvideService(r *Repository, jwtService *JWTService) *Service {
+	return &Service{jwtService, r}
 }
 
 func (s *Service) Create(dto AuthDTO) (User, error) {
@@ -58,12 +39,9 @@ func (s *Service) Login(dto AuthDTO) (Session, error) {
 		return session, err
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, AuthClaims{UserID: u.ID})
-	ss, _ := token.SignedString([]byte(JWTSecret))
-
 	session.UserID = u.ID
 	session.User = u
-	session.Token = ss
+	session.Token = s.jwtService.Generate(u.ID)
 
 	if err := s.repo.CreateSession(session); err != nil {
 		return session, err

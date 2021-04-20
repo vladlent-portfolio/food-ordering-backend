@@ -55,6 +55,8 @@ func TestJWTService_Parse(t *testing.T) {
 			}
 		}
 	})
+
+	testValidationError(t)
 }
 
 func TestJWTService_AuthClaimsFromToken(t *testing.T) {
@@ -70,6 +72,21 @@ func TestJWTService_AuthClaimsFromToken(t *testing.T) {
 			if it.NoError(err) {
 				it.Equal(id, claims.UserID)
 			}
+		}
+	})
+
+	testValidationError(t)
+}
+
+func testValidationError(t *testing.T) {
+	t.Run("should return an error if no AuthClaims in token", func(t *testing.T) {
+		it := assert.New(t)
+		service := &JWTService{}
+		ss, err := jwt.New(jwt.SigningMethodHS256).SignedString([]byte(JWTSecret))
+
+		if it.NoError(err) {
+			_, err = service.Parse(ss)
+			it.ErrorIs(err, ErrInvalidUserID)
 		}
 	})
 }

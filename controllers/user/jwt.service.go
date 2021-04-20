@@ -12,6 +12,8 @@ type AuthClaims struct {
 	UserID uint `json:"uid"`
 }
 
+var ErrInvalidUserID = errors.New("invalid user id")
+
 type JWTService struct{}
 
 func ProvideJWTService() *JWTService {
@@ -20,7 +22,7 @@ func ProvideJWTService() *JWTService {
 
 func (c AuthClaims) Valid(v *jwt.ValidationHelper) error {
 	if c.UserID == 0 {
-		return errors.New("invalid user id")
+		return ErrInvalidUserID
 	}
 
 	return nil

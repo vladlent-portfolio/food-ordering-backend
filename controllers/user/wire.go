@@ -7,7 +7,14 @@ import (
 	"gorm.io/gorm"
 )
 
+var set = wire.NewSet(ProvideService, ProvideRepository, ProvideJWTService)
+
 func InitAPI(db *gorm.DB) *API {
-	wire.Build(ProvideAPI, ProvideService, ProvideRepository)
+	wire.Build(ProvideAPI, set)
+	return nil
+}
+
+func InitAuthMid() *AuthMid {
+	wire.Build(ProvideAuthMid, set)
 	return nil
 }

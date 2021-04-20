@@ -13,7 +13,8 @@ import (
 
 func InitAPI(db *gorm.DB) *API {
 	repository := ProvideRepository(db)
-	service := ProvideService(repository)
+	jwtService := ProvideJWTService()
+	service := ProvideService(repository, jwtService)
 	api := ProvideAPI(service)
 	return api
 }

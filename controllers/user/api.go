@@ -20,7 +20,7 @@ func ProvideAPI(s *Service) *API {
 
 func (api *API) Register(router *gin.RouterGroup) {
 	router.GET("", api.FindAll)
-	router.GET("/me", AuthMiddleware(), api.Info)
+	router.GET("/me", AuthMiddleware(&JWTService{}), api.Info)
 	router.POST("", api.Create)
 	router.POST("/signin", api.Login)
 }

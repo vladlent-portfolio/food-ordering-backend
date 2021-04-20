@@ -50,6 +50,10 @@ func (s *Service) Login(dto AuthDTO) (Session, error) {
 	return session, nil
 }
 
+func (s *Service) Logout(u User) error {
+	return s.repo.DeleteAllSessions(u)
+}
+
 func (s *Service) FindSessionByToken(token string) (Session, error) {
 	return s.repo.FindSessionByToken(token)
 }

@@ -51,18 +51,12 @@ func TestAPI(t *testing.T) {
 		})
 
 		t.Run("GET /users/me", func(t *testing.T) {
-			sendWithCookie := func(c *http.Cookie) *httptest.ResponseRecorder {
-				w := httptest.NewRecorder()
-				req := httptest.NewRequest(http.MethodGet, "/users/me", nil)
-				req.AddCookie(c)
-				r.ServeHTTP(w, req)
-				return w
-			}
+			send := sendWithCookie("/users/me")
 			t.Run("should return info about authorized user", func(t *testing.T) {
 				setupDB(t)
 				it := assert.New(t)
 				dto, c := loginAsRandomUser(t)
-				resp := sendWithCookie(c)
+				resp := send(c)
 
 				if it.Equal(http.StatusOK, resp.Code) {
 					var respDTO user.ResponseDTO
@@ -78,6 +72,27 @@ func TestAPI(t *testing.T) {
 			t.Run("should return 401 if there is no session cookie in the request", func(t *testing.T) {
 				resp := sendReq(http.MethodGet, "/users/me")("")
 				assert.Equal(t, http.StatusUnauthorized, resp.Code)
+			})
+		})
+
+		t.Run("GET /users/logout", func(t *testing.T) {
+			logout := sendWithCookie("/users/logout")
+
+			t.Run("should remove auth cookie and remove all session for this user from db", func(t *testing.T) {
+				setupDB(t)
+				it := assert.New(t)
+				dto, c := loginAsRandomUser(t)
+				resp := logout(c)
+
+				if it.Equal(http.StatusOK, resp.Code) {
+					it.Nil(findCookieByName(resp.Result(), user.SessionCookieName))
+				}
+
+				var sessions []user.Session
+
+				if it.NoError(db.Joins("User").Where("email = ?", dto.Email).Find(&sessions).Error) {
+					it.Len(sessions, 0)
+				}
 			})
 		})
 	})
@@ -202,6 +217,16 @@ func sendReq(method, target string) func(body string) *httptest.ResponseRecorder
 	return func(body string) *httptest.ResponseRecorder {
 		w := httptest.NewRecorder()
 		req := httptest.NewRequest(method, target, strings.NewReader(body))
+		r.ServeHTTP(w, req)
+		return w
+	}
+}
+
+func sendWithCookie(target string) func(c *http.Cookie) *httptest.ResponseRecorder {
+	return func(c *http.Cookie) *httptest.ResponseRecorder {
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, target, nil)
+		req.AddCookie(c)
 		r.ServeHTTP(w, req)
 		return w
 	}

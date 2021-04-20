@@ -44,3 +44,8 @@ func (r *Repository) FindSessionByToken(token string) (Session, error) {
 	err := r.db.Where("token = ?", token).Joins("User").Find(&session).Error
 	return session, err
 }
+
+func (r *Repository) DeleteAllSessions(u User) error {
+	var s Session
+	return r.db.Where("user_id = ?", u.ID).Delete(&s).Error
+}

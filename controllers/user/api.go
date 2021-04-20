@@ -20,8 +20,10 @@ func ProvideAPI(s *Service) *API {
 }
 
 func (api *API) Register(router *gin.RouterGroup) {
+	auth := AuthMiddleware(api.service)
 	router.GET("", api.FindAll)
-	router.GET("/me", AuthMiddleware(api.service), api.Info)
+	router.GET("/me", auth, api.Info)
+	router.GET("/logout", auth, api.Logout)
 	router.POST("", api.Create)
 	router.POST("/signin", api.Login)
 }
@@ -83,6 +85,18 @@ func (api *API) Login(c *gin.Context) {
 	}
 
 	http.SetCookie(c.Writer, cookie)
+	c.Status(http.StatusOK)
+}
+
+func (api *API) Logout(c *gin.Context) {
+	user := c.MustGet(ContextUserKey).(User)
+	err := api.service.Logout(user)
+
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
 	c.Status(http.StatusOK)
 }
 

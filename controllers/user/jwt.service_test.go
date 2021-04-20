@@ -39,6 +39,15 @@ func TestJWTService_Generate(t *testing.T) {
 		}
 
 	})
+
+	t.Run("should generate new token everytime even for same id", func(t *testing.T) {
+		it := assert.New(t)
+
+		ss1 := service.Generate(5)
+		ss2 := service.Generate(5)
+
+		it.NotEqual(ss1, ss2)
+	})
 }
 
 func TestJWTService_Parse(t *testing.T) {
@@ -98,6 +107,7 @@ func validateToken(t *testing.T, token *jwt.Token, uid uint) {
 	if it.True(ok) {
 		it.NoError(claims.Valid(jwt.DefaultValidationHelper))
 		it.Equal(uid, claims.UserID)
+		it.NotZero(claims.IssuedAt)
 	}
 }
 

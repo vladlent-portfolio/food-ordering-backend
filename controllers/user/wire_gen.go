@@ -6,6 +6,7 @@
 package user
 
 import (
+	"github.com/google/wire"
 	"gorm.io/gorm"
 )
 
@@ -18,3 +19,7 @@ func InitAPI(db *gorm.DB) *API {
 	api := ProvideAPI(service)
 	return api
 }
+
+// wire.go:
+
+var set = wire.NewSet(ProvideService, ProvideRepository, ProvideJWTService)

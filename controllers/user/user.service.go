@@ -49,3 +49,7 @@ func (s *Service) Login(dto AuthDTO) (Session, error) {
 
 	return session, nil
 }
+
+func (s *Service) FindSessionByToken(token string) (Session, error) {
+	return s.repo.FindSessionByToken(token)
+}

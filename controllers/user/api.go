@@ -9,6 +9,7 @@ import (
 )
 
 const SessionCookieName = "access_token"
+const ContextUserKey = "user"
 
 type API struct {
 	service *Service
@@ -20,7 +21,7 @@ func ProvideAPI(s *Service) *API {
 
 func (api *API) Register(router *gin.RouterGroup) {
 	router.GET("", api.FindAll)
-	router.GET("/me", AuthMiddleware(&JWTService{}), api.Info)
+	router.GET("/me", AuthMiddleware(api.service), api.Info)
 	router.POST("", api.Create)
 	router.POST("/signin", api.Login)
 }
@@ -86,15 +87,8 @@ func (api *API) Login(c *gin.Context) {
 }
 
 func (api *API) Info(c *gin.Context) {
-	uid := c.MustGet(JWTUserIDKey).(uint)
-	u, err := api.service.FindByID(uid)
-
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	}
-
-	c.JSON(http.StatusOK, ToResponseDTO(u))
+	user := c.MustGet(ContextUserKey).(User)
+	c.JSON(http.StatusOK, ToResponseDTO(user))
 }
 
 func (api *API) bindAuthDTO(c *gin.Context) (AuthDTO, error) {

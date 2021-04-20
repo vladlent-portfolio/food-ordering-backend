@@ -38,3 +38,9 @@ func (r *Repository) FindAll() []User {
 func (r *Repository) CreateSession(s Session) error {
 	return r.db.Create(&s).Error
 }
+
+func (r *Repository) FindSessionByToken(token string) (Session, error) {
+	var session Session
+	err := r.db.Where("token = ?", token).Joins("User").Find(&session).Error
+	return session, err
+}

@@ -13,8 +13,3 @@ func InitAPI(db *gorm.DB) *API {
 	wire.Build(ProvideAPI, set)
 	return nil
 }
-
-func InitAuthMid() *AuthMid {
-	wire.Build(ProvideAuthMid, set)
-	return nil
-}

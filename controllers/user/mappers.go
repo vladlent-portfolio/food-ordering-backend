@@ -11,8 +11,9 @@ func CreateFromDTO(dto AuthDTO) (User, error) {
 
 func ToResponseDTO(u User) ResponseDTO {
 	return ResponseDTO{
-		ID:    u.ID,
-		Email: u.Email,
+		ID:      u.ID,
+		Email:   u.Email,
+		IsAdmin: u.IsAdmin,
 	}
 }
 

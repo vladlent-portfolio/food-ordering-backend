@@ -30,11 +30,12 @@ func init() {
 
 func TestAPI(t *testing.T) {
 	t.Run("GET /users", func(t *testing.T) {
-		send := sendReq(http.MethodGet, "/users")
+		send := sendWithCookie("/users")
 		t.Run("should return a list of users", func(t *testing.T) {
 			setupDB(t)
 			it := assert.New(t)
-			resp := send("")
+			_, c := loginAsRandomUser(t)
+			resp := send(c)
 
 			it.Equal(http.StatusOK, resp.Code)
 
@@ -47,7 +48,13 @@ func TestAPI(t *testing.T) {
 			for i, u := range users {
 				it.Equal(testUsers[i].ID, u.ID)
 				it.Equal(testUsers[i].Email, u.Email)
+				it.Equal(testUsers[i].IsAdmin, u.IsAdmin)
 			}
+		})
+
+		t.Run("should return 401 if user is unauthorized ", func(t *testing.T) {
+			resp := send(&http.Cookie{})
+			assert.Equal(t, http.StatusUnauthorized, resp.Code)
 		})
 
 		t.Run("GET /users/me", func(t *testing.T) {
@@ -65,6 +72,7 @@ func TestAPI(t *testing.T) {
 					if it.NoError(err) {
 						it.NotZero(respDTO.ID)
 						it.Equal(respDTO.Email, dto.Email)
+						it.True(respDTO.IsAdmin)
 					}
 				}
 			})
@@ -122,6 +130,7 @@ func TestAPI(t *testing.T) {
 				it.NotEmpty(u.PasswordHash)
 				it.Equal(newUser.Email, u.Email)
 				it.False(u.CreatedAt.IsZero())
+				it.False(u.IsAdmin)
 			}
 		})
 
@@ -245,6 +254,7 @@ func populateTestUsers() {
 			log.Fatalln(err)
 		}
 
+		u.IsAdmin = true
 		testUsers[i] = u
 	}
 }

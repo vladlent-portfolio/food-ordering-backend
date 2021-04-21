@@ -11,6 +11,7 @@ type User struct {
 	CreatedAt    time.Time
 	Email        string `gorm:"size:255;uniqueIndex;not null"`
 	PasswordHash []byte `gorm:"not null"`
+	IsAdmin      bool   `gorm:"default:false"`
 }
 
 type Session struct {

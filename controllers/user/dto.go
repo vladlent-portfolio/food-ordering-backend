@@ -6,6 +6,7 @@ type AuthDTO struct {
 }
 
 type ResponseDTO struct {
-	ID    uint   `json:"id"`
-	Email string `json:"email"`
+	ID      uint   `json:"id"`
+	Email   string `json:"email"`
+	IsAdmin bool   `json:"is_admin"`
 }

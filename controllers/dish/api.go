@@ -3,6 +3,7 @@ package dish
 import (
 	"food_ordering_backend/common"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 )
@@ -15,7 +16,7 @@ func ProvideAPI(s *Service) *API {
 	return &API{s}
 }
 
-func (api *API) Register(router *gin.RouterGroup) {
+func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
 	router.GET("", api.FindAll)
 	router.GET("/:id", api.FindByID)
 	router.POST("", api.Create)

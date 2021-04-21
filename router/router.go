@@ -9,7 +9,7 @@ import (
 )
 
 type Controller interface {
-	Register(g *gin.RouterGroup)
+	Register(g *gin.RouterGroup, db *gorm.DB)
 }
 
 func Setup(db *gorm.DB) *gin.Engine {
@@ -21,7 +21,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	}
 
 	for route, api := range routes {
-		api.Register(r.Group(route))
+		api.Register(r.Group(route), db)
 	}
 
 	return r

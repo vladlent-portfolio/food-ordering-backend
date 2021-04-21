@@ -76,13 +76,7 @@ func (api *API) Login(c *gin.Context) {
 		return
 	}
 
-	cookie := &http.Cookie{
-		Name:     SessionCookieName,
-		Value:    session.Token,
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-		Path:     "/",
-	}
+	cookie := SessionCookie(session.Token, 0)
 
 	http.SetCookie(c.Writer, cookie)
 	c.Status(http.StatusOK)
@@ -97,6 +91,9 @@ func (api *API) Logout(c *gin.Context) {
 		return
 	}
 
+	cookie := SessionCookie("", -1)
+
+	http.SetCookie(c.Writer, cookie)
 	c.Status(http.StatusOK)
 }
 
@@ -112,4 +109,15 @@ func (api *API) bindAuthDTO(c *gin.Context) (AuthDTO, error) {
 		return dto, err
 	}
 	return dto, nil
+}
+
+func SessionCookie(token string, maxAge int) *http.Cookie {
+	return &http.Cookie{
+		Name:     SessionCookieName,
+		Value:    token,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		Path:     "/",
+		MaxAge:   maxAge,
+	}
 }

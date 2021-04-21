@@ -85,13 +85,17 @@ func TestAPI(t *testing.T) {
 				resp := logout(c)
 
 				if it.Equal(http.StatusOK, resp.Code) {
-					it.Nil(findCookieByName(resp.Result(), user.SessionCookieName))
-				}
+					cookie := findCookieByName(resp.Result(), user.SessionCookieName)
 
-				var sessions []user.Session
+					if it.NotNil(cookie) {
+						it.Less(cookie.MaxAge, 0)
+					}
 
-				if it.NoError(db.Joins("User").Where("email = ?", dto.Email).Find(&sessions).Error) {
-					it.Len(sessions, 0)
+					var sessions []user.Session
+
+					if it.NoError(db.Joins("User").Where("email = ?", dto.Email).Find(&sessions).Error) {
+						it.Len(sessions, 0)
+					}
 				}
 			})
 		})
@@ -159,6 +163,7 @@ func TestAPI(t *testing.T) {
 						it.True(c.HttpOnly)
 						it.Equal(http.SameSiteLaxMode, c.SameSite)
 						it.Equal("/", c.Path)
+						it.Equal(0, c.MaxAge)
 					}
 
 					var sessions []user.Session

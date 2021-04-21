@@ -44,6 +44,10 @@ func TestJWTService_Generate(t *testing.T) {
 		it := assert.New(t)
 
 		ss1 := service.Generate(5)
+
+		// Workaround for Windows clock that apparently doesn't support nanoseconds.
+		time.Sleep(time.Microsecond)
+
 		ss2 := service.Generate(5)
 
 		it.NotEqual(ss1, ss2)

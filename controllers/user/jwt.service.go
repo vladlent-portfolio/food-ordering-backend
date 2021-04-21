@@ -30,9 +30,13 @@ func (c AuthClaims) Valid(v *jwt.ValidationHelper) error {
 }
 
 // Generate uses provided user id to create a token with AuthClaims and signs it with JWTSecret.
+//
 // Returns signed token.
 func (s *JWTService) Generate(uid uint) string {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, AuthClaims{UserID: uid, IssuedAt: time.Now().UnixNano()})
+	token := jwt.NewWithClaims(
+		jwt.SigningMethodHS256,
+		AuthClaims{UserID: uid, IssuedAt: time.Now().UnixNano()},
+	)
 	ss, _ := token.SignedString([]byte(JWTSecret))
 	return ss
 }

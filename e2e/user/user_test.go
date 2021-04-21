@@ -22,10 +22,17 @@ var testUsersDTOs = []user.AuthDTO{
 	{Email: "Hellen_Bogan26@hotmail.com", Password: "sgDOB7qIseBkpS3"},
 	{Email: "Stella.Wolff@yahoo.com", Password: "kn_yt5XoDIexljw"},
 }
+var testAdminsDTOs = []user.AuthDTO{
+	{Email: "Anya_Ernser@yahoo.com", Password: "hWPr911kMNyZWsc"},
+	{Email: "Aurore31@hotmail.com", Password: "9BNQgtcgRYSEAUv"},
+	{Email: "Julius.Keeling@hotmail.com", Password: "MblfRKEDRQvJvIK"},
+}
 var testUsers = make([]user.User, 3)
+var testAdmins = make([]user.User, 3)
 
 func init() {
 	populateTestUsers()
+	populateTestAdmins()
 }
 
 func TestAPI(t *testing.T) {
@@ -34,7 +41,7 @@ func TestAPI(t *testing.T) {
 		t.Run("should return a list of users", func(t *testing.T) {
 			setupDB(t)
 			it := assert.New(t)
-			_, c := loginAsRandomUser(t)
+			_, c := loginAsRandomAdmin(t)
 			resp := send(c)
 
 			it.Equal(http.StatusOK, resp.Code)
@@ -43,13 +50,7 @@ func TestAPI(t *testing.T) {
 			err := json.NewDecoder(resp.Body).Decode(&users)
 			require.NoError(t, err)
 
-			it.Len(users, len(testUsers))
-
-			for i, u := range users {
-				it.Equal(testUsers[i].ID, u.ID)
-				it.Equal(testUsers[i].Email, u.Email)
-				it.Equal(testUsers[i].IsAdmin, u.IsAdmin)
-			}
+			it.Len(users, len(testUsers)+len(testAdmins))
 		})
 
 		t.Run("should return 401 if user is unauthorized ", func(t *testing.T) {
@@ -72,7 +73,7 @@ func TestAPI(t *testing.T) {
 					if it.NoError(err) {
 						it.NotZero(respDTO.ID)
 						it.Equal(respDTO.Email, dto.Email)
-						it.True(respDTO.IsAdmin)
+						it.False(respDTO.IsAdmin)
 					}
 				}
 			})
@@ -210,6 +211,7 @@ func setupDB(t *testing.T) {
 	cleanup()
 	t.Cleanup(cleanup)
 	require.NoError(t, db.Create(&testUsers).Error)
+	require.NoError(t, db.Create(&testAdmins).Error)
 }
 
 func login(dto user.AuthDTO) *httptest.ResponseRecorder {
@@ -218,8 +220,16 @@ func login(dto user.AuthDTO) *httptest.ResponseRecorder {
 }
 
 func loginAsRandomUser(t *testing.T) (user.AuthDTO, *http.Cookie) {
-	randomIndex := common.RandomInt(len(testUsersDTOs))
-	dto := testUsersDTOs[randomIndex]
+	return loginAsRandomDTO(t, testUsersDTOs)
+}
+
+func loginAsRandomAdmin(t *testing.T) (user.AuthDTO, *http.Cookie) {
+	return loginAsRandomDTO(t, testAdminsDTOs)
+}
+
+func loginAsRandomDTO(t *testing.T, dtos []user.AuthDTO) (user.AuthDTO, *http.Cookie) {
+	randomIndex := common.RandomInt(len(dtos))
+	dto := dtos[randomIndex]
 	resp := login(dto)
 	authCookie := findCookieByName(resp.Result(), user.SessionCookieName)
 
@@ -254,8 +264,20 @@ func populateTestUsers() {
 			log.Fatalln(err)
 		}
 
-		u.IsAdmin = true
 		testUsers[i] = u
+	}
+}
+
+func populateTestAdmins() {
+	for i, dto := range testAdminsDTOs {
+		u, err := user.CreateFromDTO(dto)
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		u.IsAdmin = true
+		testAdmins[i] = u
 	}
 }
 

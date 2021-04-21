@@ -7,19 +7,17 @@ import (
 	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/controllers/dish"
 	"food_ordering_backend/database"
-	"food_ordering_backend/router"
+	"food_ordering_backend/e2e/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm/logger"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
-	"strings"
 	"testing"
 )
 
 var db = database.MustGetTest()
-var r = router.Setup(db)
 var testCategories = []category.Category{
 	{ID: 1, Title: "Salads", Removable: true},
 	{ID: 2, Title: "Burgers", Removable: true},
@@ -46,7 +44,7 @@ func TestDishes(t *testing.T) {
 	db.Logger.LogMode(logger.Silent)
 
 	t.Run("GET /dishes", func(t *testing.T) {
-		send := sendReq(http.MethodGet, "/dishes")
+		send := testutils.SendReq(http.MethodGet, "/dishes")
 		t.Run("should return JSON array of dishes with their respective categories", func(t *testing.T) {
 			setupDB(t)
 			it := assert.New(t)
@@ -66,7 +64,7 @@ func TestDishes(t *testing.T) {
 
 			for i, c := range testCategories {
 				dishes := testDishes[i*2 : i*2+2]
-				resp := sendReq(http.MethodGet, fmt.Sprintf("/dishes?cid=%d", c.ID))("")
+				resp := testutils.SendReq(http.MethodGet, fmt.Sprintf("/dishes?cid=%d", c.ID))("")
 
 				it.Equal(http.StatusOK, resp.Code)
 				it.Contains(resp.Header().Get("Content-Type"), "application/json")
@@ -90,13 +88,13 @@ func TestDishes(t *testing.T) {
 		})
 
 		t.Run("should return 400 if provided category id isn't a number", func(t *testing.T) {
-			resp := sendReq(http.MethodGet, "/dishes?cid=hello")("")
+			resp := testutils.SendReq(http.MethodGet, "/dishes?cid=hello")("")
 			assert.Equal(t, http.StatusBadRequest, resp.Code)
 		})
 
 		t.Run("should return an empty array if category doesn't exist", func(t *testing.T) {
 			it := assert.New(t)
-			resp := sendReq(http.MethodGet, "/dishes?cid=228")("")
+			resp := testutils.SendReq(http.MethodGet, "/dishes?cid=228")("")
 			it.Equal(http.StatusOK, resp.Code)
 			it.Equal("[]", resp.Body.String())
 		})
@@ -105,7 +103,7 @@ func TestDishes(t *testing.T) {
 	t.Run("GET /dishes/:id", func(t *testing.T) {
 		sendWithParam := func(id uint) *httptest.ResponseRecorder {
 			param := strconv.Itoa(int(id))
-			return sendReq(http.MethodGet, "/dishes/"+param)("")
+			return testutils.SendReq(http.MethodGet, "/dishes/"+param)("")
 		}
 
 		t.Run("should return dish with provided id", func(t *testing.T) {
@@ -131,7 +129,7 @@ func TestDishes(t *testing.T) {
 	})
 
 	t.Run("POST /dishes", func(t *testing.T) {
-		send := sendReq(http.MethodPost, "/dishes")
+		send := testutils.ReqWithCookie(http.MethodPost, "/dishes")
 
 		t.Run("should add dish to db and return it", func(t *testing.T) {
 			setupDB(t)
@@ -140,7 +138,8 @@ func TestDishes(t *testing.T) {
 			reqJSON := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2}`
 			respJSON := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2,"category":{"id":2,"title":"Burgers","removable":true}}`
 
-			resp := send(reqJSON)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := send(c, reqJSON)
 
 			it.Equal(http.StatusCreated, resp.Code)
 			it.Contains(resp.Header().Get("Content-Type"), "application/json")
@@ -165,10 +164,13 @@ func TestDishes(t *testing.T) {
 		})
 
 		t.Run("should return 400 if provided json isn't correct", func(t *testing.T) {
+			setupDB(t)
 			it := assert.New(t)
 			json := `{"title": 123}`
 
-			resp := send(json)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := send(c, json)
+
 			it.Equal(http.StatusBadRequest, resp.Code)
 		})
 
@@ -176,11 +178,12 @@ func TestDishes(t *testing.T) {
 			setupDB(t)
 			it := assert.New(t)
 			json := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2}`
+			_, c := testutils.LoginAsRandomAdmin(t)
 
-			resp := send(json)
+			resp := send(c, json)
 			it.Equal(http.StatusCreated, resp.Code)
 
-			resp = send(json)
+			resp = send(c, json)
 			it.Equal(http.StatusConflict, resp.Code)
 		})
 
@@ -188,9 +191,9 @@ func TestDishes(t *testing.T) {
 	})
 
 	t.Run("PUT /dishes/:id", func(t *testing.T) {
-		sendWithParam := func(id uint, body string) *httptest.ResponseRecorder {
+		sendWithParam := func(id uint, c *http.Cookie, body string) *httptest.ResponseRecorder {
 			param := strconv.Itoa(int(id))
-			return sendReq(http.MethodPut, "/dishes/"+param)(body)
+			return testutils.ReqWithCookie(http.MethodPut, "/dishes/"+param)(c, body)
 		}
 
 		t.Run("should update category in db based on provided json", func(t *testing.T) {
@@ -198,8 +201,9 @@ func TestDishes(t *testing.T) {
 			it := assert.New(t)
 			updateJSON := `{"title":"Double Cheeseburger","price":4.56,"category_id":2}`
 			respJSON := `{"id":4,"title":"Double Cheeseburger","price":4.56,"category_id":2,"category":{"id":2,"title":"Burgers","removable":true}}`
+			_, c := testutils.LoginAsRandomAdmin(t)
 
-			resp := sendWithParam(4, updateJSON)
+			resp := sendWithParam(4, c, updateJSON)
 			it.Equal(http.StatusOK, resp.Code)
 			it.Equal(respJSON, resp.Body.String())
 		})
@@ -209,8 +213,9 @@ func TestDishes(t *testing.T) {
 			it := assert.New(t)
 			updateJSON := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2}`
 			respJSON := `{"id":4,"title":"Double Cheeseburger","price":4.56,"category_id":2,"category":{"id":2,"title":"Burgers","removable":true}}`
+			_, c := testutils.LoginAsRandomAdmin(t)
 
-			resp := sendWithParam(4, updateJSON)
+			resp := sendWithParam(4, c, updateJSON)
 			it.Equal(http.StatusOK, resp.Code)
 			it.Equal(respJSON, resp.Body.String())
 		})
@@ -220,8 +225,9 @@ func TestDishes(t *testing.T) {
 			it := assert.New(t)
 			updateJSON := `{"id":69,"title":"Meat Supreme","price":3.22,"category_id":3}`
 			respJSON := `{"id":4,"title":"Meat Supreme","price":3.22,"category_id":3,"category":{"id":3,"title":"Pizza","removable":true}}`
+			_, c := testutils.LoginAsRandomAdmin(t)
 
-			resp := sendWithParam(4, updateJSON)
+			resp := sendWithParam(4, c, updateJSON)
 			it.Equal(http.StatusOK, resp.Code)
 			it.Equal(respJSON, resp.Body.String())
 		})
@@ -231,9 +237,9 @@ func TestDishes(t *testing.T) {
 	})
 
 	t.Run("DELETE /dishes/:id", func(t *testing.T) {
-		sendWithParam := func(id uint) *httptest.ResponseRecorder {
+		sendWithParam := func(id uint, c *http.Cookie) *httptest.ResponseRecorder {
 			param := strconv.Itoa(int(id))
-			return sendReq(http.MethodDelete, "/dishes/"+param)("")
+			return testutils.ReqWithCookie(http.MethodDelete, "/dishes/"+param)(c, "")
 		}
 
 		t.Run("should remove a dish with provided ID from db", func(t *testing.T) {
@@ -241,7 +247,9 @@ func TestDishes(t *testing.T) {
 			it := assert.New(t)
 			randomIndex := common.RandomInt(len(testDishes))
 			testDish := testDishes[randomIndex]
-			resp := sendWithParam(testDish.ID)
+			_, c := testutils.LoginAsRandomAdmin(t)
+
+			resp := sendWithParam(testDish.ID, c)
 
 			it.Equal(http.StatusOK, resp.Code)
 			var dishes []dish.Dish
@@ -259,13 +267,13 @@ func TestDishes(t *testing.T) {
 func runFindByIDTests(t *testing.T) {
 	t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
 		setupDB(t)
-		resp := sendReq(http.MethodGet, "/dishes/some-random-id")("")
+		resp := testutils.SendReq(http.MethodGet, "/dishes/some-random-id")("")
 		assert.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
 	t.Run("should return 404 if category with provided id doesn't exist", func(t *testing.T) {
 		setupDB(t)
-		resp := sendReq(http.MethodGet, "/dishes/69")("")
+		resp := testutils.SendReq(http.MethodGet, "/dishes/69")("")
 		assert.Equal(t, http.StatusNotFound, resp.Code)
 	})
 }
@@ -275,12 +283,13 @@ func negativePriceTest(t *testing.T, method string) {
 		setupDB(t)
 		it := assert.New(t)
 		json := `{"id":1,"title":"Meat Supreme","price":-3.22,"category_id":3}`
+		_, c := testutils.LoginAsRandomAdmin(t)
 		var resp *httptest.ResponseRecorder
 
 		if method == http.MethodPost {
-			resp = sendReq(method, "/dishes")(json)
+			resp = testutils.ReqWithCookie(method, "/dishes")(c, json)
 		} else {
-			resp = sendReq(method, "/dishes/1")(json)
+			resp = testutils.ReqWithCookie(method, "/dishes/1")(c, json)
 		}
 
 		it.Equal(http.StatusBadRequest, resp.Code)
@@ -294,17 +303,11 @@ func setupDB(t *testing.T) {
 
 	req.NoError(db.Create(&testCategories).Error)
 	req.NoError(db.Create(&testDishes).Error)
-}
-
-func sendReq(method, target string) func(body string) *httptest.ResponseRecorder {
-	return func(body string) *httptest.ResponseRecorder {
-		w := httptest.NewRecorder()
-		req := httptest.NewRequest(method, target, strings.NewReader(body))
-		r.ServeHTTP(w, req)
-		return w
-	}
+	req.NoError(db.Create(&testutils.TestUsers).Error)
+	req.NoError(db.Create(&testutils.TestAdmins).Error)
 }
 
 func cleanup() {
 	db.Exec("TRUNCATE categories CASCADE;")
+	db.Exec("TRUNCATE users, sessions;")
 }

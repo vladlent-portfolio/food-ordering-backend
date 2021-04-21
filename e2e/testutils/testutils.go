@@ -92,14 +92,15 @@ func SendReq(method, target string) func(body string) *httptest.ResponseRecorder
 	}
 }
 
-func ReqWithCookie(target string) func(c *http.Cookie) *httptest.ResponseRecorder {
-	return func(c *http.Cookie) *httptest.ResponseRecorder {
+func ReqWithCookie(method, target string) func(c *http.Cookie, body string) *httptest.ResponseRecorder {
+	return func(c *http.Cookie, body string) *httptest.ResponseRecorder {
 		w := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, target, nil)
+		req := httptest.NewRequest(method, target, strings.NewReader(body))
 
 		if c != nil {
 			req.AddCookie(c)
 		}
+
 		Router.ServeHTTP(w, req)
 		return w
 	}

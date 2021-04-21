@@ -19,12 +19,12 @@ var testAdmins = testutils.TestAdmins
 
 func TestAPI(t *testing.T) {
 	t.Run("GET /users", func(t *testing.T) {
-		send := testutils.ReqWithCookie("/users")
+		send := testutils.ReqWithCookie(http.MethodGet, "/users")
 		t.Run("should return a list of users", func(t *testing.T) {
 			setupDB(t)
 			it := assert.New(t)
 			_, c := testutils.LoginAsRandomAdmin(t)
-			resp := send(c)
+			resp := send(c, "")
 
 			it.Equal(http.StatusOK, resp.Code)
 
@@ -36,24 +36,24 @@ func TestAPI(t *testing.T) {
 		})
 
 		t.Run("should return 401 if user is unauthorized ", func(t *testing.T) {
-			resp := send(&http.Cookie{})
+			resp := send(&http.Cookie{}, "")
 			assert.Equal(t, http.StatusUnauthorized, resp.Code)
 		})
 
 		t.Run("should return 401 if user is not admin", func(t *testing.T) {
 			setupDB(t)
 			_, c := testutils.LoginAsRandomUser(t)
-			resp := send(c)
+			resp := send(c, "")
 			assert.Equal(t, http.StatusUnauthorized, resp.Code)
 		})
 
 		t.Run("GET /users/me", func(t *testing.T) {
-			send := testutils.ReqWithCookie("/users/me")
+			send := testutils.ReqWithCookie(http.MethodGet, "/users/me")
 			t.Run("should return info about authorized user", func(t *testing.T) {
 				setupDB(t)
 				it := assert.New(t)
 				dto, c := testutils.LoginAsRandomUser(t)
-				resp := send(c)
+				resp := send(c, "")
 
 				if it.Equal(http.StatusOK, resp.Code) {
 					var respDTO user.ResponseDTO
@@ -74,13 +74,13 @@ func TestAPI(t *testing.T) {
 		})
 
 		t.Run("GET /users/logout", func(t *testing.T) {
-			logout := testutils.ReqWithCookie("/users/logout")
+			logout := testutils.ReqWithCookie(http.MethodGet, "/users/logout")
 
 			t.Run("should remove auth cookie and remove all session for this user from db", func(t *testing.T) {
 				setupDB(t)
 				it := assert.New(t)
 				dto, c := testutils.LoginAsRandomUser(t)
-				resp := logout(c)
+				resp := logout(c, "")
 
 				if it.Equal(http.StatusOK, resp.Code) {
 					cookie := testutils.FindCookieByName(resp.Result(), user.SessionCookieName)

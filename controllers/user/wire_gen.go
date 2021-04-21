@@ -6,7 +6,6 @@
 package user
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"gorm.io/gorm"
 )
@@ -21,12 +20,12 @@ func InitAPI(db *gorm.DB) *API {
 	return api
 }
 
-func ProvideAuthMiddleware(db *gorm.DB) gin.HandlerFunc {
+func InitAuthMiddleware(db *gorm.DB) AuthMiddlewareFunc {
 	repository := ProvideRepository(db)
 	jwtService := ProvideJWTService()
 	service := ProvideService(repository, jwtService)
-	handlerFunc := AuthMiddleware(service)
-	return handlerFunc
+	authMiddlewareFunc := ProvideAuthMiddleware(service)
+	return authMiddlewareFunc
 }
 
 // wire.go:

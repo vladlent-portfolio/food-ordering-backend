@@ -3,7 +3,6 @@
 package user
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"gorm.io/gorm"
 )
@@ -15,7 +14,7 @@ func InitAPI(db *gorm.DB) *API {
 	return nil
 }
 
-func ProvideAuthMiddleware(db *gorm.DB) gin.HandlerFunc {
-	wire.Build(AuthMiddleware, set)
+func InitAuthMiddleware(db *gorm.DB) AuthMiddlewareFunc {
+	wire.Build(ProvideAuthMiddleware, set)
 	return nil
 }

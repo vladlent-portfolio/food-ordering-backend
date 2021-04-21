@@ -20,11 +20,11 @@ func ProvideAPI(s *Service) *API {
 }
 
 func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
-	auth := ProvideAuthMiddleware(db)
+	auth := InitAuthMiddleware(db)
 
-	router.GET("", api.FindAll)
-	router.GET("/me", auth, api.Info)
-	router.GET("/logout", auth, api.Logout)
+	router.GET("", auth(true), api.FindAll)
+	router.GET("/me", auth(false), api.Info)
+	router.GET("/logout", auth(false), api.Logout)
 	router.POST("", api.Create)
 	router.POST("/signin", api.Login)
 }

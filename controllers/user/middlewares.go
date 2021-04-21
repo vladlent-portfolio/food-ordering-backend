@@ -18,8 +18,8 @@ func ProvideAuthMiddleware(service *Service) AuthMiddlewareFunc {
 // automatically aborted with http.StatusUnauthorized.
 // If check is successful, middleware will set ContextUserKey with
 // authorized User in current gin.Context.
-// isAdmin flag indicates that a user must have admin rights to access the route.
-func AuthMiddleware(service *Service, isAdmin bool) gin.HandlerFunc {
+// adminOnly flag indicates that a user must have admin rights to access the route.
+func AuthMiddleware(service *Service, adminOnly bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cookie, err := c.Request.Cookie(SessionCookieName)
 
@@ -31,6 +31,11 @@ func AuthMiddleware(service *Service, isAdmin bool) gin.HandlerFunc {
 		session, err := service.FindSessionByToken(cookie.Value)
 
 		if err != nil {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		if adminOnly && !session.User.IsAdmin {
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}

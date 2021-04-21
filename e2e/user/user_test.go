@@ -5,43 +5,25 @@ import (
 	"food_ordering_backend/common"
 	"food_ordering_backend/controllers/user"
 	"food_ordering_backend/database"
-	"food_ordering_backend/router"
+	"food_ordering_backend/e2e/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"log"
 	"net/http"
-	"net/http/httptest"
-	"strings"
+
 	"testing"
 )
 
-var db = database.MustGetTest()
-var r = router.Setup(db)
-var testUsersDTOs = []user.AuthDTO{
-	{Email: "Kallie_Larson@hotmail.com", Password: "_GIGcnAkjjsbkzk"},
-	{Email: "Hellen_Bogan26@hotmail.com", Password: "sgDOB7qIseBkpS3"},
-	{Email: "Stella.Wolff@yahoo.com", Password: "kn_yt5XoDIexljw"},
-}
-var testAdminsDTOs = []user.AuthDTO{
-	{Email: "Anya_Ernser@yahoo.com", Password: "hWPr911kMNyZWsc"},
-	{Email: "Aurore31@hotmail.com", Password: "9BNQgtcgRYSEAUv"},
-	{Email: "Julius.Keeling@hotmail.com", Password: "MblfRKEDRQvJvIK"},
-}
-var testUsers = make([]user.User, 3)
-var testAdmins = make([]user.User, 3)
-
-func init() {
-	populateTestUsers()
-	populateTestAdmins()
-}
+var db = database.MustGet()
+var testUsers = testutils.TestUsers
+var testAdmins = testutils.TestAdmins
 
 func TestAPI(t *testing.T) {
 	t.Run("GET /users", func(t *testing.T) {
-		send := sendWithCookie("/users")
+		send := testutils.ReqWithCookie("/users")
 		t.Run("should return a list of users", func(t *testing.T) {
 			setupDB(t)
 			it := assert.New(t)
-			_, c := loginAsRandomAdmin(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
 			resp := send(c)
 
 			it.Equal(http.StatusOK, resp.Code)
@@ -58,12 +40,19 @@ func TestAPI(t *testing.T) {
 			assert.Equal(t, http.StatusUnauthorized, resp.Code)
 		})
 
+		t.Run("should return 401 if user is not admin", func(t *testing.T) {
+			setupDB(t)
+			_, c := testutils.LoginAsRandomUser(t)
+			resp := send(c)
+			assert.Equal(t, http.StatusUnauthorized, resp.Code)
+		})
+
 		t.Run("GET /users/me", func(t *testing.T) {
-			send := sendWithCookie("/users/me")
+			send := testutils.ReqWithCookie("/users/me")
 			t.Run("should return info about authorized user", func(t *testing.T) {
 				setupDB(t)
 				it := assert.New(t)
-				dto, c := loginAsRandomUser(t)
+				dto, c := testutils.LoginAsRandomUser(t)
 				resp := send(c)
 
 				if it.Equal(http.StatusOK, resp.Code) {
@@ -79,22 +68,22 @@ func TestAPI(t *testing.T) {
 			})
 
 			t.Run("should return 401 if there is no session cookie in the request", func(t *testing.T) {
-				resp := sendReq(http.MethodGet, "/users/me")("")
+				resp := testutils.SendReq(http.MethodGet, "/users/me")("")
 				assert.Equal(t, http.StatusUnauthorized, resp.Code)
 			})
 		})
 
 		t.Run("GET /users/logout", func(t *testing.T) {
-			logout := sendWithCookie("/users/logout")
+			logout := testutils.ReqWithCookie("/users/logout")
 
 			t.Run("should remove auth cookie and remove all session for this user from db", func(t *testing.T) {
 				setupDB(t)
 				it := assert.New(t)
-				dto, c := loginAsRandomUser(t)
+				dto, c := testutils.LoginAsRandomUser(t)
 				resp := logout(c)
 
 				if it.Equal(http.StatusOK, resp.Code) {
-					cookie := findCookieByName(resp.Result(), user.SessionCookieName)
+					cookie := testutils.FindCookieByName(resp.Result(), user.SessionCookieName)
 
 					if it.NotNil(cookie) {
 						it.Less(cookie.MaxAge, 0)
@@ -107,11 +96,16 @@ func TestAPI(t *testing.T) {
 					}
 				}
 			})
+
+			t.Run("should return 401 if user is unauthorized", func(t *testing.T) {
+				resp := testutils.SendReq(http.MethodGet, "/users/logout")("")
+				assert.Equal(t, http.StatusUnauthorized, resp.Code)
+			})
 		})
 	})
 
 	t.Run("POST /users", func(t *testing.T) {
-		send := sendReq(http.MethodPost, "/users")
+		send := testutils.SendReq(http.MethodPost, "/users")
 
 		t.Run("should create a user and return it", func(t *testing.T) {
 			setupDB(t)
@@ -161,12 +155,12 @@ func TestAPI(t *testing.T) {
 				setupDB(t)
 				it := assert.New(t)
 
-				for i, dto := range testUsersDTOs {
-					resp := login(dto)
+				for i, dto := range testutils.TestUsersDTOs {
+					resp := testutils.Login(dto)
 
 					it.Equal(http.StatusOK, resp.Code)
 
-					c := findCookieByName(resp.Result(), user.SessionCookieName)
+					c := testutils.FindCookieByName(resp.Result(), user.SessionCookieName)
 
 					if assert.NotNil(t, c) {
 						it.NotZero(t, c.Value)
@@ -190,16 +184,16 @@ func TestAPI(t *testing.T) {
 			t.Run("should return 403 if provided email or password is incorrect", func(t *testing.T) {
 				setupDB(t)
 				it := assert.New(t)
-				u1 := testUsersDTOs[common.RandomInt(len(testUsersDTOs))]
-				u2 := testUsersDTOs[common.RandomInt(len(testUsersDTOs))]
+				u1 := testutils.TestUsersDTOs[common.RandomInt(len(testutils.TestUsersDTOs))]
+				u2 := testutils.TestUsersDTOs[common.RandomInt(len(testutils.TestUsersDTOs))]
 
 				u1.Email = "email@not.exist"
 
-				resp := login(u1)
+				resp := testutils.Login(u1)
 				it.Equal(http.StatusForbidden, resp.Code)
 
 				u2.Password = "some-random-pass"
-				resp = login(u2)
+				resp = testutils.Login(u2)
 				it.Equal(http.StatusForbidden, resp.Code)
 			})
 		})
@@ -212,82 +206,6 @@ func setupDB(t *testing.T) {
 	t.Cleanup(cleanup)
 	require.NoError(t, db.Create(&testUsers).Error)
 	require.NoError(t, db.Create(&testAdmins).Error)
-}
-
-func login(dto user.AuthDTO) *httptest.ResponseRecorder {
-	data, _ := json.Marshal(&dto)
-	return sendReq(http.MethodPost, "/users/signin")(string(data))
-}
-
-func loginAsRandomUser(t *testing.T) (user.AuthDTO, *http.Cookie) {
-	return loginAsRandomDTO(t, testUsersDTOs)
-}
-
-func loginAsRandomAdmin(t *testing.T) (user.AuthDTO, *http.Cookie) {
-	return loginAsRandomDTO(t, testAdminsDTOs)
-}
-
-func loginAsRandomDTO(t *testing.T, dtos []user.AuthDTO) (user.AuthDTO, *http.Cookie) {
-	randomIndex := common.RandomInt(len(dtos))
-	dto := dtos[randomIndex]
-	resp := login(dto)
-	authCookie := findCookieByName(resp.Result(), user.SessionCookieName)
-
-	require.NotEmpty(t, authCookie)
-	return dto, authCookie
-}
-
-func sendReq(method, target string) func(body string) *httptest.ResponseRecorder {
-	return func(body string) *httptest.ResponseRecorder {
-		w := httptest.NewRecorder()
-		req := httptest.NewRequest(method, target, strings.NewReader(body))
-		r.ServeHTTP(w, req)
-		return w
-	}
-}
-
-func sendWithCookie(target string) func(c *http.Cookie) *httptest.ResponseRecorder {
-	return func(c *http.Cookie) *httptest.ResponseRecorder {
-		w := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, target, nil)
-		req.AddCookie(c)
-		r.ServeHTTP(w, req)
-		return w
-	}
-}
-
-func populateTestUsers() {
-	for i, dto := range testUsersDTOs {
-		u, err := user.CreateFromDTO(dto)
-
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		testUsers[i] = u
-	}
-}
-
-func populateTestAdmins() {
-	for i, dto := range testAdminsDTOs {
-		u, err := user.CreateFromDTO(dto)
-
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		u.IsAdmin = true
-		testAdmins[i] = u
-	}
-}
-
-func findCookieByName(resp *http.Response, name string) *http.Cookie {
-	for _, c := range resp.Cookies() {
-		if c.Name == name {
-			return c
-		}
-	}
-	return nil
 }
 
 func cleanup() {

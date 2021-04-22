@@ -60,6 +60,20 @@ func populateTestAdmins() {
 	}
 }
 
+// SetupUsersDB inserts TestUsers and TestAdmins into db.
+// Users and sessions tables will be truncated before and after test run.
+func SetupUsersDB(t *testing.T) {
+	cleanup := func() {
+		db.Exec("TRUNCATE users, sessions;")
+	}
+
+	t.Cleanup(cleanup)
+	cleanup()
+
+	require.NoError(t, db.Create(&TestUsers).Error)
+	require.NoError(t, db.Create(&TestAdmins).Error)
+}
+
 func LoginAsRandomUser(t *testing.T) (user.AuthDTO, *http.Cookie) {
 	return loginAsRandomDTO(t, TestUsersDTOs)
 }

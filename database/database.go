@@ -3,6 +3,7 @@ package database
 import (
 	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/controllers/dish"
+	"food_ordering_backend/controllers/order"
 	"food_ordering_backend/controllers/user"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -64,13 +65,28 @@ func initDB(connStr string) error {
 		return err
 	}
 
-	db.AutoMigrate(&category.Category{})
-	db.AutoMigrate(&dish.Dish{})
-	db.AutoMigrate(&user.User{})
-	db.AutoMigrate(&user.Session{})
+	autoMigrate(db)
 
 	database = db
 	return nil
+}
+
+func autoMigrate(db *gorm.DB) {
+	models := []interface{}{
+		&category.Category{},
+		&dish.Dish{},
+		&user.User{},
+		&user.Session{},
+		&order.Status{},
+		&order.Order{},
+	}
+
+	for _, model := range models {
+		if err := db.AutoMigrate(model); err != nil {
+			panic(err)
+		}
+	}
+
 }
 
 func get(isTest bool) (*gorm.DB, error) {

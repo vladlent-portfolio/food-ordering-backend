@@ -20,7 +20,6 @@ func ProvideAPI(s *Service) *API {
 func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
 	auth := user.InitAuthMiddleware(db)
 
-	// TODO: Add auth tests
 	router.GET("", api.FindAll)
 	router.GET("/:id", api.FindByID)
 	router.POST("", auth(true), api.Create)

@@ -6,6 +6,7 @@ import (
 	"food_ordering_backend/controllers/user"
 	"food_ordering_backend/database"
 	"food_ordering_backend/router"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"log"
 	"net/http"
@@ -72,6 +73,24 @@ func SetupUsersDB(t *testing.T) {
 
 	require.NoError(t, db.Create(&TestUsers).Error)
 	require.NoError(t, db.Create(&TestAdmins).Error)
+}
+
+func RunAuthTests(t *testing.T, method, target string, adminOnly bool) {
+	t.Run("should return 401 user is unauthorized", func(t *testing.T) {
+		t.Run("should return 401 if there is no session cookie in the request", func(t *testing.T) {
+			resp := SendReq(method, target)("")
+			assert.Equal(t, http.StatusUnauthorized, resp.Code)
+		})
+	})
+
+	if adminOnly {
+		t.Run("should return 401 if user is not admin", func(t *testing.T) {
+			SetupUsersDB(t)
+			_, c := LoginAsRandomUser(t)
+			resp := ReqWithCookie(method, target)(c, "")
+			assert.Equal(t, http.StatusUnauthorized, resp.Code)
+		})
+	}
 }
 
 func LoginAsRandomUser(t *testing.T) (user.AuthDTO, *http.Cookie) {

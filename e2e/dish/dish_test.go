@@ -132,6 +132,7 @@ func TestDishes(t *testing.T) {
 		send := testutils.ReqWithCookie(http.MethodPost, "/dishes")
 
 		t.Run("should add dish to db and return it", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
 			setupDB(t)
 			it := assert.New(t)
 			initialLen := len(testDishes)
@@ -164,6 +165,7 @@ func TestDishes(t *testing.T) {
 		})
 
 		t.Run("should return 400 if provided json isn't correct", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
 			setupDB(t)
 			it := assert.New(t)
 			json := `{"title": 123}`
@@ -175,6 +177,7 @@ func TestDishes(t *testing.T) {
 		})
 
 		t.Run("should return 409 if dish already exists", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
 			setupDB(t)
 			it := assert.New(t)
 			json := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2}`
@@ -187,6 +190,7 @@ func TestDishes(t *testing.T) {
 			it.Equal(http.StatusConflict, resp.Code)
 		})
 
+		testutils.RunAuthTests(t, http.MethodPost, "/dishes", true)
 		negativePriceTest(t, http.MethodPost)
 	})
 
@@ -197,6 +201,7 @@ func TestDishes(t *testing.T) {
 		}
 
 		t.Run("should update category in db based on provided json", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
 			setupDB(t)
 			it := assert.New(t)
 			updateJSON := `{"title":"Double Cheeseburger","price":4.56,"category_id":2}`
@@ -209,6 +214,7 @@ func TestDishes(t *testing.T) {
 		})
 
 		t.Run("should ignore id in provided json", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
 			setupDB(t)
 			it := assert.New(t)
 			updateJSON := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2}`
@@ -221,6 +227,7 @@ func TestDishes(t *testing.T) {
 		})
 
 		t.Run("should correctly handle category change", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
 			setupDB(t)
 			it := assert.New(t)
 			updateJSON := `{"id":69,"title":"Meat Supreme","price":3.22,"category_id":3}`
@@ -232,6 +239,7 @@ func TestDishes(t *testing.T) {
 			it.Equal(respJSON, resp.Body.String())
 		})
 
+		testutils.RunAuthTests(t, http.MethodPut, "/dishes/1", true)
 		runFindByIDTests(t)
 		negativePriceTest(t, http.MethodPut)
 	})
@@ -243,6 +251,7 @@ func TestDishes(t *testing.T) {
 		}
 
 		t.Run("should remove a dish with provided ID from db", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
 			setupDB(t)
 			it := assert.New(t)
 			randomIndex := common.RandomInt(len(testDishes))
@@ -261,6 +270,8 @@ func TestDishes(t *testing.T) {
 				it.NotEqual(d.ID, testDish.ID)
 			}
 		})
+
+		testutils.RunAuthTests(t, http.MethodDelete, "/dishes/1", true)
 	})
 }
 
@@ -280,6 +291,7 @@ func runFindByIDTests(t *testing.T) {
 
 func negativePriceTest(t *testing.T, method string) {
 	t.Run("should return 400 if price is < 0", func(t *testing.T) {
+		testutils.SetupUsersDB(t)
 		setupDB(t)
 		it := assert.New(t)
 		json := `{"id":1,"title":"Meat Supreme","price":-3.22,"category_id":3}`
@@ -303,11 +315,8 @@ func setupDB(t *testing.T) {
 
 	req.NoError(db.Create(&testCategories).Error)
 	req.NoError(db.Create(&testDishes).Error)
-	req.NoError(db.Create(&testutils.TestUsers).Error)
-	req.NoError(db.Create(&testutils.TestAdmins).Error)
 }
 
 func cleanup() {
 	db.Exec("TRUNCATE categories CASCADE;")
-	db.Exec("TRUNCATE users, sessions;")
 }

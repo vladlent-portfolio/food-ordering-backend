@@ -2,6 +2,7 @@ package category
 
 import (
 	"food_ordering_backend/common"
+	"food_ordering_backend/controllers/user"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
@@ -17,11 +18,13 @@ func ProvideAPI(s *Service) *API {
 }
 
 func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
+	auth := user.InitAuthMiddleware(db)
+
 	router.GET("", api.FindAll)
 	router.GET("/:id", api.FindByID)
-	router.POST("", api.Create)
-	router.PUT("/:id", api.Update)
-	router.DELETE("/:id", api.Delete)
+	router.POST("", auth(true), api.Create)
+	router.PUT("/:id", auth(true), api.Update)
+	router.DELETE("/:id", auth(true), api.Delete)
 }
 
 func (api *API) Create(c *gin.Context) {

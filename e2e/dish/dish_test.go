@@ -4,13 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"food_ordering_backend/common"
-	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/controllers/dish"
 	"food_ordering_backend/database"
 	"food_ordering_backend/e2e/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/gorm/logger"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -18,52 +16,29 @@ import (
 )
 
 var db = database.MustGetTest()
-var testCategories = []category.Category{
-	{ID: 1, Title: "Salads", Removable: true},
-	{ID: 2, Title: "Burgers", Removable: true},
-	{ID: 3, Title: "Pizza", Removable: true},
-	{ID: 4, Title: "Drinks", Removable: true},
-}
-var testDishes = []dish.Dish{
-	{ID: 1, Title: "Fresh and Healthy Salad", Price: 2.65, CategoryID: 1, Category: testCategories[0]},
-	{ID: 2, Title: "Crunchy Cashew Salad", Price: 3.22, CategoryID: 1, Category: testCategories[0]},
-	{ID: 3, Title: "Hamburger", Price: 1.99, CategoryID: 2, Category: testCategories[1]},
-	{ID: 4, Title: "Cheeseburger", Price: 2.28, CategoryID: 2, Category: testCategories[1]},
-	{ID: 5, Title: "Margherita", Price: 4.20, CategoryID: 3, Category: testCategories[2]},
-	{ID: 6, Title: "4 Cheese", Price: 4.69, CategoryID: 3, Category: testCategories[2]},
-	{ID: 7, Title: "Pepsi 2L", Price: 1.50, CategoryID: 4, Category: testCategories[3]},
-	{ID: 8, Title: "Orange Juice 2L", Price: 2, CategoryID: 4, Category: testCategories[3]},
-}
-
-var testCategoriesJSON = `[{"id":1,"title":"Salads","removable":true},{"id":2,"title":"Burgers","removable":true},{"id":3,"title":"Pizza","removable":true},{"id":4,"title":"Drinks","removable":true}]`
-var testDishesJSON = `[{"id":1,"title":"Fresh and Healthy Salad","price":2.65,"category_id":1,"category":{"id":1,"title":"Salads","removable":true}},{"id":2,"title":"Crunchy Cashew Salad","price":3.22,"category_id":1,"category":{"id":1,"title":"Salads","removable":true}},{"id":3,"title":"Hamburger","price":1.99,"category_id":2,"category":{"id":2,"title":"Burgers","removable":true}},{"id":4,"title":"Cheeseburger","price":2.28,"category_id":2,"category":{"id":2,"title":"Burgers","removable":true}},{"id":5,"title":"Margherita","price":4.2,"category_id":3,"category":{"id":3,"title":"Pizza","removable":true}},{"id":6,"title":"4 Cheese","price":4.69,"category_id":3,"category":{"id":3,"title":"Pizza","removable":true}},{"id":7,"title":"Pepsi 2L","price":1.5,"category_id":4,"category":{"id":4,"title":"Drinks","removable":true}},{"id":8,"title":"Orange Juice 2L","price":2,"category_id":4,"category":{"id":4,"title":"Drinks","removable":true}}]`
 
 func TestDishes(t *testing.T) {
-	cleanup()
-	t.Cleanup(cleanup)
-	db.Logger.LogMode(logger.Silent)
-
 	t.Run("GET /dishes", func(t *testing.T) {
 		send := testutils.SendReq(http.MethodGet, "/dishes")
 		t.Run("should return JSON array of dishes with their respective categories", func(t *testing.T) {
-			setupDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
 			resp := send("")
 
 			it.Equal(http.StatusOK, resp.Code)
 			it.Contains(resp.Header().Get("Content-Type"), "application/json")
 			it.Equal(
-				testDishesJSON,
+				testutils.TestDishesJSON,
 				resp.Body.String(),
 			)
 		})
 
 		t.Run("should return dishes filtered by provided category id", func(t *testing.T) {
-			setupDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
 
-			for i, c := range testCategories {
-				dishes := testDishes[i*2 : i*2+2]
+			for i, c := range testutils.TestCategories {
+				dishes := testutils.TestDishes[i*2 : i*2+2]
 				resp := testutils.SendReq(http.MethodGet, fmt.Sprintf("/dishes?cid=%d", c.ID))("")
 
 				it.Equal(http.StatusOK, resp.Code)
@@ -107,12 +82,12 @@ func TestDishes(t *testing.T) {
 		}
 
 		t.Run("should return dish with provided id", func(t *testing.T) {
-			setupDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
 
-			for i, testDish := range testDishes {
+			for i, testDish := range testutils.TestDishes {
 				resp := sendWithParam(testDish.ID)
-				testCat := testCategories[i/2]
+				testCat := testutils.TestCategories[i/2]
 				it.Equal(http.StatusOK, resp.Code)
 				it.Equal(
 					fmt.Sprintf(
@@ -133,9 +108,9 @@ func TestDishes(t *testing.T) {
 
 		t.Run("should add dish to db and return it", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
-			setupDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
-			initialLen := len(testDishes)
+			initialLen := len(testutils.TestDishes)
 			reqJSON := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2}`
 			respJSON := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2,"category":{"id":2,"title":"Burgers","removable":true}}`
 
@@ -166,7 +141,6 @@ func TestDishes(t *testing.T) {
 
 		t.Run("should return 400 if provided json isn't correct", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
-			setupDB(t)
 			it := assert.New(t)
 			json := `{"title": 123}`
 
@@ -178,7 +152,7 @@ func TestDishes(t *testing.T) {
 
 		t.Run("should return 409 if dish already exists", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
-			setupDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
 			json := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2}`
 			_, c := testutils.LoginAsRandomAdmin(t)
@@ -202,7 +176,7 @@ func TestDishes(t *testing.T) {
 
 		t.Run("should update category in db based on provided json", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
-			setupDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
 			updateJSON := `{"title":"Double Cheeseburger","price":4.56,"category_id":2}`
 			respJSON := `{"id":4,"title":"Double Cheeseburger","price":4.56,"category_id":2,"category":{"id":2,"title":"Burgers","removable":true}}`
@@ -215,7 +189,7 @@ func TestDishes(t *testing.T) {
 
 		t.Run("should ignore id in provided json", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
-			setupDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
 			updateJSON := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2}`
 			respJSON := `{"id":4,"title":"Double Cheeseburger","price":4.56,"category_id":2,"category":{"id":2,"title":"Burgers","removable":true}}`
@@ -228,7 +202,7 @@ func TestDishes(t *testing.T) {
 
 		t.Run("should correctly handle category change", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
-			setupDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
 			updateJSON := `{"id":69,"title":"Meat Supreme","price":3.22,"category_id":3}`
 			respJSON := `{"id":4,"title":"Meat Supreme","price":3.22,"category_id":3,"category":{"id":3,"title":"Pizza","removable":true}}`
@@ -252,8 +226,9 @@ func TestDishes(t *testing.T) {
 
 		t.Run("should remove a dish with provided ID from db", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
-			setupDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
+			testDishes := testutils.TestDishes
 			randomIndex := common.RandomInt(len(testDishes))
 			testDish := testDishes[randomIndex]
 			_, c := testutils.LoginAsRandomAdmin(t)
@@ -277,13 +252,11 @@ func TestDishes(t *testing.T) {
 
 func runFindByIDTests(t *testing.T) {
 	t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
-		setupDB(t)
 		resp := testutils.SendReq(http.MethodGet, "/dishes/some-random-id")("")
 		assert.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
 	t.Run("should return 404 if category with provided id doesn't exist", func(t *testing.T) {
-		setupDB(t)
 		resp := testutils.SendReq(http.MethodGet, "/dishes/69")("")
 		assert.Equal(t, http.StatusNotFound, resp.Code)
 	})
@@ -292,7 +265,8 @@ func runFindByIDTests(t *testing.T) {
 func negativePriceTest(t *testing.T, method string) {
 	t.Run("should return 400 if price is < 0", func(t *testing.T) {
 		testutils.SetupUsersDB(t)
-		setupDB(t)
+		testutils.SetupDishesAndCategories(t)
+
 		it := assert.New(t)
 		json := `{"id":1,"title":"Meat Supreme","price":-3.22,"category_id":3}`
 		_, c := testutils.LoginAsRandomAdmin(t)
@@ -306,17 +280,4 @@ func negativePriceTest(t *testing.T, method string) {
 
 		it.Equal(http.StatusBadRequest, resp.Code)
 	})
-}
-
-func setupDB(t *testing.T) {
-	cleanup()
-	t.Cleanup(cleanup)
-	req := require.New(t)
-
-	req.NoError(db.Create(&testCategories).Error)
-	req.NoError(db.Create(&testDishes).Error)
-}
-
-func cleanup() {
-	db.Exec("TRUNCATE categories CASCADE;")
 }

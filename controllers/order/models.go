@@ -6,12 +6,20 @@ import (
 	"time"
 )
 
+type Status int
+
+const (
+	StatusCreated    Status = 0
+	StatusInProgress Status = 1
+	StatusDone       Status = 2
+	StatusCanceled   Status = 3
+)
+
 type Order struct {
 	ID        uint `gorm:"primaryKey"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	StatusID  uint
-	Status    Status
+	Status    Status `gorm:"type:smallint"`
 	UserID    uint
 	User      user.User `gorm:"constraint:OnDelete:SET NULL,OnUpdate:CASCADE"`
 	Total     float64   `gorm:"check:total >= 0"`
@@ -26,15 +34,6 @@ type Item struct {
 	Quantity int `gorm:"check:quantity > 0"`
 }
 
-type Status struct {
-	ID    uint   `gorm:"primaryKey"`
-	Title string `gorm:"not null,unique,size:30"`
-}
-
 func (i Item) TableName() string {
 	return "order_items"
-}
-
-func (s Status) TableName() string {
-	return "order_status"
 }

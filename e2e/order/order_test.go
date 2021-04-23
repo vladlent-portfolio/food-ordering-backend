@@ -45,8 +45,7 @@ func TestOrders(t *testing.T) {
 					it.NotZero(dto.ID)
 					it.NotZero(dto.CreatedAt)
 					it.Equal(dto.CreatedAt, dto.UpdatedAt)
-					// TODO: Add order status check
-
+					it.Equal(order.StatusCreated, dto.Status)
 					it.Equal(userDTO.Email, dto.User.Email)
 					it.Equal(7.29, dto.Total)
 					// TODO: Check returned dishes

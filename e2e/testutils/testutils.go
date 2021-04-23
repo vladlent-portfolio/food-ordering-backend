@@ -56,7 +56,7 @@ func populateTestAdmins() {
 // Users and sessions tables will be truncated before and after test run.
 func SetupUsersDB(t *testing.T) {
 	cleanup := func() {
-		db.Exec("TRUNCATE users, sessions;")
+		db.Exec("TRUNCATE users, sessions CASCADE;")
 	}
 
 	t.Cleanup(cleanup)

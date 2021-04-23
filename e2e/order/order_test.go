@@ -30,6 +30,7 @@ func TestOrders(t *testing.T) {
 		send := testutils.ReqWithCookie(http.MethodPost, "/orders")
 
 		t.Run("should create an order and return it", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
 			it := assert.New(t)
 			// TODO: Use TestDishes instead of hardcoded
 
@@ -56,6 +57,7 @@ func TestOrders(t *testing.T) {
 		})
 
 		t.Run("should return 422 if json is incorrect or contains validation errors", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
 			it := assert.New(t)
 			malformed := `{"items":[{"id":  1, "quantity": 2}, {"id":  3, "quantity": `
 			invalid := `{"items":[{"id":  1, "quantity": 2}, {"id":  3, "quantity": -1}]}`

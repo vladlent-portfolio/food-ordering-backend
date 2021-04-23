@@ -79,6 +79,7 @@ func autoMigrate(db *gorm.DB) {
 		&user.Session{},
 		&order.Status{},
 		&order.Order{},
+		&order.Item{},
 	}
 
 	for _, model := range models {

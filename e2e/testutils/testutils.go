@@ -8,7 +8,6 @@ import (
 	"food_ordering_backend/router"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -38,11 +37,7 @@ func init() {
 
 func populateTestUsers() {
 	for i, dto := range TestUsersDTOs {
-		u, err := user.CreateFromDTO(dto)
-
-		if err != nil {
-			log.Fatalln(err)
-		}
+		u := user.CreateFromDTO(dto)
 
 		TestUsers[i] = u
 	}
@@ -50,11 +45,7 @@ func populateTestUsers() {
 
 func populateTestAdmins() {
 	for i, dto := range TestAdminsDTOs {
-		u, err := user.CreateFromDTO(dto)
-
-		if err != nil {
-			log.Fatalln(err)
-		}
+		u := user.CreateFromDTO(dto)
 
 		u.IsAdmin = true
 		TestAdmins[i] = u

@@ -13,8 +13,8 @@ type Order struct {
 	StatusID  uint
 	Status    Status
 	UserID    uint
-	User      user.User
-	Total     float64 `gorm:"check:total >= 0"`
+	User      user.User `gorm:"constraint:OnDelete:SET NULL,OnUpdate:CASCADE"`
+	Total     float64   `gorm:"check:total >= 0"`
 	Items     []Item
 }
 

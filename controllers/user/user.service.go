@@ -10,12 +10,7 @@ func ProvideService(r *Repository, jwtService *JWTService) *Service {
 }
 
 func (s *Service) Create(dto AuthDTO) (User, error) {
-	user, err := CreateFromDTO(dto)
-
-	if err != nil {
-		return user, err
-	}
-
+	user := CreateFromDTO(dto)
 	return s.repo.Create(user)
 }
 

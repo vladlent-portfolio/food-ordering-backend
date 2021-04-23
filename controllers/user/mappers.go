@@ -1,12 +1,12 @@
 package user
 
-func CreateFromDTO(dto AuthDTO) (User, error) {
+func CreateFromDTO(dto AuthDTO) User {
 	var user User
 
 	user.Email = dto.Email
 	user.SetPassword(dto.Password)
 
-	return user, nil
+	return user
 }
 
 func ToResponseDTO(u User) ResponseDTO {

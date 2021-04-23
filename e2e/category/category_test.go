@@ -7,31 +7,27 @@ import (
 	"food_ordering_backend/e2e/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/gorm/logger"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 )
 
-var testCategories = []category.Category{{ID: 1, Title: "Salads", Removable: true}, {ID: 2, Title: "Burgers", Removable: true}, {ID: 3, Title: "Pizza", Removable: true}, {ID: 4, Title: "Drinks", Removable: true}}
 var db = database.MustGetTest()
 
 func TestCategories(t *testing.T) {
-	db.Logger.LogMode(logger.Silent)
-
 	t.Run("GET /categories", func(t *testing.T) {
 		send := testutils.SendReq(http.MethodGet, "/categories")
 
 		t.Run("should return JSON array of categories", func(t *testing.T) {
-			setupDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
 			resp := send("")
 
 			it.Equal(http.StatusOK, resp.Code)
 			it.Contains(resp.Header().Get("Content-Type"), "application/json")
 			it.Equal(
-				`[{"id":1,"title":"Salads","removable":true},{"id":2,"title":"Burgers","removable":true},{"id":3,"title":"Pizza","removable":true},{"id":4,"title":"Drinks","removable":true}]`,
+				testutils.TestCategoriesJSON,
 				resp.Body.String(),
 			)
 		})
@@ -44,10 +40,10 @@ func TestCategories(t *testing.T) {
 		}
 
 		t.Run("should return category with provided id", func(t *testing.T) {
-			setupDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
 
-			for _, cat := range testCategories {
+			for _, cat := range testutils.TestCategories {
 				resp := sendWithParam(cat.ID)
 				it.Equal(http.StatusOK, resp.Code)
 				it.Equal(
@@ -66,7 +62,7 @@ func TestCategories(t *testing.T) {
 
 		t.Run("should add category to db and return it", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
-			setupDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
 			json := `{"id":69,"title":"Pizza","removable":false}`
 			_, c := testutils.LoginAsRandomAdmin(t)
@@ -86,7 +82,7 @@ func TestCategories(t *testing.T) {
 
 			var categories []category.Category
 			if it.NoError(db.Find(&categories).Error) {
-				it.Len(categories, len(testCategories)+1)
+				it.Len(categories, len(testutils.TestCategories)+1)
 			}
 		})
 
@@ -102,7 +98,7 @@ func TestCategories(t *testing.T) {
 
 		t.Run("should return 409 if category already exists", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
-			setupDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
 			json := `{"id":13,"title":"Salads","removable":false}`
 			_, c := testutils.LoginAsRandomAdmin(t)
@@ -125,9 +121,9 @@ func TestCategories(t *testing.T) {
 
 		t.Run("should update category in db based on provided json", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
-			setupDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
-			testCategory := testCategories[0]
+			testCategory := testutils.TestCategories[0]
 			updateJSON := `{"title":"Sushi","removable":true}`
 
 			_, c := testutils.LoginAsRandomAdmin(t)
@@ -139,9 +135,9 @@ func TestCategories(t *testing.T) {
 
 		t.Run("should ignore id in provided json", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
-			setupDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
-			testCategory := testCategories[0]
+			testCategory := testutils.TestCategories[0]
 			updateJSON := `{"id":420,"title":"Sushi","removable":true}`
 			require.NotEqual(t, testCategory.ID, 420)
 
@@ -164,8 +160,9 @@ func TestCategories(t *testing.T) {
 
 		t.Run("should removed a category with provided ID from db", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
-			setupDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
+			testCategories := testutils.TestCategories
 			testCat := testCategories[len(testCategories)/2]
 			_, c := testutils.LoginAsRandomAdmin(t)
 			resp := sendWithParam(testCat.ID, c)
@@ -183,7 +180,7 @@ func TestCategories(t *testing.T) {
 
 		t.Run("should return 403 if category isn't removable", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
-			setupDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
 			c := category.Category{ID: 69, Title: "Seafood", Removable: false}
 			_, cookie := testutils.LoginAsRandomAdmin(t)
@@ -200,24 +197,12 @@ func TestCategories(t *testing.T) {
 
 func runFindByIDTests(t *testing.T) {
 	t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
-		setupDB(t)
 		resp := testutils.SendReq(http.MethodGet, "/categories/some-random-id")("")
 		assert.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
 	t.Run("should return 404 if category with provided id doesn't exist", func(t *testing.T) {
-		setupDB(t)
 		resp := testutils.SendReq(http.MethodGet, "/categories/69")("")
 		assert.Equal(t, http.StatusNotFound, resp.Code)
 	})
-}
-
-func setupDB(t *testing.T) {
-	cleanup()
-	t.Cleanup(cleanup)
-	require.NoError(t, db.Create(&testCategories).Error)
-}
-
-func cleanup() {
-	db.Exec("TRUNCATE categories CASCADE;")
 }

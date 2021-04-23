@@ -5,7 +5,7 @@ import (
 	"food_ordering_backend/controllers/user"
 )
 
-func ToDTO(o Order) ResponseDTO {
+func ToResponseDTO(o Order) ResponseDTO {
 	return ResponseDTO{
 		ID:        o.ID,
 		CreatedAt: o.CreatedAt,
@@ -26,7 +26,7 @@ func ToDTO(o Order) ResponseDTO {
 //	o.Items = dto.Items
 //}
 
-func ToItemDTO(i Item) ItemResponseDTO {
+func ToItemResponseDTO(i Item) ItemResponseDTO {
 	return ItemResponseDTO{
 		ID:       i.ID,
 		OrderID:  i.OrderID,
@@ -40,7 +40,7 @@ func ToItemsDTO(items []Item) []ItemResponseDTO {
 	dtos := make([]ItemResponseDTO, len(items))
 
 	for i, item := range items {
-		dtos[i] = ToItemDTO(item)
+		dtos[i] = ToItemResponseDTO(item)
 	}
 
 	return dtos

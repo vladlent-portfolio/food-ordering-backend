@@ -3,6 +3,7 @@ package router
 import (
 	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/controllers/dish"
+	"food_ordering_backend/controllers/order"
 	"food_ordering_backend/controllers/user"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -18,6 +19,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 		"/categories": category.InitAPI(db),
 		"/dishes":     dish.InitAPI(db),
 		"/users":      user.InitAPI(db),
+		"/orders":     order.InitAPI(db),
 	}
 
 	for route, api := range routes {

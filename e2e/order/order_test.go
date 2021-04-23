@@ -1,6 +1,8 @@
 package order
 
 import (
+	"encoding/json"
+	"food_ordering_backend/controllers/order"
 	"food_ordering_backend/e2e/testutils"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -31,7 +33,42 @@ func TestOrders(t *testing.T) {
 
 		t.Run("should create an order and return it", func(t *testing.T) {
 			it := assert.New(t)
+			// TODO: Use TestDishes instead of hardcoded
 
+			reqJSON := `{"items": [{"id":  1, "quantity": 2}, {"id":  3, "quantity": 1}]}`
+			userDTO, c := testutils.LoginAsRandomUser(t)
+
+			resp := send(c, reqJSON)
+
+			if it.Equal(http.StatusCreated, resp.Code) {
+				var dto order.ResponseDTO
+				if it.NoError(json.NewDecoder(resp.Body).Decode(&dto)) {
+					it.NotZero(dto.ID)
+					it.NotZero(dto.CreatedAt)
+					it.Equal(dto.CreatedAt, dto.UpdatedAt)
+					// TODO: Add order status check
+
+					it.Equal(userDTO.Email, dto.User.Email)
+					it.Equal(7.29, dto.Total)
+					// TODO: Check returned dishes
+
+					it.Len(dto.Items, 2)
+				}
+			}
+		})
+
+		t.Run("should return 422 if json is incorrect or contains validation errors", func(t *testing.T) {
+			it := assert.New(t)
+			malformed := `{"items":[{"id":  1, "quantity": 2}, {"id":  3, "quantity": `
+			invalid := `{"items":[{"id":  1, "quantity": 2}, {"id":  3, "quantity": -1}]}`
+			zeroQuantity := `{"items":[{"id":  1, "quantity": 2}, {"id":  3, "quantity": 0}]}`
+
+			_, c := testutils.LoginAsRandomUser(t)
+
+			for _, req := range []string{malformed, invalid, zeroQuantity} {
+				resp := send(c, req)
+				it.Equal(http.StatusUnprocessableEntity, resp.Code)
+			}
 		})
 		testutils.RunAuthTests(t, http.MethodPost, "/orders", false)
 	})

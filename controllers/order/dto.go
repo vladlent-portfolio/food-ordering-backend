@@ -7,27 +7,32 @@ import (
 )
 
 type RequestDTO struct {
-	Items []ItemDTO `json:"items" binding:"required,gt=0"`
+	Items []ItemResponseDTO `json:"items" binding:"required,gt=0"`
+}
+
+type ItemRequestDTO struct {
+	ID       uint `json:"id" binding:"required"`
+	Quantity int  `json:"quantity" binding:"required, gt=0"`
 }
 
 type ResponseDTO struct {
-	ID        uint             `json:"id"`
-	CreatedAt time.Time        `json:"created_at"`
-	UpdatedAt time.Time        `json:"updated_at"`
-	StatusID  uint             `json:"status_id,omitempty"`
-	Status    StatusDTO        `json:"status"`
-	UserID    uint             `json:"user_id,omitempty"`
-	User      user.ResponseDTO `json:"user"`
-	Total     float64          `json:"total" binding:"gt=0"`
-	Items     []ItemDTO        `json:"items" binding:"required,gt=0"`
+	ID        uint              `json:"id"`
+	CreatedAt time.Time         `json:"created_at"`
+	UpdatedAt time.Time         `json:"updated_at"`
+	StatusID  uint              `json:"status_id"`
+	Status    StatusDTO         `json:"status"`
+	UserID    uint              `json:"user_id"`
+	User      user.ResponseDTO  `json:"user"`
+	Total     float64           `json:"total"`
+	Items     []ItemResponseDTO `json:"items"`
 }
 
-type ItemDTO struct {
-	ID       uint `json:"id,omitempty"`
-	OrderID  uint `json:"order_id" binding:"required"`
-	DishID   uint `json:"dish_id" binding:"required"`
-	Dish     dish.DTO
-	Quantity int `json:"quantity" binding:"required,gt=0"`
+type ItemResponseDTO struct {
+	ID       uint     `json:"id"`
+	OrderID  uint     `json:"order_id"`
+	DishID   uint     `json:"dish_id"`
+	Dish     dish.DTO `json:"dish"`
+	Quantity int      `json:"quantity"`
 }
 
 type StatusDTO struct {

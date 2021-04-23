@@ -26,8 +26,8 @@ func ToDTO(o Order) ResponseDTO {
 //	o.Items = dto.Items
 //}
 
-func ToItemDTO(i Item) ItemDTO {
-	return ItemDTO{
+func ToItemDTO(i Item) ItemResponseDTO {
+	return ItemResponseDTO{
 		ID:       i.ID,
 		OrderID:  i.OrderID,
 		DishID:   i.DishID,
@@ -36,8 +36,8 @@ func ToItemDTO(i Item) ItemDTO {
 	}
 }
 
-func ToItemsDTO(items []Item) []ItemDTO {
-	dtos := make([]ItemDTO, len(items))
+func ToItemsDTO(items []Item) []ItemResponseDTO {
+	dtos := make([]ItemResponseDTO, len(items))
 
 	for i, item := range items {
 		dtos[i] = ToItemDTO(item)

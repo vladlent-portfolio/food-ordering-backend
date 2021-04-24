@@ -4,6 +4,7 @@ import (
 	"food_ordering_backend/controllers/user"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"net/http"
 )
 
 type API struct {
@@ -24,7 +25,22 @@ func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
 }
 
 func (api *API) FindAll(c *gin.Context) {
+	var orders []Order
+	var err error
+	u := c.MustGet(user.ContextUserKey).(user.User)
 
+	if u.IsAdmin {
+		orders, err = api.service.FindAll()
+	} else {
+		orders, err = api.service.FindByUID(u.ID)
+	}
+
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.JSON(http.StatusOK, ToResponseDTOs(orders))
 }
 
 func (api *API) Create(c *gin.Context) {

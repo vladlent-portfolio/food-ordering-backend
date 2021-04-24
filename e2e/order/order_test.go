@@ -3,6 +3,7 @@ package order
 import (
 	"encoding/json"
 	"food_ordering_backend/controllers/order"
+	"food_ordering_backend/controllers/user"
 	"food_ordering_backend/e2e/testutils"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -16,14 +17,12 @@ func TestOrders(t *testing.T) {
 
 		t.Run("should return a list of orders for specific user", func(t *testing.T) {
 			testutils.SetupOrdersDB(t)
-
 			c := testutils.LoginAs(t, testutils.TestUsersDTOs[0])
 			verifyResponse(t, 3, send(c, ""))
 		})
 
 		t.Run("should return all orders if requester is admin", func(t *testing.T) {
 			testutils.SetupOrdersDB(t)
-
 			_, c := testutils.LoginAsRandomAdmin(t)
 			verifyResponse(t, len(testutils.TestOrders), send(c, ""))
 		})
@@ -129,10 +128,10 @@ func verifyResponse(t *testing.T, expectedLen int, resp *httptest.ResponseRecord
 				if it.NotZero(o.ID) {
 					testOrder := testutils.FindTestOrderByID(o.ID)
 					it.Equal(testOrder.UserID, o.UserID)
-					it.Equal(testOrder.Items, o.Items)
+					it.Equal(order.ToItemsResponseDTO(testOrder.Items), o.Items)
 					it.Equal(testOrder.Status, o.Status)
 					it.Equal(testOrder.Total, o.Total)
-					it.Equal(testOrder.User, o.User)
+					it.Equal(user.ToResponseDTO(testOrder.User), o.User)
 				}
 			}
 		}

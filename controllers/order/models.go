@@ -32,7 +32,7 @@ type Item struct {
 	OrderID  uint
 	DishID   uint
 	Dish     dish.Dish `gorm:"constraint:OnUpdate:CASCADE"`
-	Quantity int       `gorm:"check:quantity > 0"`
+	Quantity int       `gorm:"type:int;check:quantity > 0"`
 }
 
 func (i Item) TableName() string {

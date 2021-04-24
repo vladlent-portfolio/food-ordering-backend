@@ -14,8 +14,18 @@ func ToResponseDTO(o Order) ResponseDTO {
 		UserID:    o.UserID,
 		User:      user.ToResponseDTO(o.User),
 		Total:     o.Total,
-		Items:     ToItemsDTO(o.Items),
+		Items:     ToItemsResponseDTO(o.Items),
 	}
+}
+
+func ToResponseDTOs(orders []Order) []ResponseDTO {
+	dtos := make([]ResponseDTO, len(orders))
+
+	for i, order := range orders {
+		dtos[i] = ToResponseDTO(order)
+	}
+
+	return dtos
 }
 
 // TODO: Change all ToModel() functions to FromDTO()
@@ -35,7 +45,7 @@ func ToItemResponseDTO(i Item) ItemResponseDTO {
 	}
 }
 
-func ToItemsDTO(items []Item) []ItemResponseDTO {
+func ToItemsResponseDTO(items []Item) []ItemResponseDTO {
 	dtos := make([]ItemResponseDTO, len(items))
 
 	for i, item := range items {

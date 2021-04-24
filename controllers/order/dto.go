@@ -19,8 +19,7 @@ type ResponseDTO struct {
 	ID        uint              `json:"id"`
 	CreatedAt time.Time         `json:"created_at"`
 	UpdatedAt time.Time         `json:"updated_at"`
-	StatusID  uint              `json:"status_id"`
-	Status    StatusDTO         `json:"status"`
+	Status    Status            `json:"status"`
 	UserID    uint              `json:"user_id"`
 	User      user.ResponseDTO  `json:"user"`
 	Total     float64           `json:"total"`

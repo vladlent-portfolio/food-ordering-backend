@@ -3,6 +3,7 @@ package order
 import (
 	"food_ordering_backend/controllers/dish"
 	"food_ordering_backend/controllers/user"
+	"math"
 	"time"
 )
 
@@ -36,4 +37,20 @@ type Item struct {
 
 func (i Item) TableName() string {
 	return "order_items"
+}
+
+func (i *Item) Cost() float64 {
+	res := i.Dish.Price * float64(i.Quantity)
+	// Dealing with precision problems
+	return math.Ceil(res*100) / 100
+}
+
+func CalcTotal(items []Item) float64 {
+	var total float64
+
+	for _, item := range items {
+		total += item.Cost()
+	}
+
+	return total
 }

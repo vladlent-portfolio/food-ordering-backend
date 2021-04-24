@@ -10,8 +10,7 @@ func ToResponseDTO(o Order) ResponseDTO {
 		ID:        o.ID,
 		CreatedAt: o.CreatedAt,
 		UpdatedAt: o.UpdatedAt,
-		StatusID:  o.StatusID,
-		Status:    ToStatusDTO(o.Status),
+		Status:    o.Status,
 		UserID:    o.UserID,
 		User:      user.ToResponseDTO(o.User),
 		Total:     o.Total,
@@ -44,11 +43,4 @@ func ToItemsDTO(items []Item) []ItemResponseDTO {
 	}
 
 	return dtos
-}
-
-func ToStatusDTO(s Status) StatusDTO {
-	return StatusDTO{
-		ID:    s.ID,
-		Title: s.Title,
-	}
 }

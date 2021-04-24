@@ -1,8 +1,6 @@
 package testutils
 
 import (
-	"encoding/json"
-	"food_ordering_backend/controllers/user"
 	"food_ordering_backend/database"
 	"food_ordering_backend/router"
 	"net/http"
@@ -12,11 +10,6 @@ import (
 
 var db = database.MustGetTest()
 var Router = router.Setup(db)
-
-func Login(dto user.AuthDTO) *httptest.ResponseRecorder {
-	data, _ := json.Marshal(&dto)
-	return SendReq(http.MethodPost, "/users/signin")(string(data))
-}
 
 func SendReq(method, target string) func(body string) *httptest.ResponseRecorder {
 	return func(body string) *httptest.ResponseRecorder {

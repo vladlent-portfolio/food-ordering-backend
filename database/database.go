@@ -77,7 +77,6 @@ func autoMigrate(db *gorm.DB) {
 		&dish.Dish{},
 		&user.User{},
 		&user.Session{},
-		&order.Status{},
 		&order.Order{},
 		&order.Item{},
 	}

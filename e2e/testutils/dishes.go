@@ -4,6 +4,7 @@ import (
 	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/controllers/dish"
 	"github.com/stretchr/testify/require"
+	"log"
 	"testing"
 )
 
@@ -34,6 +35,16 @@ func SetupDishesAndCategories(t *testing.T) {
 	cleanup()
 	t.Cleanup(cleanup)
 
-	req.NoError(db.Create(TestCategories).Error)
+	//req.NoError(db.Create(TestCategories).Error)
 	req.NoError(db.Create(TestDishes).Error)
+}
+
+func FindTestDishByID(id uint) dish.Dish {
+	for _, testDish := range TestDishes {
+		if testDish.ID == id {
+			return testDish
+		}
+	}
+	log.Panicf("cannot find TestDish with id %d\n", id)
+	return dish.Dish{}
 }

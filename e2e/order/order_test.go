@@ -6,21 +6,26 @@ import (
 	"food_ordering_backend/e2e/testutils"
 	"github.com/stretchr/testify/assert"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
 func TestOrders(t *testing.T) {
 	t.Run("GET /orders", func(t *testing.T) {
-		//send := testutils.ReqWithCookie(http.MethodGet, "/orders")
+		send := testutils.ReqWithCookie(http.MethodGet, "/orders")
 
 		t.Run("should return a list of orders for specific user", func(t *testing.T) {
-			//it := assert.New(t)
+			testutils.SetupOrdersDB(t)
 
+			c := testutils.LoginAs(t, testutils.TestUsersDTOs[0])
+			verifyResponse(t, 3, send(c, ""))
 		})
 
 		t.Run("should return all orders if requester is admin", func(t *testing.T) {
-			//it := assert.New(t)
+			testutils.SetupOrdersDB(t)
 
+			_, c := testutils.LoginAsRandomAdmin(t)
+			verifyResponse(t, len(testutils.TestOrders), send(c, ""))
 		})
 
 		testutils.RunAuthTests(t, http.MethodGet, "/orders", false)
@@ -107,4 +112,30 @@ func TestOrders(t *testing.T) {
 
 		testutils.RunAuthTests(t, http.MethodPut, "/orders/69", true)
 	})
+}
+
+func verifyResponse(t *testing.T, expectedLen int, resp *httptest.ResponseRecorder) {
+	it := assert.New(t)
+	if it.Equal(http.StatusOK, resp.Code) {
+
+		var orders []order.ResponseDTO
+		if it.NoError(json.NewDecoder(resp.Body).Decode(&orders)) {
+			it.Len(orders, expectedLen)
+
+			for _, o := range orders {
+				it.NotZero(o.CreatedAt)
+				it.NotZero(o.UpdatedAt)
+
+				if it.NotZero(o.ID) {
+					testOrder := testutils.FindTestOrderByID(o.ID)
+					it.Equal(testOrder.UserID, o.UserID)
+					it.Equal(testOrder.Items, o.Items)
+					it.Equal(testOrder.Status, o.Status)
+					it.Equal(testOrder.Total, o.Total)
+					it.Equal(testOrder.User, o.User)
+				}
+			}
+		}
+	}
+
 }

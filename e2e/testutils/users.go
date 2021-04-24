@@ -1,6 +1,7 @@
 package testutils
 
 import (
+	"encoding/json"
 	"food_ordering_backend/common"
 	"food_ordering_backend/controllers/user"
 	"github.com/stretchr/testify/assert"
@@ -19,29 +20,36 @@ var TestAdminsDTOs = []user.AuthDTO{
 	{Email: "Aurore31@hotmail.com", Password: "9BNQgtcgRYSEAUv"},
 	{Email: "Julius.Keeling@hotmail.com", Password: "MblfRKEDRQvJvIK"},
 }
-var TestUsers = make([]user.User, 3)
-var TestAdmins = make([]user.User, 3)
 
-func init() {
-	populateTestUsers()
-	populateTestAdmins()
-}
+var startID uint = 1
+var TestUsers = populateTestUsers(startID)
+var TestAdmins = populateTestAdmins(startID + uint(len(TestUsers)))
 
-func populateTestUsers() {
+func populateTestUsers(startID uint) []user.User {
+	users := make([]user.User, 3)
 	for i, dto := range TestUsersDTOs {
 		u := user.CreateFromDTO(dto)
+		u.ID = startID
 
-		TestUsers[i] = u
+		startID++
+
+		users[i] = u
 	}
+	return users
 }
 
-func populateTestAdmins() {
+func populateTestAdmins(startID uint) []user.User {
+	admins := make([]user.User, 3)
 	for i, dto := range TestAdminsDTOs {
 		u := user.CreateFromDTO(dto)
+		u.ID = startID
+
+		startID++
 
 		u.IsAdmin = true
-		TestAdmins[i] = u
+		admins[i] = u
 	}
+	return admins
 }
 
 // SetupUsersDB inserts TestUsers and TestAdmins into db.
@@ -77,6 +85,15 @@ func RunAuthTests(t *testing.T, method, target string, adminOnly bool) {
 	}
 }
 
+func LoginAs(t *testing.T, dto user.AuthDTO) *http.Cookie {
+	data, _ := json.Marshal(&dto)
+	resp := SendReq(http.MethodPost, "/users/signin")(string(data))
+	authCookie := FindCookieByName(resp.Result(), user.SessionCookieName)
+
+	require.NotEmpty(t, authCookie)
+	return authCookie
+}
+
 func LoginAsRandomUser(t *testing.T) (user.AuthDTO, *http.Cookie) {
 	return loginAsRandomDTO(t, TestUsersDTOs)
 }
@@ -88,9 +105,5 @@ func LoginAsRandomAdmin(t *testing.T) (user.AuthDTO, *http.Cookie) {
 func loginAsRandomDTO(t *testing.T, dtos []user.AuthDTO) (user.AuthDTO, *http.Cookie) {
 	randomIndex := common.RandomInt(len(dtos))
 	dto := dtos[randomIndex]
-	resp := Login(dto)
-	authCookie := FindCookieByName(resp.Result(), user.SessionCookieName)
-
-	require.NotEmpty(t, authCookie)
-	return dto, authCookie
+	return dto, LoginAs(t, dto)
 }

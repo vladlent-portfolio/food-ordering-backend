@@ -29,6 +29,12 @@ func (r *Repository) FindAll() ([]Order, error) {
 	return orders, err
 }
 
+func (r *Repository) FindByID(id uint) (Order, error) {
+	var order Order
+	err := r.preload().First(&order, id).Error
+	return order, err
+}
+
 func (r *Repository) FindByUID(uid uint) ([]Order, error) {
 	var orders []Order
 	err := r.preload().Where("user_id = ?", uid).Find(&orders).Error

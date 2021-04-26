@@ -5,12 +5,17 @@ import (
 	"food_ordering_backend/controllers/dish"
 	"food_ordering_backend/controllers/order"
 	"food_ordering_backend/controllers/user"
+	"food_ordering_backend/database"
 	"food_ordering_backend/e2e/testutils"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 )
+
+var db = database.MustGetTest()
+var orderRepo = order.ProvideRepository(db)
 
 func TestOrders(t *testing.T) {
 	t.Run("GET /orders", func(t *testing.T) {
@@ -103,21 +108,76 @@ func TestOrders(t *testing.T) {
 	})
 
 	t.Run("PATCH /orders/:id", func(t *testing.T) {
+		sendWithParam := func(id uint, c *http.Cookie) *httptest.ResponseRecorder {
+			param := strconv.Itoa(int(id))
+			return testutils.ReqWithCookie(http.MethodPatch, "/orders/"+param+"/cancel")(c, "")
+		}
 
 		t.Run("/orders/:id/cancel", func(t *testing.T) {
-			//sendWithParam := func(id uint, body string, c *http.Cookie) *httptest.ResponseRecorder {
-			//	param := strconv.Itoa(int(id))
-			//	return testutils.ReqWithCookie(http.MethodPatch, "/orders/"+param+"/cancel")(c, body)
-			//}
+			t.Run("should change orders status to 'canceled' and return it", func(t *testing.T) {
+				testutils.SetupOrdersDB(t)
+				it := assert.New(t)
+				tests := []struct {
+					userDTO user.AuthDTO
+					orderID uint
+				}{
+					{testutils.TestUsersDTOs[0], 2},
+					{testutils.TestUsersDTOs[2], 4},
+					{testutils.TestUsersDTOs[0], 5},
+				}
 
-			t.Run("should change orders status to 'canceled'", func(t *testing.T) {
-				//it := assert.New(t)
+				for _, tc := range tests {
+					c := testutils.LoginAs(t, tc.userDTO)
+					resp := sendWithParam(tc.orderID, c)
+
+					if it.Equal(http.StatusOK, resp.Code) {
+						o, err := orderRepo.FindByID(tc.orderID)
+
+						if it.NoError(err) {
+							it.Equal(order.StatusCanceled, o.Status)
+
+							// Checking that only order status was changed
+							unmodified := testutils.FindTestOrderByID(tc.orderID)
+							it.NotEqual(unmodified.UpdatedAt, o.UpdatedAt)
+							it.Equal(unmodified.CreatedAt, o.CreatedAt)
+							it.Equal(unmodified.User, o.User)
+							it.Equal(unmodified.UserID, o.UserID)
+							it.Equal(unmodified.Total, o.Total)
+							it.Equal(unmodified.Items, o.Items)
+						}
+					}
+				}
 
 			})
 
-			t.Run("should return 304 if order is already canceled", func(t *testing.T) {
-				//it := assert.New(t)
+			t.Run("should return 304 if order is already canceled or done", func(t *testing.T) {
+				it := assert.New(t)
+				tests := []struct {
+					userDTO user.AuthDTO
+					orderID uint
+				}{
+					{testutils.TestUsersDTOs[0], 1},
+					{testutils.TestUsersDTOs[3], 2},
+				}
 
+				for _, tc := range tests {
+					c := testutils.LoginAs(t, tc.userDTO)
+					resp := sendWithParam(tc.orderID, c)
+
+					if it.Equal(http.StatusNotModified, resp.Code) {
+						o, err := orderRepo.FindByID(tc.orderID)
+						if it.NoError(err) {
+							unmodified := testutils.FindTestOrderByID(tc.orderID)
+							it.Equal(unmodified.UpdatedAt, o.UpdatedAt)
+							it.Equal(unmodified.Status, o.Status)
+							it.Equal(unmodified.CreatedAt, o.CreatedAt)
+							it.Equal(unmodified.User, o.User)
+							it.Equal(unmodified.UserID, o.UserID)
+							it.Equal(unmodified.Total, o.Total)
+							it.Equal(unmodified.Items, o.Items)
+						}
+					}
+				}
 			})
 
 			testutils.RunAuthTests(t, http.MethodPut, "/orders/69/cancel", false)

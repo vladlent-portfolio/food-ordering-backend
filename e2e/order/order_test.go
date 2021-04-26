@@ -114,7 +114,7 @@ func TestOrders(t *testing.T) {
 		}
 
 		t.Run("/orders/:id/cancel", func(t *testing.T) {
-			t.Run("should change orders status to 'canceled' and return it", func(t *testing.T) {
+			t.Run("should change orders status to 'canceled'", func(t *testing.T) {
 				testutils.SetupOrdersDB(t)
 				it := assert.New(t)
 				tests := []struct {

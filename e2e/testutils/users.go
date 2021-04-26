@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -85,9 +86,13 @@ func RunAuthTests(t *testing.T, method, target string, adminOnly bool) {
 	}
 }
 
-func LoginAs(t *testing.T, dto user.AuthDTO) *http.Cookie {
+func Login(dto user.AuthDTO) *httptest.ResponseRecorder {
 	data, _ := json.Marshal(&dto)
-	resp := SendReq(http.MethodPost, "/users/signin")(string(data))
+	return SendReq(http.MethodPost, "/users/signin")(string(data))
+}
+
+func LoginAs(t *testing.T, dto user.AuthDTO) *http.Cookie {
+	resp := Login(dto)
 	authCookie := FindCookieByName(resp.Result(), user.SessionCookieName)
 
 	require.NotEmpty(t, authCookie)

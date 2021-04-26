@@ -53,6 +53,7 @@ func TestAPI(t *testing.T) {
 						it.NotZero(respDTO.ID)
 						it.Equal(respDTO.Email, dto.Email)
 						it.False(respDTO.IsAdmin)
+						it.False(respDTO.CreatedAt.IsZero())
 					}
 				}
 			})

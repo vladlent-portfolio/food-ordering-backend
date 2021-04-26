@@ -41,6 +41,13 @@ func (r *Repository) FindByUID(uid uint) ([]Order, error) {
 	return orders, err
 }
 
+func (r *Repository) UpdateStatus(id uint, status Status) error {
+	o := Order{
+		ID: id,
+	}
+	return r.db.Model(&o).Update("status", status).Error
+}
+
 func (r *Repository) preload() *gorm.DB {
 	return r.db.
 		Preload("Items").

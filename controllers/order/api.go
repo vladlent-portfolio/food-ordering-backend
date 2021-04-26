@@ -2,11 +2,11 @@ package order
 
 import (
 	"errors"
-	"fmt"
 	"food_ordering_backend/controllers/user"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
+	"strconv"
 )
 
 type API struct {
@@ -51,9 +51,6 @@ func (api *API) Create(c *gin.Context) {
 		c.Status(http.StatusUnprocessableEntity)
 		return
 	}
-
-	fmt.Printf("dto: %+v\n", dto)
-
 	u := c.MustGet(user.ContextUserKey).(user.User)
 	o, err := api.service.Create(dto.Items, u)
 
@@ -72,7 +69,45 @@ func (api *API) Create(c *gin.Context) {
 }
 
 func (api *API) Cancel(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
 
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	u := c.MustGet(user.ContextUserKey).(user.User)
+	o, err := api.service.FindByID(uint(id))
+
+	if err != nil {
+		var errOrderID *ErrOrderID
+
+		if errors.As(err, &errOrderID) {
+			c.String(http.StatusNotFound, errOrderID.Error())
+			return
+		}
+
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	if !u.IsAdmin && u.ID != o.UserID {
+		c.Status(http.StatusForbidden)
+		return
+	}
+
+	switch o.Status {
+	case StatusCanceled, StatusDone:
+		c.Status(http.StatusNotModified)
+		return
+	}
+
+	if err := api.service.UpdateStatus(uint(id), StatusCanceled); err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.Status(http.StatusOK)
 }
 
 func (api *API) Update(c *gin.Context) {}

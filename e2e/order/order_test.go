@@ -101,7 +101,7 @@ func TestOrders(t *testing.T) {
 
 			resp := send(c, req)
 			it.Equal(http.StatusBadRequest, resp.Code)
-			it.Contains("Dish with id 233 doesn't exist", resp.Body.String())
+			it.Contains(resp.Body.String(), "Dish with id 233 doesn't exist")
 		})
 
 		testutils.RunAuthTests(t, http.MethodPost, "/orders", false)
@@ -131,33 +131,32 @@ func TestOrders(t *testing.T) {
 					resp := sendWithParam(tc.orderID, c)
 
 					if it.Equal(http.StatusOK, resp.Code) {
-						o, err := orderRepo.FindByID(tc.orderID)
-
-						if it.NoError(err) {
-							it.Equal(order.StatusCanceled, o.Status)
-
-							// Checking that only order status was changed
-							unmodified := testutils.FindTestOrderByID(tc.orderID)
-							it.NotEqual(unmodified.UpdatedAt, o.UpdatedAt)
-							it.Equal(unmodified.CreatedAt, o.CreatedAt)
-							it.Equal(unmodified.User, o.User)
-							it.Equal(unmodified.UserID, o.UserID)
-							it.Equal(unmodified.Total, o.Total)
-							it.Equal(unmodified.Items, o.Items)
-						}
+						verifyStatusChange(t, tc.orderID, order.StatusCanceled)
 					}
 				}
+			})
 
+			t.Run("should return 200 if admin is changing status", func(t *testing.T) {
+				testutils.SetupOrdersDB(t)
+				it := assert.New(t)
+				_, c := testutils.LoginAsRandomAdmin(t)
+				resp := sendWithParam(4, c)
+
+				if it.Equal(http.StatusOK, resp.Code) {
+					verifyStatusChange(t, 4, order.StatusCanceled)
+				}
 			})
 
 			t.Run("should return 304 if order is already canceled or done", func(t *testing.T) {
+				testutils.SetupOrdersDB(t)
 				it := assert.New(t)
 				tests := []struct {
 					userDTO user.AuthDTO
 					orderID uint
+					status  order.Status
 				}{
-					{testutils.TestUsersDTOs[0], 1},
-					{testutils.TestUsersDTOs[3], 2},
+					{testutils.TestUsersDTOs[0], 1, order.StatusDone},
+					{testutils.TestUsersDTOs[1], 3, order.StatusCanceled},
 				}
 
 				for _, tc := range tests {
@@ -165,22 +164,38 @@ func TestOrders(t *testing.T) {
 					resp := sendWithParam(tc.orderID, c)
 
 					if it.Equal(http.StatusNotModified, resp.Code) {
-						o, err := orderRepo.FindByID(tc.orderID)
-						if it.NoError(err) {
-							unmodified := testutils.FindTestOrderByID(tc.orderID)
-							it.Equal(unmodified.UpdatedAt, o.UpdatedAt)
-							it.Equal(unmodified.Status, o.Status)
-							it.Equal(unmodified.CreatedAt, o.CreatedAt)
-							it.Equal(unmodified.User, o.User)
-							it.Equal(unmodified.UserID, o.UserID)
-							it.Equal(unmodified.Total, o.Total)
-							it.Equal(unmodified.Items, o.Items)
-						}
+						verifyStatusNotChange(t, tc.orderID, tc.status)
 					}
 				}
 			})
 
-			testutils.RunAuthTests(t, http.MethodPut, "/orders/69/cancel", false)
+			t.Run("should return 400 if order id is invalid", func(t *testing.T) {
+				testutils.SetupOrdersDB(t)
+				_, c := testutils.LoginAsRandomUser(t)
+				resp := testutils.ReqWithCookie(http.MethodPatch, "/orders/randomtext/cancel")(c, "")
+				assert.Equal(t, http.StatusBadRequest, resp.Code)
+			})
+
+			t.Run("should return 403 if user tries to change another users order", func(t *testing.T) {
+				testutils.SetupOrdersDB(t)
+				c := testutils.LoginAs(t, testutils.TestUsersDTOs[2])
+				resp := sendWithParam(5, c)
+				assert.Equal(t, http.StatusForbidden, resp.Code)
+				verifyStatusNotChange(t, 5, order.StatusCreated)
+			})
+
+			t.Run("should return 404 if order with provided id doesn't exist", func(t *testing.T) {
+				testutils.SetupOrdersDB(t)
+				it := assert.New(t)
+				_, c := testutils.LoginAsRandomUser(t)
+				resp := sendWithParam(1337, c)
+
+				if it.Equal(http.StatusNotFound, resp.Code) {
+					it.Contains(resp.Body.String(), "Order with id 1337 doesn't exist")
+				}
+			})
+
+			testutils.RunAuthTests(t, http.MethodPatch, "/orders/69/cancel", false)
 		})
 	})
 
@@ -222,5 +237,37 @@ func verifyResponse(t *testing.T, expectedLen int, resp *httptest.ResponseRecord
 			}
 		}
 	}
+}
 
+func verifyStatusChange(t *testing.T, orderID uint, newStatus order.Status) {
+	it := assert.New(t)
+	o, err := orderRepo.FindByID(orderID)
+
+	if it.NoError(err) {
+		it.Equal(newStatus, o.Status)
+
+		unmodified := testutils.FindTestOrderByID(orderID)
+		it.NotEqual(unmodified.UpdatedAt, o.UpdatedAt)
+		it.NotEqual(o.CreatedAt, o.UpdatedAt)
+		testutils.UsersEqual(t, unmodified.User, o.User)
+		it.Equal(unmodified.UserID, o.UserID)
+		it.Equal(unmodified.Total, o.Total)
+		it.Equal(unmodified.Items, o.Items)
+	}
+}
+func verifyStatusNotChange(t *testing.T, orderID uint, status order.Status) {
+	it := assert.New(t)
+	o, err := orderRepo.FindByID(orderID)
+
+	if it.NoError(err) {
+		it.Equal(status, o.Status)
+
+		unmodified := testutils.FindTestOrderByID(orderID)
+		it.Equal(unmodified.CreatedAt, o.CreatedAt)
+		it.Equal(unmodified.UpdatedAt, o.UpdatedAt)
+		testutils.UsersEqual(t, unmodified.User, o.User)
+		it.Equal(unmodified.UserID, o.UserID)
+		it.Equal(unmodified.Total, o.Total)
+		it.Equal(unmodified.Items, o.Items)
+	}
 }

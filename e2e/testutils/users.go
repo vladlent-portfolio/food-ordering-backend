@@ -102,6 +102,16 @@ func LoginAsRandomAdmin(t *testing.T) (user.AuthDTO, *http.Cookie) {
 	return loginAsRandomDTO(t, TestAdminsDTOs)
 }
 
+func UsersEqual(t *testing.T, u1, u2 user.User) {
+	it := assert.New(t)
+	it.Equal(u1.ID, u2.ID)
+	it.Equal(u1.Email, u2.Email)
+	// TODO: Fix user times not being equal
+	it.True(u1.CreatedAt.Equal(u2.CreatedAt))
+	it.Equal(u1.IsAdmin, u2.IsAdmin)
+	it.Equal(u1.PasswordHash, u2.PasswordHash)
+}
+
 func loginAsRandomDTO(t *testing.T, dtos []user.AuthDTO) (user.AuthDTO, *http.Cookie) {
 	randomIndex := common.RandomInt(len(dtos))
 	dto := dtos[randomIndex]

@@ -35,7 +35,6 @@ func SetupDishesAndCategories(t *testing.T) {
 	cleanup()
 	t.Cleanup(cleanup)
 
-	//req.NoError(db.Create(TestCategories).Error)
 	req.NoError(db.Create(TestDishes).Error)
 }
 

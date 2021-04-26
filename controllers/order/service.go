@@ -1,9 +1,11 @@
 package order
 
 import (
+	"errors"
 	"fmt"
 	"food_ordering_backend/controllers/dish"
 	"food_ordering_backend/controllers/user"
+	"gorm.io/gorm"
 )
 
 type Service struct {
@@ -15,8 +17,16 @@ type ErrDishID struct {
 	ID uint
 }
 
+type ErrOrderID struct {
+	ID uint
+}
+
 func (e *ErrDishID) Error() string {
 	return fmt.Sprintf("Dish with id %d doesn't exist", e.ID)
+}
+
+func (e *ErrOrderID) Error() string {
+	return fmt.Sprintf("Order with id %d doesn't exist", e.ID)
 }
 
 func ProvideService(repo *Repository, dishes *dish.Service) *Service {
@@ -25,6 +35,20 @@ func ProvideService(repo *Repository, dishes *dish.Service) *Service {
 
 func (s *Service) FindAll() ([]Order, error) {
 	return s.repo.FindAll()
+}
+
+func (s *Service) FindByID(id uint) (Order, error) {
+	o, err := s.repo.FindByID(id)
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return Order{}, &ErrOrderID{ID: id}
+		}
+
+		return Order{}, err
+	}
+
+	return o, nil
 }
 
 func (s *Service) FindByUID(uid uint) ([]Order, error) {
@@ -69,4 +93,8 @@ func (s *Service) Create(itemsDTO []ItemRequestDTO, u user.User) (Order, error) 
 
 	o.Total = CalcTotal(o.Items)
 	return s.repo.Create(o)
+}
+
+func (s *Service) UpdateStatus(id uint, status Status) error {
+	return s.repo.UpdateStatus(id, status)
 }

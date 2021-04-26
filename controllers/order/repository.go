@@ -12,6 +12,17 @@ func ProvideRepository(db *gorm.DB) *Repository {
 	return &Repository{db}
 }
 
+func (r *Repository) Create(o Order) (Order, error) {
+	err := r.db.Create(&o).Error
+
+	if err != nil {
+		return o, err
+	}
+
+	err = r.preload().First(&o).Error
+	return o, err
+}
+
 func (r *Repository) FindAll() ([]Order, error) {
 	var orders []Order
 	err := r.preload().Find(&orders).Error

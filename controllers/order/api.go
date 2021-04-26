@@ -1,6 +1,8 @@
 package order
 
 import (
+	"errors"
+	"fmt"
 	"food_ordering_backend/controllers/user"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -44,7 +46,29 @@ func (api *API) FindAll(c *gin.Context) {
 }
 
 func (api *API) Create(c *gin.Context) {
+	var dto RequestDTO
+	if err := c.ShouldBindJSON(&dto); err != nil {
+		c.Status(http.StatusUnprocessableEntity)
+		return
+	}
 
+	fmt.Printf("dto: %+v\n", dto)
+
+	u := c.MustGet(user.ContextUserKey).(user.User)
+	o, err := api.service.Create(dto.Items, u)
+
+	if err != nil {
+		var errDishID *ErrDishID
+		if errors.As(err, &errDishID) {
+			c.String(http.StatusBadRequest, errDishID.Error())
+			return
+		}
+
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.JSON(http.StatusCreated, ToResponseDTO(o))
 }
 
 func (api *API) Cancel(c *gin.Context) {

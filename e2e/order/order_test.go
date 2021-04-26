@@ -1,7 +1,8 @@
-package order
+package order_test
 
 import (
 	"encoding/json"
+	"food_ordering_backend/controllers/dish"
 	"food_ordering_backend/controllers/order"
 	"food_ordering_backend/controllers/user"
 	"food_ordering_backend/e2e/testutils"
@@ -35,9 +36,8 @@ func TestOrders(t *testing.T) {
 
 		t.Run("should create an order and return it", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
+			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
-			// TODO: Use TestDishes instead of hardcoded
-
 			reqJSON := `{"items": [{"id":  1, "quantity": 2}, {"id":  3, "quantity": 1}]}`
 			userDTO, c := testutils.LoginAsRandomUser(t)
 
@@ -52,9 +52,21 @@ func TestOrders(t *testing.T) {
 					it.Equal(order.StatusCreated, dto.Status)
 					it.Equal(userDTO.Email, dto.User.Email)
 					it.Equal(7.29, dto.Total)
-					// TODO: Check returned dishes
 
-					it.Len(dto.Items, 2)
+					if it.Len(dto.Items, 2) {
+						item1, item2 := dto.Items[0], dto.Items[1]
+						it.NotZero(item1.ID)
+						it.NotZero(item2.ID)
+
+						it.NotZero(item1.OrderID)
+						it.Equal(item1.OrderID, item2.OrderID)
+
+						it.Equal(uint(1), item1.DishID)
+						it.Equal(uint(3), item2.DishID)
+
+						it.Equal(dish.ToDTO(testutils.FindTestDishByID(1)), item1.Dish)
+						it.Equal(dish.ToDTO(testutils.FindTestDishByID(3)), item2.Dish)
+					}
 				}
 			}
 		})
@@ -62,17 +74,31 @@ func TestOrders(t *testing.T) {
 		t.Run("should return 422 if json is incorrect or contains validation errors", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			it := assert.New(t)
-			malformed := `{"items":[{"id":  1, "quantity": 2}, {"id":  3, "quantity": `
-			invalid := `{"items":[{"id":  1, "quantity": 2}, {"id":  3, "quantity": -1}]}`
-			zeroQuantity := `{"items":[{"id":  1, "quantity": 2}, {"id":  3, "quantity": 0}]}`
-
+			tests := []string{
+				`{"items":[{"id":  1, "quantity": 2}, {"id":  3, "quantity": `,
+				`{"items":[{"id":  1, "quantity": 2}, {"id":  3, "quantity": -1}]}`,
+				`{"items":[{"id":  1, "quantity": 2}, {"id":  3, "quantity": 0}]}`,
+				`{"items":[]}`,
+			}
 			_, c := testutils.LoginAsRandomUser(t)
 
-			for _, req := range []string{malformed, invalid, zeroQuantity} {
+			for _, req := range tests {
 				resp := send(c, req)
 				it.Equal(http.StatusUnprocessableEntity, resp.Code)
 			}
 		})
+		t.Run("should return 400 if dish with provided id doesn't exist", func(t *testing.T) {
+			testutils.SetupDishesAndCategories(t)
+			testutils.SetupUsersDB(t)
+			it := assert.New(t)
+			req := `{"items":[{"id":  1, "quantity": 2}, {"id": 233, "quantity": 1}]}`
+			_, c := testutils.LoginAsRandomUser(t)
+
+			resp := send(c, req)
+			it.Equal(http.StatusBadRequest, resp.Code)
+			it.Contains("Dish with id 233 doesn't exist", resp.Body.String())
+		})
+
 		testutils.RunAuthTests(t, http.MethodPost, "/orders", false)
 	})
 

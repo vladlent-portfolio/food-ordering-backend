@@ -7,12 +7,12 @@ import (
 )
 
 type RequestDTO struct {
-	Items []ItemResponseDTO `json:"items" binding:"required,gt=0"`
+	Items []ItemRequestDTO `json:"items" binding:"required,gt=0,dive"`
 }
 
 type ItemRequestDTO struct {
 	ID       uint `json:"id" binding:"required"`
-	Quantity int  `json:"quantity" binding:"required, gt=0"`
+	Quantity int  `json:"quantity" binding:"required,gt=0"`
 }
 
 type ResponseDTO struct {

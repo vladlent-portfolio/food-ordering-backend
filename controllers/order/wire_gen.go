@@ -6,6 +6,7 @@
 package order
 
 import (
+	"food_ordering_backend/controllers/dish"
 	"gorm.io/gorm"
 )
 
@@ -13,7 +14,9 @@ import (
 
 func InitAPI(db *gorm.DB) *API {
 	repository := ProvideRepository(db)
-	service := ProvideService(repository)
-	api := ProvideAPI(service)
+	dishRepository := dish.ProvideRepository(db)
+	service := dish.ProvideService(dishRepository)
+	orderService := ProvideService(repository, service)
+	api := ProvideAPI(orderService)
 	return api
 }

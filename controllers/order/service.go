@@ -1,11 +1,26 @@
 package order
 
+import (
+	"fmt"
+	"food_ordering_backend/controllers/dish"
+	"food_ordering_backend/controllers/user"
+)
+
 type Service struct {
-	repo *Repository
+	repo   *Repository
+	dishes *dish.Service
 }
 
-func ProvideService(repo *Repository) *Service {
-	return &Service{repo}
+type ErrDishID struct {
+	ID uint
+}
+
+func (e *ErrDishID) Error() string {
+	return fmt.Sprintf("Dish with id %d doesn't exist", e.ID)
+}
+
+func ProvideService(repo *Repository, dishes *dish.Service) *Service {
+	return &Service{repo, dishes}
 }
 
 func (s *Service) FindAll() ([]Order, error) {
@@ -14,4 +29,44 @@ func (s *Service) FindAll() ([]Order, error) {
 
 func (s *Service) FindByUID(uid uint) ([]Order, error) {
 	return s.repo.FindByUID(uid)
+}
+
+func (s *Service) Create(itemsDTO []ItemRequestDTO, u user.User) (Order, error) {
+	ids := make([]uint, len(itemsDTO))
+
+	for i, dto := range itemsDTO {
+		ids[i] = dto.ID
+	}
+
+	dishes, err := s.dishes.FindByIDs(ids)
+
+	if err != nil {
+		return Order{}, err
+	}
+
+	o := Order{
+		UserID: u.ID,
+		Status: StatusCreated,
+		Items:  make([]Item, len(itemsDTO)),
+	}
+
+	for i, dto := range itemsDTO {
+		d, ok := dish.Dishes(dishes).Find(func(d dish.Dish, index int) bool {
+			return d.ID == dto.ID
+		})
+
+		if !ok {
+			return Order{}, &ErrDishID{ID: dto.ID}
+		}
+
+		item := Item{
+			DishID:   dto.ID,
+			Quantity: dto.Quantity,
+			Dish:     d,
+		}
+		o.Items[i] = item
+	}
+
+	o.Total = CalcTotal(o.Items)
+	return s.repo.Create(o)
 }

@@ -41,6 +41,12 @@ func (r *Repository) FindByID(id uint) (Dish, error) {
 	return d, err
 }
 
+func (r *Repository) FindByIDs(ids []uint) ([]Dish, error) {
+	var dishes []Dish
+	err := r.db.Find(&dishes, ids).Error
+	return dishes, err
+}
+
 func (r *Repository) FindAll(cid uint) []Dish {
 	var dishes []Dish
 

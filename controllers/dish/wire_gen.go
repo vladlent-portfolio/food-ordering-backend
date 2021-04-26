@@ -6,6 +6,7 @@
 package dish
 
 import (
+	"github.com/google/wire"
 	"gorm.io/gorm"
 )
 
@@ -17,3 +18,7 @@ func InitAPI(db *gorm.DB) *API {
 	api := ProvideAPI(service)
 	return api
 }
+
+// wire.go:
+
+var ServiceSet = wire.NewSet(ProvideService, ProvideRepository)

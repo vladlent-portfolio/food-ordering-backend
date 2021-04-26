@@ -20,6 +20,10 @@ func (s *Service) FindByID(id uint) (Dish, error) {
 	return s.repo.FindByID(id)
 }
 
+func (s *Service) FindByIDs(ids []uint) ([]Dish, error) {
+	return s.repo.FindByIDs(ids)
+}
+
 func (s *Service) FindAll(cid uint) []Dish {
 	return s.repo.FindAll(cid)
 }

@@ -6,11 +6,11 @@ import (
 	"time"
 )
 
-type RequestDTO struct {
-	Items []ItemRequestDTO `json:"items" binding:"required,gt=0,dive"`
+type CreateDTO struct {
+	Items []ItemCreateDTO `json:"items" binding:"required,gt=0,dive"`
 }
 
-type ItemRequestDTO struct {
+type ItemCreateDTO struct {
 	ID       uint `json:"id" binding:"required"`
 	Quantity int  `json:"quantity" binding:"required,gt=0"`
 }
@@ -26,12 +26,19 @@ type ResponseDTO struct {
 	Items     []ItemResponseDTO `json:"items"`
 }
 
+type UpdateDTO struct {
+	Status Status          `json:"status" binding:"required,min=0,max=3"`
+	UserID uint            `json:"user_id" binding:"required"`
+	Total  float64         `json:"total" binding:"required"`
+	Items  []ItemCreateDTO `json:"items" binding:"required,gt=0,dive"`
+}
+
 type ItemResponseDTO struct {
 	ID       uint     `json:"id"`
-	OrderID  uint     `json:"order_id"`
-	DishID   uint     `json:"dish_id"`
+	OrderID  uint     `json:"order_id" binding:"required"`
+	DishID   uint     `json:"dish_id" binding:"required"`
 	Dish     dish.DTO `json:"dish"`
-	Quantity int      `json:"quantity"`
+	Quantity int      `json:"quantity" binding:"required"`
 }
 
 type StatusDTO struct {

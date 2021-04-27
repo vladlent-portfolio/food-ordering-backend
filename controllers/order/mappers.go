@@ -28,13 +28,6 @@ func ToResponseDTOs(orders []Order) []ResponseDTO {
 	return dtos
 }
 
-// TODO: Change all ToModel() functions to FromDTO()
-
-//func CreateFromRequestDTO(dto RequestDTO) Order {
-//	var o Order
-//	o.Items = dto.Items
-//}
-
 func ToItemResponseDTO(i Item) ItemResponseDTO {
 	return ItemResponseDTO{
 		ID:       i.ID,

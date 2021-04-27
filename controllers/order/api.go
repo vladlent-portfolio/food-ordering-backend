@@ -46,7 +46,7 @@ func (api *API) FindAll(c *gin.Context) {
 }
 
 func (api *API) Create(c *gin.Context) {
-	var dto RequestDTO
+	var dto CreateDTO
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.Status(http.StatusUnprocessableEntity)
 		return

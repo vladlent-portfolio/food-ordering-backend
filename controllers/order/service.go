@@ -55,7 +55,7 @@ func (s *Service) FindByUID(uid uint) ([]Order, error) {
 	return s.repo.FindByUID(uid)
 }
 
-func (s *Service) Create(itemsDTO []ItemRequestDTO, u user.User) (Order, error) {
+func (s *Service) Create(itemsDTO []ItemCreateDTO, u user.User) (Order, error) {
 	ids := make([]uint, len(itemsDTO))
 
 	for i, dto := range itemsDTO {

@@ -201,13 +201,53 @@ func TestOrders(t *testing.T) {
 	})
 
 	t.Run("PUT /orders/:id", func(t *testing.T) {
-		//sendWithParam := func(id uint, body string, c *http.Cookie) *httptest.ResponseRecorder {
-		//	param := strconv.Itoa(int(id))
-		//	return testutils.ReqWithCookie(http.MethodPut, "/orders/"+param)(c, body)
-		//}
+		sendWithParam := func(id uint, dto order.UpdateDTO, c *http.Cookie) *httptest.ResponseRecorder {
+			param := strconv.Itoa(int(id))
+			body, _ := json.Marshal(dto)
+			return testutils.ReqWithCookie(http.MethodPut, "/orders/"+param)(c, string(body))
+		}
 
 		t.Run("should change order and return modified version", func(t *testing.T) {
-			//it := assert.New(t)
+			testutils.SetupOrdersDB(t)
+			it := assert.New(t)
+			initialOrder := testutils.TestOrders[3]
+			_, c := testutils.LoginAsRandomAdmin(t)
+			dto := order.UpdateDTO{
+				Status: order.StatusInProgress,
+				UserID: 1,
+				Total:  1337,
+				Items:  []order.ItemCreateDTO{{ID: 5, Quantity: 4}, {ID: 1, Quantity: 20}},
+			}
+
+			resp := sendWithParam(initialOrder.ID, dto, c)
+
+			if it.Equal(http.StatusOK, resp.Code) {
+				var respDTO order.ResponseDTO
+				if it.NoError(json.NewDecoder(resp.Body).Decode(&respDTO)) {
+					it.Equal(initialOrder.ID, respDTO.ID)
+					it.Equal(initialOrder.CreatedAt, respDTO.CreatedAt)
+					it.NotEqual(respDTO.UpdatedAt, initialOrder.CreatedAt)
+					it.Equal(order.StatusInProgress, respDTO.Status)
+					it.Equal(1, respDTO.UserID)
+					it.Equal(1337, respDTO.Total)
+
+					if it.Len(respDTO.Items, 2) {
+						it.Equal(5, dto.Items[0].ID)
+						it.Equal(4, dto.Items[0].Quantity)
+						it.Equal(1, dto.Items[1].ID)
+						it.Equal(20, dto.Items[1].Quantity)
+					}
+
+				}
+				orderInDB, err := orderRepo.FindByID(initialOrder.ID)
+				if it.NoError(err) {
+					it.Equal(order.ToResponseDTO(orderInDB), respDTO)
+				}
+			}
+		})
+
+		t.Run("should ignore id in request body", func(t *testing.T) {
+			it := assert.New(t)
 
 		})
 

@@ -23,6 +23,19 @@ func (r *Repository) Create(o Order) (Order, error) {
 	return o, err
 }
 
+func (r *Repository) Save(o Order) (Order, error) {
+	if err := r.db.Omit("User").Save(&o).Error; err != nil {
+		return Order{}, err
+	}
+
+	var updated Order
+	if err := r.preload().First(&updated, o.ID).Error; err != nil {
+		return Order{}, err
+	}
+
+	return updated, nil
+}
+
 func (r *Repository) FindAll() ([]Order, error) {
 	var orders []Order
 	err := r.preload().Find(&orders).Error
@@ -46,6 +59,10 @@ func (r *Repository) UpdateStatus(id uint, status Status) error {
 		ID: id,
 	}
 	return r.db.Model(&o).Update("status", status).Error
+}
+
+func (r *Repository) DeleteItemsByID(ids []uint) error {
+	return r.db.Delete(Item{}, ids).Error
 }
 
 func (r *Repository) preload() *gorm.DB {

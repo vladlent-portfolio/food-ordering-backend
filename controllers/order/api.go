@@ -69,27 +69,13 @@ func (api *API) Create(c *gin.Context) {
 }
 
 func (api *API) Cancel(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+	o, err := api.findByID(c)
 
 	if err != nil {
-		c.Status(http.StatusBadRequest)
 		return
 	}
 
 	u := c.MustGet(user.ContextUserKey).(user.User)
-	o, err := api.service.FindByID(uint(id))
-
-	if err != nil {
-		var errOrderID *ErrOrderID
-
-		if errors.As(err, &errOrderID) {
-			c.String(http.StatusNotFound, errOrderID.Error())
-			return
-		}
-
-		c.Status(http.StatusInternalServerError)
-		return
-	}
 
 	if !u.IsAdmin && u.ID != o.UserID {
 		c.Status(http.StatusForbidden)
@@ -102,7 +88,7 @@ func (api *API) Cancel(c *gin.Context) {
 		return
 	}
 
-	if err := api.service.UpdateStatus(uint(id), StatusCanceled); err != nil {
+	if err := api.service.UpdateStatus(o.ID, StatusCanceled); err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
 	}
@@ -110,4 +96,57 @@ func (api *API) Cancel(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-func (api *API) Update(c *gin.Context) {}
+func (api *API) Update(c *gin.Context) {
+	o, err := api.findByID(c)
+
+	if err != nil {
+		return
+	}
+
+	var dto UpdateDTO
+	if err := c.ShouldBindJSON(&dto); err != nil {
+		c.Status(http.StatusUnprocessableEntity)
+		return
+	}
+
+	o, err = api.service.Update(o, dto)
+
+	// TODO: Merge with Create() error handling and refactor
+	if err != nil {
+		var errDishID *ErrDishID
+		if errors.As(err, &errDishID) {
+			c.String(http.StatusBadRequest, errDishID.Error())
+			return
+		}
+
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.JSON(http.StatusOK, ToResponseDTO(o))
+}
+
+func (api *API) findByID(c *gin.Context) (Order, error) {
+	id, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+		return Order{}, err
+	}
+
+	o, err := api.service.FindByID(uint(id))
+
+	if err != nil {
+		var errOrderID *ErrOrderID
+
+		if errors.As(err, &errOrderID) {
+			c.String(http.StatusNotFound, errOrderID.Error())
+		} else {
+			c.Status(http.StatusInternalServerError)
+		}
+
+		return Order{}, err
+	}
+
+	return o, nil
+}

@@ -16,6 +16,8 @@ const (
 	StatusCanceled   Status = 3
 )
 
+type Items []Item
+
 type Order struct {
 	ID        uint `gorm:"primaryKey"`
 	CreatedAt time.Time
@@ -43,6 +45,16 @@ func (i *Item) Cost() float64 {
 	res := i.Dish.Price * float64(i.Quantity)
 	// Dealing with precision problems
 	return math.Ceil(res*100) / 100
+}
+
+func (items Items) IDs() []uint {
+	ids := make([]uint, len(items))
+
+	for i, item := range items {
+		ids[i] = item.ID
+	}
+
+	return ids
 }
 
 func CalcTotal(items []Item) float64 {

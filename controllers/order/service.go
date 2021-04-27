@@ -56,6 +56,46 @@ func (s *Service) FindByUID(uid uint) ([]Order, error) {
 }
 
 func (s *Service) Create(itemsDTO []ItemCreateDTO, u user.User) (Order, error) {
+	items, err := s.ItemsFromDTOs(itemsDTO)
+
+	if err != nil {
+		return Order{}, err
+	}
+
+	o := Order{
+		UserID: u.ID,
+		Status: StatusCreated,
+		Items:  items,
+		Total:  CalcTotal(items),
+	}
+
+	return s.repo.Create(o)
+}
+
+func (s *Service) Update(o Order, dto UpdateDTO) (Order, error) {
+	items, err := s.ItemsFromDTOs(dto.Items)
+
+	if err != nil {
+		return Order{}, err
+	}
+
+	if err := s.repo.DeleteItemsByID(Items(o.Items).IDs()); err != nil {
+		return Order{}, err
+	}
+
+	o.Status = dto.Status
+	o.UserID = dto.UserID
+	o.Total = dto.Total
+	o.Items = items
+
+	return s.repo.Save(o)
+}
+
+func (s *Service) UpdateStatus(id uint, status Status) error {
+	return s.repo.UpdateStatus(id, status)
+}
+
+func (s *Service) ItemsFromDTOs(itemsDTO []ItemCreateDTO) ([]Item, error) {
 	ids := make([]uint, len(itemsDTO))
 
 	for i, dto := range itemsDTO {
@@ -65,22 +105,17 @@ func (s *Service) Create(itemsDTO []ItemCreateDTO, u user.User) (Order, error) {
 	dishes, err := s.dishes.FindByIDs(ids)
 
 	if err != nil {
-		return Order{}, err
+		return nil, err
 	}
 
-	o := Order{
-		UserID: u.ID,
-		Status: StatusCreated,
-		Items:  make([]Item, len(itemsDTO)),
-	}
-
+	items := make([]Item, len(itemsDTO))
 	for i, dto := range itemsDTO {
 		d, ok := dish.Dishes(dishes).Find(func(d dish.Dish, index int) bool {
 			return d.ID == dto.ID
 		})
 
 		if !ok {
-			return Order{}, &ErrDishID{ID: dto.ID}
+			return nil, &ErrDishID{ID: dto.ID}
 		}
 
 		item := Item{
@@ -88,13 +123,8 @@ func (s *Service) Create(itemsDTO []ItemCreateDTO, u user.User) (Order, error) {
 			Quantity: dto.Quantity,
 			Dish:     d,
 		}
-		o.Items[i] = item
+		items[i] = item
 	}
 
-	o.Total = CalcTotal(o.Items)
-	return s.repo.Create(o)
-}
-
-func (s *Service) UpdateStatus(id uint, status Status) error {
-	return s.repo.UpdateStatus(id, status)
+	return items, nil
 }

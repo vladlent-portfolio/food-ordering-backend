@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"time"
 )
 
 var db = database.MustGetTest()
@@ -41,4 +42,10 @@ func FindCookieByName(resp *http.Response, name string) *http.Cookie {
 		}
 	}
 	return nil
+}
+
+func EqualTimestamps(t1, t2 time.Time) bool {
+	// There can be slight difference between cached user and user from db
+	// so we compare string representation instead
+	return t1.Format(time.RFC3339) == t2.Format(time.RFC3339)
 }

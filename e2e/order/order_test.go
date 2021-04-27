@@ -2,6 +2,7 @@ package order_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"food_ordering_backend/controllers/dish"
 	"food_ordering_backend/controllers/order"
 	"food_ordering_backend/controllers/user"
@@ -12,7 +13,6 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"testing"
-	"time"
 )
 
 var db = database.MustGetTest()
@@ -225,16 +225,16 @@ func TestOrders(t *testing.T) {
 				var respDTO order.ResponseDTO
 				if it.NoError(json.NewDecoder(resp.Body).Decode(&respDTO)) {
 					it.Equal(initialOrder.ID, respDTO.ID)
-					it.Equal(initialOrder.CreatedAt, respDTO.CreatedAt)
-					it.NotEqual(respDTO.UpdatedAt, initialOrder.CreatedAt)
+					it.True(testutils.EqualTimestamps(initialOrder.CreatedAt, respDTO.CreatedAt))
+					it.NotEqual(initialOrder.UpdatedAt, respDTO.UpdatedAt)
 					it.Equal(dto.Status, respDTO.Status)
 					it.Equal(dto.UserID, respDTO.UserID)
 					it.Equal(dto.Total, respDTO.Total)
 
 					if it.Len(respDTO.Items, 2) {
-						it.Equal(dto.Items[0].ID, respDTO.Items[0].ID)
+						it.NotEqual(dto.Items[0].ID, respDTO.Items[0].ID)
 						it.Equal(dto.Items[0].Quantity, respDTO.Items[0].Quantity)
-						it.Equal(dto.Items[1].ID, respDTO.Items[1].ID)
+						it.NotEqual(dto.Items[1].ID, respDTO.Items[1].ID)
 						it.Equal(dto.Items[1].Quantity, respDTO.Items[1].Quantity)
 					}
 
@@ -276,6 +276,20 @@ func TestOrders(t *testing.T) {
 			}
 		})
 
+		t.Run("should return 404 if order with provided id doesn't exist", func(t *testing.T) {
+			it := assert.New(t)
+			testutils.SetupOrdersDB(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			ids := []uint{1337, 420}
+
+			for _, id := range ids {
+				resp := sendWithParam(id, "", c)
+				if it.Equal(http.StatusNotFound, resp.Code) {
+					it.Contains(resp.Body.String(), fmt.Sprintf("Order with id %d doesn't exist", id))
+				}
+			}
+		})
+
 		testutils.RunAuthTests(t, http.MethodPut, "/orders/69", true)
 	})
 }
@@ -301,12 +315,7 @@ func verifyResponse(t *testing.T, expectedLen int, resp *httptest.ResponseRecord
 					it.Equal(testOrder.User.ID, o.User.ID)
 					it.Equal(testOrder.User.Email, o.User.Email)
 					it.Equal(testOrder.User.IsAdmin, o.User.IsAdmin)
-					// There can be slight difference between cached user and user from db
-					// so we compare string representation instead
-					it.Equal(
-						testOrder.User.CreatedAt.Format(time.RFC3339),
-						o.User.CreatedAt.Format(time.RFC3339),
-					)
+					it.True(testutils.EqualTimestamps(testOrder.User.CreatedAt, o.User.CreatedAt))
 				}
 			}
 		}
@@ -337,10 +346,8 @@ func verifyStatusNotChange(t *testing.T, orderID uint, status order.Status) {
 		it.Equal(status, o.Status)
 
 		unmodified := testutils.FindTestOrderByID(orderID)
-		// There can be slight difference between cached user and user from db
-		// so we compare string representation instead
-		it.Equal(unmodified.CreatedAt.Format(time.RFC3339), o.CreatedAt.Format(time.RFC3339))
-		it.Equal(unmodified.UpdatedAt.Format(time.RFC3339), o.UpdatedAt.Format(time.RFC3339))
+		it.True(testutils.EqualTimestamps(unmodified.CreatedAt, o.CreatedAt))
+		it.True(testutils.EqualTimestamps(unmodified.UpdatedAt, o.UpdatedAt))
 		testutils.UsersEqual(t, unmodified.User, o.User)
 		it.Equal(unmodified.UserID, o.UserID)
 		it.Equal(unmodified.Total, o.Total)

@@ -64,3 +64,11 @@ func TestCalcTotal(t *testing.T) {
 		}
 	})
 }
+
+func TestItems_IDs(t *testing.T) {
+	items := Items{{ID: 23}, {ID: 456}, {ID: 10}}
+
+	t.Run("should return a slice of ids in original order", func(t *testing.T) {
+		assert.Equal(t, []uint{23, 456, 10}, items.IDs())
+	})
+}

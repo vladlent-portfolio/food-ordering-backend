@@ -201,10 +201,9 @@ func TestOrders(t *testing.T) {
 	})
 
 	t.Run("PUT /orders/:id", func(t *testing.T) {
-		sendWithParam := func(id uint, dto order.UpdateDTO, c *http.Cookie) *httptest.ResponseRecorder {
+		sendWithParam := func(id uint, body string, c *http.Cookie) *httptest.ResponseRecorder {
 			param := strconv.Itoa(int(id))
-			body, _ := json.Marshal(dto)
-			return testutils.ReqWithCookie(http.MethodPut, "/orders/"+param)(c, string(body))
+			return testutils.ReqWithCookie(http.MethodPut, "/orders/"+param)(c, body)
 		}
 
 		t.Run("should change order and return modified version", func(t *testing.T) {
@@ -218,8 +217,9 @@ func TestOrders(t *testing.T) {
 				Total:  1337,
 				Items:  []order.ItemCreateDTO{{ID: 5, Quantity: 4}, {ID: 1, Quantity: 20}},
 			}
+			body, _ := json.Marshal(&dto)
 
-			resp := sendWithParam(initialOrder.ID, dto, c)
+			resp := sendWithParam(initialOrder.ID, string(body), c)
 
 			if it.Equal(http.StatusOK, resp.Code) {
 				var respDTO order.ResponseDTO
@@ -227,15 +227,15 @@ func TestOrders(t *testing.T) {
 					it.Equal(initialOrder.ID, respDTO.ID)
 					it.Equal(initialOrder.CreatedAt, respDTO.CreatedAt)
 					it.NotEqual(respDTO.UpdatedAt, initialOrder.CreatedAt)
-					it.Equal(order.StatusInProgress, respDTO.Status)
-					it.Equal(1, respDTO.UserID)
-					it.Equal(1337, respDTO.Total)
+					it.Equal(dto.Status, respDTO.Status)
+					it.Equal(dto.UserID, respDTO.UserID)
+					it.Equal(dto.Total, respDTO.Total)
 
 					if it.Len(respDTO.Items, 2) {
-						it.Equal(5, dto.Items[0].ID)
-						it.Equal(4, dto.Items[0].Quantity)
-						it.Equal(1, dto.Items[1].ID)
-						it.Equal(20, dto.Items[1].Quantity)
+						it.Equal(dto.Items[0].ID, respDTO.Items[0].ID)
+						it.Equal(dto.Items[0].Quantity, respDTO.Items[0].Quantity)
+						it.Equal(dto.Items[1].ID, respDTO.Items[1].ID)
+						it.Equal(dto.Items[1].Quantity, respDTO.Items[1].Quantity)
 					}
 
 				}
@@ -243,12 +243,37 @@ func TestOrders(t *testing.T) {
 				if it.NoError(err) {
 					it.Equal(order.ToResponseDTO(orderInDB), respDTO)
 				}
+
+				var initialOrderItems []order.Item
+				itemsIDs := []uint{initialOrder.Items[0].ID, initialOrder.Items[1].ID}
+				if it.NoError(db.Find(&initialOrderItems, itemsIDs).Error) {
+					it.Len(initialOrderItems, 0, "expected previous order items to be deleted")
+				}
 			}
 		})
 
-		t.Run("should ignore id in request body", func(t *testing.T) {
-			it := assert.New(t)
+		t.Run("should return 422 if json in request is malformed or invalid", func(t *testing.T) {
+			testutils.SetupOrdersDB(t)
+			orderID := uint(2)
+			tests := []struct{ reqJSON, reason string }{
+				{`{"status": 2, "user_id": 1, "total": 23, "items": [{"id"}]}`, "malformed"},
+				{`{"status": -1, "user_id": 1, "total": 12.88, "items": [{"id": 2, "quantity": 4}]}`, "status < 0"},
+				{`{"status": 4, "user_id": 1, "total": 23, "items": [{"id": 2, "quantity": 4}]}`, "status > 4"},
+				{`{"user_id": 1, "total": 23, "items": [{"id": 2, "quantity": 4}]}`, "no status field"},
+				{`{"status": 4, "total": 23, "items": [{"id": 2, "quantity": 4}]}`, "no user id"},
+				{`{"status": 4, "user_id": 1, "total": 12.88, "items": [{"id": 2, "quantity": 4}]}`, "total < 0"},
+				{`{"status": 4, "user_id": 1, "total": 12.88, "items": []}`, "empty items array"},
+				{`{"status": 4, "user_id": 1, "total": 12.88}`, "no items field"},
+				{`{"status": 4, "user_id": 1, "total": 12.88, "items": [{"quantity": 4}]}`, "no id field in items"},
+				{`{"status": 4, "user_id": 1, "total": 12.88, "items": [{"id": 2, "quantity": 0}]}`, "quantity is 0"},
+				{`{"status": 4, "user_id": 1, "total": 12.88, "items": [{"id": 2, "quantity": -1}]}`, "quantity < 0"},
+			}
+			_, c := testutils.LoginAsRandomAdmin(t)
 
+			for _, tc := range tests {
+				resp := sendWithParam(orderID, tc.reqJSON, c)
+				assert.Equalf(t, http.StatusUnprocessableEntity, resp.Code, "expected request with %q to return 422", tc.reason)
+			}
 		})
 
 		testutils.RunAuthTests(t, http.MethodPut, "/orders/69", true)

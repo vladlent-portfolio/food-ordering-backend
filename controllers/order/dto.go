@@ -29,19 +29,19 @@ type ResponseDTO struct {
 type UpdateDTO struct {
 	Status Status          `json:"status" binding:"required,min=0,max=3"`
 	UserID uint            `json:"user_id" binding:"required"`
-	Total  float64         `json:"total" binding:"required"`
+	Total  float64         `json:"total" binding:"required,min=0"`
 	Items  []ItemCreateDTO `json:"items" binding:"required,gt=0,dive"`
 }
 
 type ItemResponseDTO struct {
 	ID       uint     `json:"id"`
-	OrderID  uint     `json:"order_id" binding:"required"`
-	DishID   uint     `json:"dish_id" binding:"required"`
+	OrderID  uint     `json:"order_id"`
+	DishID   uint     `json:"dish_id"`
 	Dish     dish.DTO `json:"dish"`
-	Quantity int      `json:"quantity" binding:"required"`
+	Quantity int      `json:"quantity"`
 }
 
 type StatusDTO struct {
-	ID    uint   `json:"id" binding:"required"`
+	ID    uint   `json:"id" binding:"required,min=1"`
 	Title string `json:"title" binding:"required,min=2,max=30"`
 }

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 var TestUsersDTOs = []user.AuthDTO{
@@ -111,8 +112,9 @@ func UsersEqual(t *testing.T, u1, u2 user.User) {
 	it := assert.New(t)
 	it.Equal(u1.ID, u2.ID)
 	it.Equal(u1.Email, u2.Email)
-	// TODO: Fix user times not being equal
-	it.True(u1.CreatedAt.Equal(u2.CreatedAt))
+	// There can be slight difference between cached user and user from db
+	// so we compare string representation instead
+	it.Equal(u1.CreatedAt.Format(time.RFC3339), u2.CreatedAt.Format(time.RFC3339))
 	it.Equal(u1.IsAdmin, u2.IsAdmin)
 	it.Equal(u1.PasswordHash, u2.PasswordHash)
 }

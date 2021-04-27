@@ -52,7 +52,7 @@ func SetupOrdersDB(t *testing.T) {
 	SetupUsersDB(t)
 	SetupDishesAndCategories(t)
 
-	req.NoError(db.Omit("User").Create(&TestOrders).Error)
+	req.NoError(db.Create(&TestOrders).Error)
 	//req.NoError(db.Create(&TestOrderItems).Error)
 }
 

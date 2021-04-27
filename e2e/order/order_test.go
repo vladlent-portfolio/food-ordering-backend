@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"time"
 )
 
 var db = database.MustGetTest()
@@ -232,7 +233,15 @@ func verifyResponse(t *testing.T, expectedLen int, resp *httptest.ResponseRecord
 					it.Equal(order.ToItemsResponseDTO(testOrder.Items), o.Items)
 					it.Equal(testOrder.Status, o.Status)
 					it.Equal(testOrder.Total, o.Total)
-					it.Equal(user.ToResponseDTO(testOrder.User), o.User)
+					it.Equal(testOrder.User.ID, o.User.ID)
+					it.Equal(testOrder.User.Email, o.User.Email)
+					it.Equal(testOrder.User.IsAdmin, o.User.IsAdmin)
+					// There can be slight difference between cached user and user from db
+					// so we compare string representation instead
+					it.Equal(
+						testOrder.User.CreatedAt.Format(time.RFC3339),
+						o.User.CreatedAt.Format(time.RFC3339),
+					)
 				}
 			}
 		}
@@ -263,8 +272,10 @@ func verifyStatusNotChange(t *testing.T, orderID uint, status order.Status) {
 		it.Equal(status, o.Status)
 
 		unmodified := testutils.FindTestOrderByID(orderID)
-		it.Equal(unmodified.CreatedAt, o.CreatedAt)
-		it.Equal(unmodified.UpdatedAt, o.UpdatedAt)
+		// There can be slight difference between cached user and user from db
+		// so we compare string representation instead
+		it.Equal(unmodified.CreatedAt.Format(time.RFC3339), o.CreatedAt.Format(time.RFC3339))
+		it.Equal(unmodified.UpdatedAt.Format(time.RFC3339), o.UpdatedAt.Format(time.RFC3339))
 		testutils.UsersEqual(t, unmodified.User, o.User)
 		it.Equal(unmodified.UserID, o.UserID)
 		it.Equal(unmodified.Total, o.Total)

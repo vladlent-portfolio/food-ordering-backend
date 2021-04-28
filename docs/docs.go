@@ -418,6 +418,174 @@ var doc = `{
                 }
             }
         },
+        "/orders": {
+            "get": {
+                "description": "If requester is admin, it returns all orders. Otherwise, it returns orders only for that user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "order"
+                ],
+                "summary": "Get all orders. Requires auth.",
+                "operationId": "order-all",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/order.ResponseDTO"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "403": {
+                        "description": ""
+                    },
+                    "404": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "order"
+                ],
+                "summary": "Create new order. Requires auth.",
+                "operationId": "order-create",
+                "parameters": [
+                    {
+                        "description": "Create order DTO",
+                        "name": "dto",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/order.CreateDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/order.ResponseDTO"
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "403": {
+                        "description": ""
+                    },
+                    "422": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/orders/:id": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "order"
+                ],
+                "summary": "Replace order. Requires admin rights.",
+                "operationId": "order-update",
+                "parameters": [
+                    {
+                        "description": "Order update DTO",
+                        "name": "dto",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/order.UpdateDTO"
+                        }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Order id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/order.ResponseDTO"
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "403": {
+                        "description": ""
+                    },
+                    "404": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/orders/:id/cancel": {
+            "patch": {
+                "tags": [
+                    "order"
+                ],
+                "summary": "Change order status to 'canceled'. Requires auth.",
+                "operationId": "order-cancel",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Order id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "403": {
+                        "description": ""
+                    },
+                    "404": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/users": {
             "get": {
                 "produces": [
@@ -589,6 +757,113 @@ var doc = `{
                 },
                 "title": {
                     "type": "string"
+                }
+            }
+        },
+        "order.CreateDTO": {
+            "type": "object",
+            "required": [
+                "items"
+            ],
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/order.ItemCreateDTO"
+                    }
+                }
+            }
+        },
+        "order.ItemCreateDTO": {
+            "type": "object",
+            "required": [
+                "id",
+                "quantity"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "integer"
+                }
+            }
+        },
+        "order.ItemResponseDTO": {
+            "type": "object",
+            "properties": {
+                "dish": {
+                    "$ref": "#/definitions/dish.DTO"
+                },
+                "dish_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "order_id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "integer"
+                }
+            }
+        },
+        "order.ResponseDTO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/order.ItemResponseDTO"
+                    }
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "number"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/user.ResponseDTO"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "order.UpdateDTO": {
+            "type": "object",
+            "required": [
+                "items",
+                "status",
+                "total",
+                "user_id"
+            ],
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/order.ItemCreateDTO"
+                    }
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "number"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },

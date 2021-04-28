@@ -22,6 +22,77 @@ definitions:
       title:
         type: string
     type: object
+  order.CreateDTO:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/order.ItemCreateDTO'
+        type: array
+    required:
+    - items
+    type: object
+  order.ItemCreateDTO:
+    properties:
+      id:
+        type: integer
+      quantity:
+        type: integer
+    required:
+    - id
+    - quantity
+    type: object
+  order.ItemResponseDTO:
+    properties:
+      dish:
+        $ref: '#/definitions/dish.DTO'
+      dish_id:
+        type: integer
+      id:
+        type: integer
+      order_id:
+        type: integer
+      quantity:
+        type: integer
+    type: object
+  order.ResponseDTO:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/order.ItemResponseDTO'
+        type: array
+      status:
+        type: integer
+      total:
+        type: number
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/user.ResponseDTO'
+      user_id:
+        type: integer
+    type: object
+  order.UpdateDTO:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/order.ItemCreateDTO'
+        type: array
+      status:
+        type: integer
+      total:
+        type: number
+      user_id:
+        type: integer
+    required:
+    - items
+    - status
+    - total
+    - user_id
+    type: object
   user.AuthDTO:
     properties:
       email:
@@ -311,6 +382,117 @@ paths:
       summary: Replace dish. Requires admin rights.
       tags:
       - dish
+  /orders:
+    get:
+      description: If requester is admin, it returns all orders. Otherwise, it returns orders only for that user.
+      operationId: order-all
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/order.ResponseDTO'
+            type: array
+        "401":
+          description: ""
+        "403":
+          description: ""
+        "404":
+          description: ""
+        "500":
+          description: ""
+      summary: Get all orders. Requires auth.
+      tags:
+      - order
+    post:
+      consumes:
+      - application/json
+      operationId: order-create
+      parameters:
+      - description: Create order DTO
+        in: body
+        name: dto
+        required: true
+        schema:
+          $ref: '#/definitions/order.CreateDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/order.ResponseDTO'
+        "401":
+          description: ""
+        "403":
+          description: ""
+        "422":
+          description: ""
+        "500":
+          description: ""
+      summary: Create new order. Requires auth.
+      tags:
+      - order
+  /orders/:id:
+    put:
+      consumes:
+      - application/json
+      operationId: order-update
+      parameters:
+      - description: Order update DTO
+        in: body
+        name: dto
+        required: true
+        schema:
+          $ref: '#/definitions/order.UpdateDTO'
+      - description: Order id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/order.ResponseDTO'
+        "401":
+          description: ""
+        "403":
+          description: ""
+        "404":
+          description: ""
+        "500":
+          description: ""
+      summary: Replace order. Requires admin rights.
+      tags:
+      - order
+  /orders/:id/cancel:
+    patch:
+      operationId: order-cancel
+      parameters:
+      - description: Order id
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: ""
+        "401":
+          description: ""
+        "403":
+          description: ""
+        "404":
+          description: ""
+        "500":
+          description: ""
+      summary: Change order status to 'canceled'. Requires auth.
+      tags:
+      - order
   /users:
     get:
       operationId: user-get-all

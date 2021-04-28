@@ -26,6 +26,15 @@ func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
 	router.PUT("/:id", auth(true), api.Update)
 }
 
+// FindAll godoc
+// @Summary Get all orders. Requires auth.
+// @Description If requester is admin, it returns all orders. Otherwise, it returns orders only for that user.
+// @ID order-all
+// @Tags order
+// @Produce json
+// @Success 200 {array} ResponseDTO
+// @Failure 401,403,404,500
+// @Router /orders [get]
 func (api *API) FindAll(c *gin.Context) {
 	var orders []Order
 	var err error
@@ -45,6 +54,16 @@ func (api *API) FindAll(c *gin.Context) {
 	c.JSON(http.StatusOK, ToResponseDTOs(orders))
 }
 
+// Create godoc
+// @Summary Create new order. Requires auth.
+// @ID order-create
+// @Tags order
+// @Accept json
+// @Param dto body CreateDTO true "Create order DTO"
+// @Produce json
+// @Success 201 {object} ResponseDTO
+// @Failure 401,403,422,500
+// @Router /orders [post]
 func (api *API) Create(c *gin.Context) {
 	var dto CreateDTO
 	if err := c.ShouldBindJSON(&dto); err != nil {
@@ -68,6 +87,14 @@ func (api *API) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, ToResponseDTO(o))
 }
 
+// Cancel godoc
+// @Summary Change order status to 'canceled'. Requires auth.
+// @ID order-cancel
+// @Tags order
+// @Param id path integer true "Order id"
+// @Success 200
+// @Failure 401,403,404,500
+// @Router /orders/:id/cancel [patch]
 func (api *API) Cancel(c *gin.Context) {
 	o, err := api.findByID(c)
 
@@ -96,6 +123,17 @@ func (api *API) Cancel(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
+// Update godoc
+// @Summary Replace order. Requires admin rights.
+// @ID order-update
+// @Tags order
+// @Accept json
+// @Param dto body UpdateDTO true "Order update DTO"
+// @Param id path integer true "Order id"
+// @Produce json
+// @Success 200 {object} ResponseDTO
+// @Failure 401,403,404,500
+// @Router /orders/:id [put]
 func (api *API) Update(c *gin.Context) {
 	o, err := api.findByID(c)
 

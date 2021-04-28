@@ -127,6 +127,7 @@ func TestAPI(t *testing.T) {
 		})
 
 		t.Run("should return 409 if user with provided email already exists", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
 			resp := send(`{"email":"example@user.com", "password": "secretpass"}`)
 			require.Equal(t, http.StatusCreated, resp.Code)
 

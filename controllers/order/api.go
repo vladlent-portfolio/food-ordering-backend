@@ -111,7 +111,6 @@ func (api *API) Update(c *gin.Context) {
 
 	o, err = api.service.Update(o, dto)
 
-	// TODO: Merge with Create() error handling and refactor
 	if err != nil {
 		var errDishID *ErrDishID
 		if errors.As(err, &errDishID) {

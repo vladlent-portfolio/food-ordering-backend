@@ -29,6 +29,16 @@ func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
 	router.POST("/signin", api.Login)
 }
 
+// Create godoc
+// @Summary Creates new user
+// @ID user-create
+// @Tags users
+// @Accept json
+// @Param auth body AuthDTO true "User info"
+// @Produce json
+// @Success 201 {object} ResponseDTO
+// @Failure 409,422
+// @Router /users [post]
 func (api *API) Create(c *gin.Context) {
 	dto, err := api.bindAuthDTO(c)
 
@@ -53,11 +63,28 @@ func (api *API) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, ToResponseDTO(user))
 }
 
+// FindAll godoc
+// @Summary Get all users
+// @ID user-get-all
+// @Tags users
+// @Produce json
+// @Success 200 {array} ResponseDTO
+// @Failure 401
+// @Router /users [get]
 func (api *API) FindAll(c *gin.Context) {
 	users := api.service.FindAll()
 	c.JSON(http.StatusOK, ToResponseDTOs(users))
 }
 
+// Login godoc
+// @Summary Sign in
+// @ID user-login
+// @Tags users
+// @Accept json
+// @Param auth body AuthDTO true "User login data"
+// @Success 200
+// @Failure 403,500
+// @Router /users/signin [post]
 func (api *API) Login(c *gin.Context) {
 	dto, err := api.bindAuthDTO(c)
 
@@ -83,6 +110,13 @@ func (api *API) Login(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
+// Logout godoc
+// @Summary Logout
+// @ID user-logout
+// @Tags users
+// @Success 200
+// @Failure 401,500
+// @Router /users/logout [get]
 func (api *API) Logout(c *gin.Context) {
 	user := c.MustGet(ContextUserKey).(User)
 	err := api.service.Logout(user)
@@ -98,6 +132,13 @@ func (api *API) Logout(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
+// Info godoc
+// @Summary Get info about current user
+// @ID user-info
+// @Tags users
+// @Success 200 {object} ResponseDTO
+// @Failure 401
+// @Router /users/me [get]
 func (api *API) Info(c *gin.Context) {
 	user := c.MustGet(ContextUserKey).(User)
 	c.JSON(http.StatusOK, ToResponseDTO(user))

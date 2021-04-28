@@ -1,0 +1,128 @@
+basePath: /
+definitions:
+  user.AuthDTO:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  user.ResponseDTO:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      is_admin:
+        type: boolean
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: vladlent.dev@gmail.com
+    name: Vladlen Tereshchenko
+    url: https://github.com/VladlenT
+  description: Golang backend for Food Ordering portfolio app.
+  license:
+    name: MIT
+  title: Food Ordering Backend
+  version: "1.0"
+paths:
+  /users:
+    get:
+      operationId: user-get-all
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/user.ResponseDTO'
+            type: array
+        "401":
+          description: ""
+      summary: Get all users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      operationId: user-create
+      parameters:
+      - description: User info
+        in: body
+        name: auth
+        required: true
+        schema:
+          $ref: '#/definitions/user.AuthDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/user.ResponseDTO'
+        "409":
+          description: ""
+        "422":
+          description: ""
+      summary: Creates new user
+      tags:
+      - users
+  /users/logout:
+    get:
+      operationId: user-logout
+      responses:
+        "200":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: Logout
+      tags:
+      - users
+  /users/me:
+    get:
+      operationId: user-info
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.ResponseDTO'
+        "401":
+          description: ""
+      summary: Get info about current user
+      tags:
+      - users
+  /users/signin:
+    post:
+      consumes:
+      - application/json
+      operationId: user-login
+      parameters:
+      - description: User login data
+        in: body
+        name: auth
+        required: true
+        schema:
+          $ref: '#/definitions/user.AuthDTO'
+      responses:
+        "200":
+          description: ""
+        "403":
+          description: ""
+        "500":
+          description: ""
+      summary: Sign in
+      tags:
+      - users
+schemes:
+- http
+swagger: "2.0"

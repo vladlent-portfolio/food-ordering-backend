@@ -27,6 +27,16 @@ func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
 	router.DELETE("/:id", auth(true), api.Delete)
 }
 
+// Create godoc
+// @Summary Create new category. Requires admin rights.
+// @ID category-create
+// @Tags category
+// @Accept json
+// @Param auth body DTO true "Category DTO"
+// @Produce json
+// @Success 201 {object} DTO
+// @Failure 409,422,500
+// @Router /categories [post]
 func (api *API) Create(c *gin.Context) {
 	dto, err := api.bindJSON(c)
 
@@ -48,6 +58,15 @@ func (api *API) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, ToDTO(category))
 }
 
+// FindByID godoc
+// @Summary Find category by id
+// @ID category-find
+// @Tags category
+// @Param id path integer true "Category id"
+// @Produce json
+// @Success 200 {object} DTO
+// @Failure 403,404
+// @Router /categories/:id [get]
 func (api *API) FindByID(c *gin.Context) {
 	cat, err := api.findByID(c)
 
@@ -58,11 +77,30 @@ func (api *API) FindByID(c *gin.Context) {
 	c.JSON(http.StatusOK, ToDTO(cat))
 }
 
+// FindAll godoc
+// @Summary Get all categories
+// @ID category-all
+// @Tags category
+// @Produce json
+// @Success 200 {array} DTO
+// @Failure 403,404
+// @Router /categories [get]
 func (api *API) FindAll(c *gin.Context) {
 	categories := api.service.FindAll()
 	c.JSON(http.StatusOK, ToDTOs(categories))
 }
 
+// Update godoc
+// @Summary Replace category. Requires admin rights.
+// @ID category-update
+// @Tags category
+// @Accept json
+// @Param category body DTO true "Category DTO"
+// @Param id path integer true "Category id"
+// @Produce json
+// @Success 200 {object} DTO
+// @Failure 401,403,404,500
+// @Router /categories/:id [put]
 func (api *API) Update(c *gin.Context) {
 	cat, err := api.findByID(c)
 
@@ -89,6 +127,15 @@ func (api *API) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, ToDTO(cat))
 }
 
+// Delete godoc
+// @Summary Delete category by id. Requires admin rights.
+// @ID category-delete
+// @Tags category
+// @Param id path integer true "Category id"
+// @Produce json
+// @Success 200 {object} DTO
+// @Failure 401,403,404,500
+// @Router /categories/:id [delete]
 func (api *API) Delete(c *gin.Context) {
 	cat, err := api.findByID(c)
 

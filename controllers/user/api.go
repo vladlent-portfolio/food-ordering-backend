@@ -30,9 +30,9 @@ func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
 }
 
 // Create godoc
-// @Summary Creates new user
+// @Summary Create new user
 // @ID user-create
-// @Tags users
+// @Tags user
 // @Accept json
 // @Param auth body AuthDTO true "User info"
 // @Produce json
@@ -64,9 +64,9 @@ func (api *API) Create(c *gin.Context) {
 }
 
 // FindAll godoc
-// @Summary Get all users
+// @Summary Get all users. Requires admin rights.
 // @ID user-get-all
-// @Tags users
+// @Tags user
 // @Produce json
 // @Success 200 {array} ResponseDTO
 // @Failure 401
@@ -79,7 +79,7 @@ func (api *API) FindAll(c *gin.Context) {
 // Login godoc
 // @Summary Sign in
 // @ID user-login
-// @Tags users
+// @Tags user
 // @Accept json
 // @Param auth body AuthDTO true "User login data"
 // @Success 200
@@ -111,9 +111,9 @@ func (api *API) Login(c *gin.Context) {
 }
 
 // Logout godoc
-// @Summary Logout
+// @Summary Logout. Requires auth.
 // @ID user-logout
-// @Tags users
+// @Tags user
 // @Success 200
 // @Failure 401,500
 // @Router /users/logout [get]
@@ -133,9 +133,9 @@ func (api *API) Logout(c *gin.Context) {
 }
 
 // Info godoc
-// @Summary Get info about current user
+// @Summary Get info about current user. Requires auth.
 // @ID user-info
-// @Tags users
+// @Tags user
 // @Success 200 {object} ResponseDTO
 // @Failure 401
 // @Router /users/me [get]

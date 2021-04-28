@@ -1,5 +1,14 @@
 basePath: /
 definitions:
+  category.DTO:
+    properties:
+      id:
+        type: integer
+      removable:
+        type: boolean
+      title:
+        type: string
+    type: object
   user.AuthDTO:
     properties:
       email:
@@ -33,6 +42,135 @@ info:
   title: Food Ordering Backend
   version: "1.0"
 paths:
+  /categories:
+    get:
+      operationId: category-all
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/category.DTO'
+            type: array
+        "403":
+          description: ""
+        "404":
+          description: ""
+      summary: Get all categories
+      tags:
+      - category
+    post:
+      consumes:
+      - application/json
+      operationId: category-create
+      parameters:
+      - description: Category DTO
+        in: body
+        name: auth
+        required: true
+        schema:
+          $ref: '#/definitions/category.DTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/category.DTO'
+        "409":
+          description: ""
+        "422":
+          description: ""
+        "500":
+          description: ""
+      summary: Create new category. Requires admin rights.
+      tags:
+      - category
+  /categories/:id:
+    delete:
+      operationId: category-delete
+      parameters:
+      - description: Category id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/category.DTO'
+        "401":
+          description: ""
+        "403":
+          description: ""
+        "404":
+          description: ""
+        "500":
+          description: ""
+      summary: Delete category by id. Requires admin rights.
+      tags:
+      - category
+    get:
+      operationId: category-find
+      parameters:
+      - description: Category id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/category.DTO'
+        "403":
+          description: ""
+        "404":
+          description: ""
+      summary: Find category by id
+      tags:
+      - category
+    put:
+      consumes:
+      - application/json
+      operationId: category-update
+      parameters:
+      - description: Category DTO
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/category.DTO'
+      - description: Category id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/category.DTO'
+        "401":
+          description: ""
+        "403":
+          description: ""
+        "404":
+          description: ""
+        "500":
+          description: ""
+      summary: Replace category. Requires admin rights.
+      tags:
+      - category
   /users:
     get:
       operationId: user-get-all
@@ -47,9 +185,9 @@ paths:
             type: array
         "401":
           description: ""
-      summary: Get all users
+      summary: Get all users. Requires admin rights.
       tags:
-      - users
+      - user
     post:
       consumes:
       - application/json
@@ -72,9 +210,9 @@ paths:
           description: ""
         "422":
           description: ""
-      summary: Creates new user
+      summary: Create new user
       tags:
-      - users
+      - user
   /users/logout:
     get:
       operationId: user-logout
@@ -85,9 +223,9 @@ paths:
           description: ""
         "500":
           description: ""
-      summary: Logout
+      summary: Logout. Requires auth.
       tags:
-      - users
+      - user
   /users/me:
     get:
       operationId: user-info
@@ -98,9 +236,9 @@ paths:
             $ref: '#/definitions/user.ResponseDTO'
         "401":
           description: ""
-      summary: Get info about current user
+      summary: Get info about current user. Requires auth.
       tags:
-      - users
+      - user
   /users/signin:
     post:
       consumes:
@@ -122,7 +260,7 @@ paths:
           description: ""
       summary: Sign in
       tags:
-      - users
+      - user
 schemes:
 - http
 swagger: "2.0"

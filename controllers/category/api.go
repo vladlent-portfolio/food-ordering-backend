@@ -32,7 +32,7 @@ func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
 // @ID category-create
 // @Tags category
 // @Accept json
-// @Param auth body DTO true "Category DTO"
+// @Param dto body DTO true "Category DTO"
 // @Produce json
 // @Success 201 {object} DTO
 // @Failure 409,422,500
@@ -95,7 +95,7 @@ func (api *API) FindAll(c *gin.Context) {
 // @ID category-update
 // @Tags category
 // @Accept json
-// @Param category body DTO true "Category DTO"
+// @Param dto body DTO true "Category DTO"
 // @Param id path integer true "Category id"
 // @Produce json
 // @Success 200 {object} DTO

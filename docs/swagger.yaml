@@ -9,6 +9,19 @@ definitions:
       title:
         type: string
     type: object
+  dish.DTO:
+    properties:
+      category:
+        $ref: '#/definitions/category.DTO'
+      category_id:
+        type: integer
+      id:
+        type: integer
+      price:
+        type: number
+      title:
+        type: string
+    type: object
   user.AuthDTO:
     properties:
       email:
@@ -68,7 +81,7 @@ paths:
       parameters:
       - description: Category DTO
         in: body
-        name: auth
+        name: dto
         required: true
         schema:
           $ref: '#/definitions/category.DTO'
@@ -144,7 +157,7 @@ paths:
       parameters:
       - description: Category DTO
         in: body
-        name: category
+        name: dto
         required: true
         schema:
           $ref: '#/definitions/category.DTO'
@@ -171,6 +184,133 @@ paths:
       summary: Replace category. Requires admin rights.
       tags:
       - category
+  /dishes:
+    get:
+      operationId: dish-all
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dish.DTO'
+            type: array
+        "403":
+          description: ""
+        "404":
+          description: ""
+      summary: Get all dishes
+      tags:
+      - dish
+    post:
+      consumes:
+      - application/json
+      operationId: dish-create
+      parameters:
+      - description: User info
+        in: body
+        name: dto
+        required: true
+        schema:
+          $ref: '#/definitions/dish.DTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dish.DTO'
+        "409":
+          description: ""
+        "422":
+          description: ""
+      summary: Create new dish. Requires admin rights.
+      tags:
+      - dish
+  /dishes/:id:
+    delete:
+      operationId: dish-delete
+      parameters:
+      - description: Dish id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dish.DTO'
+        "401":
+          description: ""
+        "403":
+          description: ""
+        "404":
+          description: ""
+        "500":
+          description: ""
+      summary: Delete dish by id. Requires admin rights.
+      tags:
+      - dish
+    get:
+      operationId: dish-find
+      parameters:
+      - description: Dish id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dish.DTO'
+        "403":
+          description: ""
+        "404":
+          description: ""
+      summary: Find dish by id
+      tags:
+      - dish
+    put:
+      consumes:
+      - application/json
+      operationId: dish-update
+      parameters:
+      - description: Dish DTO
+        in: body
+        name: dto
+        required: true
+        schema:
+          $ref: '#/definitions/dish.DTO'
+      - description: Dish id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dish.DTO'
+        "401":
+          description: ""
+        "403":
+          description: ""
+        "404":
+          description: ""
+        "500":
+          description: ""
+      summary: Replace dish. Requires admin rights.
+      tags:
+      - dish
   /users:
     get:
       operationId: user-get-all

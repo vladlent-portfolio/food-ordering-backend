@@ -74,7 +74,7 @@ var doc = `{
                 "parameters": [
                     {
                         "description": "Category DTO",
-                        "name": "auth",
+                        "name": "dto",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -150,7 +150,7 @@ var doc = `{
                 "parameters": [
                     {
                         "description": "Category DTO",
-                        "name": "category",
+                        "name": "dto",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -209,6 +209,198 @@ var doc = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/category.DTO"
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "403": {
+                        "description": ""
+                    },
+                    "404": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/dishes": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dish"
+                ],
+                "summary": "Get all dishes",
+                "operationId": "dish-all",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dish.DTO"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": ""
+                    },
+                    "404": {
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dish"
+                ],
+                "summary": "Create new dish. Requires admin rights.",
+                "operationId": "dish-create",
+                "parameters": [
+                    {
+                        "description": "User info",
+                        "name": "dto",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dish.DTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dish.DTO"
+                        }
+                    },
+                    "409": {
+                        "description": ""
+                    },
+                    "422": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/dishes/:id": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dish"
+                ],
+                "summary": "Find dish by id",
+                "operationId": "dish-find",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Dish id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dish.DTO"
+                        }
+                    },
+                    "403": {
+                        "description": ""
+                    },
+                    "404": {
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dish"
+                ],
+                "summary": "Replace dish. Requires admin rights.",
+                "operationId": "dish-update",
+                "parameters": [
+                    {
+                        "description": "Dish DTO",
+                        "name": "dto",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dish.DTO"
+                        }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Dish id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dish.DTO"
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "403": {
+                        "description": ""
+                    },
+                    "404": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dish"
+                ],
+                "summary": "Delete dish by id. Requires admin rights.",
+                "operationId": "dish-delete",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Dish id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dish.DTO"
                         }
                     },
                     "401": {
@@ -374,6 +566,26 @@ var doc = `{
                 },
                 "removable": {
                     "type": "boolean"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "dish.DTO": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "$ref": "#/definitions/category.DTO"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "price": {
+                    "type": "number"
                 },
                 "title": {
                     "type": "string"

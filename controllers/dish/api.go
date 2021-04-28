@@ -27,6 +27,16 @@ func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
 	router.DELETE("/:id", auth(true), api.Delete)
 }
 
+// Create godoc
+// @Summary Create new dish. Requires admin rights.
+// @ID dish-create
+// @Tags dish
+// @Accept json
+// @Param dto body DTO true "User info"
+// @Produce json
+// @Success 201 {object} DTO
+// @Failure 409,422
+// @Router /dishes [post]
 func (api *API) Create(c *gin.Context) {
 	dto, err := api.bindJSON(c)
 
@@ -48,6 +58,15 @@ func (api *API) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, ToDTO(dish))
 }
 
+// FindByID godoc
+// @Summary Find dish by id
+// @ID dish-find
+// @Tags dish
+// @Param id path integer true "Dish id"
+// @Produce json
+// @Success 200 {object} DTO
+// @Failure 403,404
+// @Router /dishes/:id [get]
 func (api *API) FindByID(c *gin.Context) {
 	dish, err := api.findByID(c)
 
@@ -58,6 +77,14 @@ func (api *API) FindByID(c *gin.Context) {
 	c.JSON(http.StatusOK, ToDTO(dish))
 }
 
+// FindAll godoc
+// @Summary Get all dishes
+// @ID dish-all
+// @Tags dish
+// @Produce json
+// @Success 200 {array} DTO
+// @Failure 403,404
+// @Router /dishes [get]
 func (api *API) FindAll(c *gin.Context) {
 	var dishes []Dish
 	cidq := c.Query("cid")
@@ -78,6 +105,17 @@ func (api *API) FindAll(c *gin.Context) {
 	c.JSON(http.StatusOK, ToDTOs(dishes))
 }
 
+// Update godoc
+// @Summary Replace dish. Requires admin rights.
+// @ID dish-update
+// @Tags dish
+// @Accept json
+// @Param dto body DTO true "Dish DTO"
+// @Param id path integer true "Dish id"
+// @Produce json
+// @Success 200 {object} DTO
+// @Failure 401,403,404,500
+// @Router /dishes/:id [put]
 func (api *API) Update(c *gin.Context) {
 	dish, err := api.findByID(c)
 
@@ -106,6 +144,15 @@ func (api *API) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, ToDTO(dish))
 }
 
+// Delete godoc
+// @Summary Delete dish by id. Requires admin rights.
+// @ID dish-delete
+// @Tags dish
+// @Param id path integer true "Dish id"
+// @Produce json
+// @Success 200 {object} DTO
+// @Failure 401,403,404,500
+// @Router /dishes/:id [delete]
 func (api *API) Delete(c *gin.Context) {
 	dish, err := api.findByID(c)
 

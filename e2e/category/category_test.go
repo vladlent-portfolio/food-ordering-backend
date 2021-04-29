@@ -9,6 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"os"
+	"path"
+	"path/filepath"
 	"strconv"
 	"testing"
 )
@@ -111,6 +115,55 @@ func TestCategories(t *testing.T) {
 		})
 
 		testutils.RunAuthTests(t, http.MethodPost, "/categories", true)
+	})
+
+	t.Run("PATCH /categories/:id/upload", func(t *testing.T) {
+		upload := testutils.UploadReqWithCookie(http.MethodPatch, "/categories/3/upload", "image")
+
+		t.Run("should upload an image, update category in db and return a link to image", func(t *testing.T) {
+			it := assert.New(t)
+			img, err := os.Open("./img/pizza.png")
+			require.NoError(t, err)
+			fileName := filepath.Base(img.Name())
+			stat, err := img.Stat()
+			require.NoError(t, err)
+			_, c := testutils.LoginAsRandomAdmin(t)
+
+			resp := upload(c, fileName, img)
+
+			if it.Equal(http.StatusOK, resp.Code) {
+				link, err := url.Parse(resp.Body.String())
+
+				if it.NoError(err, "expected valid link to image in response") {
+					it.NotEqual(fileName, path.Base(link.String()), "expected filename to be changed")
+					resp, err := http.Get(link.String())
+
+					if it.NoError(err, "expected file to be served") {
+						it.Contains(resp.Header.Get("Content-Type"), "image/png", "expected served image to have correct Content-Type")
+						it.Equal(stat.Size(), resp.ContentLength, "expected served image to be the same size as uploaded")
+					}
+				}
+			}
+
+			var cat category.Category
+			if it.NoError(db.First(&cat, 3).Error) {
+				it.NotZero(cat.Image, "expected category to have a not empty image name")
+				it.NotEqual(fileName, *cat.Image, "expected changed image name")
+			}
+
+		})
+
+		t.Run("should return 415 if file type is not supported", func(t *testing.T) {
+			it := assert.New(t)
+
+		})
+
+		t.Run("should return 413 if file size is too big", func(t *testing.T) {
+			it := assert.New(t)
+
+		})
+
+		testutils.RunAuthTests(t, http.MethodPatch, "/categories/1337/upload", true)
 	})
 
 	t.Run("PUT /categories/:id", func(t *testing.T) {

@@ -1,11 +1,24 @@
 package category
 
+import (
+	"os"
+	"path/filepath"
+)
+
 type Service struct {
 	repo *Repository
 }
 
 func ProvideService(r *Repository) *Service {
 	return &Service{r}
+}
+
+func PathToImages() string {
+	main, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	return filepath.Join(main, "/static/categories")
 }
 
 func (s *Service) Create(c Category) (Category, error) {

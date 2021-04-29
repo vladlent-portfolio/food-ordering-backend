@@ -2,12 +2,14 @@ package testutils
 
 import (
 	"bytes"
+	"food_ordering_backend/config"
 	"food_ordering_backend/database"
 	"food_ordering_backend/router"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"time"
 )
@@ -75,6 +77,12 @@ func EqualTimestamps(t1, t2 time.Time) bool {
 	// There can be slight difference between cached user and user from db
 	// so we compare string representation instead
 	return t1.Format(time.RFC3339) == t2.Format(time.RFC3339)
+}
+
+func CleanupStaticFolder() {
+	if err := os.RemoveAll(config.PathToStatic()); err != nil {
+		panic(err)
+	}
 }
 
 func noError(err error) {

@@ -1,12 +1,15 @@
 package category_test
 
 import (
+	"bytes"
 	"fmt"
+	"food_ordering_backend/config"
 	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/database"
 	"food_ordering_backend/e2e/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -14,6 +17,7 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -118,24 +122,32 @@ func TestCategories(t *testing.T) {
 	})
 
 	t.Run("PATCH /categories/:id/upload", func(t *testing.T) {
-		upload := testutils.UploadReqWithCookie(http.MethodPatch, "/categories/3/upload", "image")
+		upload := func(id uint, c *http.Cookie, fileName string, file io.Reader) *httptest.ResponseRecorder {
+			param := strconv.Itoa(int(id))
+			return testutils.UploadReqWithCookie(http.MethodPatch, "/categories/"+param+"/upload", "image")(c, fileName, file)
+		}
 
 		t.Run("should upload an image, update category in db and return a link to image", func(t *testing.T) {
+			t.Cleanup(testutils.CleanupStaticFolder)
 			it := assert.New(t)
+			c := testutils.TestCategories[2]
+
 			img, err := os.Open("./img/pizza.png")
 			require.NoError(t, err)
 			fileName := filepath.Base(img.Name())
 			stat, err := img.Stat()
 			require.NoError(t, err)
-			_, c := testutils.LoginAsRandomAdmin(t)
+			expectedName := fmt.Sprintf("%d.png", c.ID)
 
-			resp := upload(c, fileName, img)
+			_, cookie := testutils.LoginAsRandomAdmin(t)
+
+			resp := upload(c.ID, cookie, fileName, img)
 
 			if it.Equal(http.StatusOK, resp.Code) {
 				link, err := url.Parse(resp.Body.String())
 
 				if it.NoError(err, "expected valid link to image in response") {
-					it.NotEqual(fileName, path.Base(link.String()), "expected filename to be changed")
+					it.Equal(expectedName, path.Base(link.String()), "expected filename to be 'category_id'+'file_extension'")
 					resp, err := http.Get(link.String())
 
 					if it.NoError(err, "expected file to be served") {
@@ -145,22 +157,29 @@ func TestCategories(t *testing.T) {
 				}
 			}
 
-			var cat category.Category
-			if it.NoError(db.First(&cat, 3).Error) {
-				it.NotZero(cat.Image, "expected category to have a not empty image name")
-				it.NotEqual(fileName, *cat.Image, "expected changed image name")
+			if it.NoError(db.First(&c).Error) {
+				it.Equal(expectedName, c.Image, "expected filename to be 'category_id'+'file_extension'")
 			}
 
+			if it.DirExists(config.CategoriesImgDir) {
+				it.FileExists(filepath.Join(config.CategoriesImgDir, expectedName))
+			}
 		})
 
 		t.Run("should return 415 if file type is not supported", func(t *testing.T) {
-			it := assert.New(t)
-
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := upload(3, c, "img.json", strings.NewReader(""))
+			assert.Equal(t, http.StatusUnsupportedMediaType, resp.Code)
 		})
 
 		t.Run("should return 413 if file size is too big", func(t *testing.T) {
 			it := assert.New(t)
+			var body *bytes.Buffer
+			body.Grow(config.MaxUploadFileSize + 1)
+			_, c := testutils.LoginAsRandomAdmin(t)
 
+			resp := upload(3, c, "photo.png", body)
+			assert.Equal(t, http.StatusRequestEntityTooLarge, resp.Code)
 		})
 
 		testutils.RunAuthTests(t, http.MethodPatch, "/categories/1337/upload", true)

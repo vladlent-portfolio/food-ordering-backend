@@ -2,7 +2,6 @@ package testutils
 
 import (
 	"bytes"
-	"food_ordering_backend/config"
 	"food_ordering_backend/database"
 	"food_ordering_backend/router"
 	"io"
@@ -10,6 +9,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -42,7 +43,7 @@ func ReqWithCookie(method, target string) func(c *http.Cookie, body string) *htt
 
 func UploadReqWithCookie(method, target, formField string) func(c *http.Cookie, fileName string, file io.Reader) *httptest.ResponseRecorder {
 	return func(c *http.Cookie, fileName string, file io.Reader) *httptest.ResponseRecorder {
-		var body *bytes.Buffer
+		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
 		recorder := httptest.NewRecorder()
 
@@ -79,8 +80,17 @@ func EqualTimestamps(t1, t2 time.Time) bool {
 	return t1.Format(time.RFC3339) == t2.Format(time.RFC3339)
 }
 
+// PathToFile combines absolute file path to testutils folder with provided path.
+// Useful for testing, since all test executables are created in OS's temp folder.
+func PathToFile(path string) string {
+	// Test executables are created in temp dir, so we need a reference to a current file.
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(filename)
+	return filepath.Join(dir, path)
+}
+
 func CleanupStaticFolder() {
-	if err := os.RemoveAll(config.PathToStatic()); err != nil {
+	if err := os.RemoveAll(PathToFile("../../static")); err != nil {
 		panic(err)
 	}
 }

@@ -1,18 +1,20 @@
 package config
 
 import (
-	"os"
 	"path/filepath"
+	"runtime"
 )
 
 var MaxUploadFileSize = 1 << 20 // 1 MiB
 
-var CategoriesImgDir = filepath.Join(PathToStatic(), "categories", "img")
+// StaticDir shows absolute path to project's "static" directory.
+var StaticDir = filepath.Join(PathToMain(), "/static")
 
-func PathToStatic() string {
-	main, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	return filepath.Join(main, "/static")
+// CategoriesImgDir shows absolute path for categories images.
+var CategoriesImgDir = filepath.Join(StaticDir, "categories", "img")
+
+// PathToMain returns absolute path to project root.
+func PathToMain() string {
+	_, filename, _, _ := runtime.Caller(0)
+	return filepath.Join(filepath.Dir(filename), "../")
 }

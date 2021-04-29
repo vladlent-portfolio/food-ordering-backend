@@ -128,12 +128,16 @@ func TestCategories(t *testing.T) {
 		}
 
 		t.Run("should upload an image, update category in db and return a link to image", func(t *testing.T) {
+			testutils.SetupDishesAndCategories(t)
+			testutils.SetupUsersDB(t)
 			t.Cleanup(testutils.CleanupStaticFolder)
 			it := assert.New(t)
 			c := testutils.TestCategories[2]
 
-			img, err := os.Open("./img/pizza.png")
+			img, err := os.Open(testutils.PathToFile("./img/pizza.png"))
 			require.NoError(t, err)
+			defer img.Close()
+
 			fileName := filepath.Base(img.Name())
 			stat, err := img.Stat()
 			require.NoError(t, err)
@@ -167,14 +171,15 @@ func TestCategories(t *testing.T) {
 		})
 
 		t.Run("should return 415 if file type is not supported", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
 			_, c := testutils.LoginAsRandomAdmin(t)
 			resp := upload(3, c, "img.json", strings.NewReader(""))
 			assert.Equal(t, http.StatusUnsupportedMediaType, resp.Code)
 		})
 
 		t.Run("should return 413 if file size is too big", func(t *testing.T) {
-			it := assert.New(t)
-			var body *bytes.Buffer
+			testutils.SetupUsersDB(t)
+			body := &bytes.Buffer{}
 			body.Grow(config.MaxUploadFileSize + 1)
 			_, c := testutils.LoginAsRandomAdmin(t)
 

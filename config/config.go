@@ -6,8 +6,7 @@ import (
 	"runtime"
 )
 
-const HostRaw = "http://localhost:8080"
-
+var HostRaw = "http://localhost:8080"
 var HostURL, _ = url.Parse(HostRaw)
 
 var MaxUploadFileSize int64 = 512 * 1024 // 512 KiB

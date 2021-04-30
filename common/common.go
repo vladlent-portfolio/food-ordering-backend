@@ -1,9 +1,11 @@
 package common
 
 import (
+	"food_ordering_backend/config"
 	"io"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -16,6 +18,7 @@ func RandomInt(max int) int {
 	return rand.New(rand.NewSource(time.Now().UnixNano())).Intn(max)
 }
 
+// MIMEType returns MIME type for provided file using http.DetectContentType.
 func MIMEType(file io.ReadSeeker) (string, error) {
 	fileHeader := make([]byte, 512)
 
@@ -28,4 +31,11 @@ func MIMEType(file io.ReadSeeker) (string, error) {
 	}
 
 	return http.DetectContentType(fileHeader), nil
+}
+
+// HostURLResolver resolves reference from config.HostURL to provided relative path.
+// Returns absolute URL.
+func HostURLResolver(relativePath string) string {
+	u, _ := url.Parse(relativePath)
+	return config.HostURL.ResolveReference(u).String()
 }

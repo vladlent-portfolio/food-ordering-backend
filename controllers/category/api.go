@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -206,9 +205,7 @@ func (api *API) Upload(c *gin.Context) {
 		return
 	}
 
-	imgDirPath, _ := url.Parse(path.Join(config.CategoriesImgDir, fName))
-
-	c.String(http.StatusOK, config.HostURL.ResolveReference(imgDirPath).String())
+	c.String(http.StatusOK, common.HostURLResolver(path.Join(config.CategoriesImgDir, fName)))
 }
 
 // Delete godoc

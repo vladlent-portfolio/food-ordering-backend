@@ -9,10 +9,10 @@ import (
 )
 
 var TestCategories = []category.Category{
-	{ID: 1, Title: "Salads", Removable: true},
-	{ID: 2, Title: "Burgers", Removable: true},
-	{ID: 3, Title: "Pizza", Removable: true},
-	{ID: 4, Title: "Drinks", Removable: true},
+	{ID: 1, Title: "Salads", Removable: true, Image: strPointer("1.png")},
+	{ID: 2, Title: "Burgers", Removable: true, Image: strPointer("2.png")},
+	{ID: 3, Title: "Pizza", Removable: true, Image: strPointer("3.png")},
+	{ID: 4, Title: "Drinks", Removable: true, Image: strPointer("4.png")},
 }
 var TestDishes = []dish.Dish{
 	{ID: 1, Title: "Fresh and Healthy Salad", Price: 2.65, CategoryID: 1, Category: TestCategories[0]},
@@ -46,4 +46,8 @@ func FindTestDishByID(id uint) dish.Dish {
 	}
 	log.Panicf("cannot find TestDish with id %d\n", id)
 	return dish.Dish{}
+}
+
+func strPointer(str string) *string {
+	return &str
 }

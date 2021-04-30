@@ -1,7 +1,9 @@
 package category_test
 
 import (
+	"encoding/json"
 	"fmt"
+	"food_ordering_backend/common"
 	"food_ordering_backend/config"
 	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/database"
@@ -31,12 +33,22 @@ func TestCategories(t *testing.T) {
 			it := assert.New(t)
 			resp := send("")
 
-			it.Equal(http.StatusOK, resp.Code)
-			it.Contains(resp.Header().Get("Content-Type"), "application/json")
-			it.Equal(
-				testutils.TestCategoriesJSON,
-				resp.Body.String(),
-			)
+			if it.Equal(http.StatusOK, resp.Code) {
+				it.Contains(resp.Header().Get("Content-Type"), "application/json")
+				var dtos []category.DTO
+
+				if it.NoError(json.NewDecoder(resp.Body).Decode(&dtos)) {
+					it.Len(dtos, len(testutils.TestCategories))
+
+					for i, dto := range dtos {
+						c := testutils.TestCategories[i]
+						it.Equal(c.ID, dto.ID)
+						it.Equal(c.Title, dto.Title)
+						it.Equal(c.Removable, dto.Removable)
+						it.Equal(imgURL(*c.Image), *dto.Image)
+					}
+				}
+			}
 		})
 	})
 
@@ -54,7 +66,7 @@ func TestCategories(t *testing.T) {
 				resp := sendWithParam(cat.ID)
 				it.Equal(http.StatusOK, resp.Code)
 				it.Equal(
-					fmt.Sprintf(`{"id":%d,"title":%q,"removable":%t}`, cat.ID, cat.Title, cat.Removable),
+					fmt.Sprintf(`{"id":%d,"title":%q,"removable":%t,"image":%q}`, cat.ID, cat.Title, cat.Removable, imgURL(*cat.Image)),
 					resp.Body.String(),
 				)
 			}
@@ -237,7 +249,14 @@ func TestCategories(t *testing.T) {
 
 			resp := sendWithParam(testCategory.ID, updateJSON, c)
 			it.Equal(http.StatusOK, resp.Code)
-			it.Equal(fmt.Sprintf(`{"id":%d,"title":"Sushi","removable":true}`, testCategory.ID), resp.Body.String())
+			it.Equal(
+				fmt.Sprintf(
+					`{"id":%d,"title":"Sushi","removable":true,"image":%q}`,
+					testCategory.ID,
+					imgURL(*testCategory.Image),
+				),
+				resp.Body.String(),
+			)
 		})
 
 		t.Run("should ignore id in provided json", func(t *testing.T) {
@@ -252,7 +271,7 @@ func TestCategories(t *testing.T) {
 
 			resp := sendWithParam(testCategory.ID, updateJSON, c)
 			it.Equal(http.StatusOK, resp.Code)
-			it.Equal(fmt.Sprintf(`{"id":%d,"title":"Sushi","removable":true}`, testCategory.ID), resp.Body.String())
+			it.Equal(fmt.Sprintf(`{"id":%d,"title":"Sushi","removable":true,"image":%q}`, testCategory.ID, imgURL(*testCategory.Image)), resp.Body.String())
 		})
 
 		t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
@@ -329,4 +348,8 @@ func TestCategories(t *testing.T) {
 
 		testutils.RunAuthTests(t, http.MethodDelete, "/categories/69", true)
 	})
+}
+
+func imgURL(name string) string {
+	return common.HostURLResolver(path.Join(config.CategoriesImgDir, name))
 }

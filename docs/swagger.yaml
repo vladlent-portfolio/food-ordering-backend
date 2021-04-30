@@ -19,6 +19,8 @@ definitions:
         type: integer
       id:
         type: integer
+      image:
+        type: string
       price:
         type: number
       title:
@@ -268,6 +270,11 @@ paths:
         name: id
         required: true
         type: integer
+      - description: Category image
+        in: formData
+        name: image
+        required: true
+        type: file
       produces:
       - text/plain
       responses:
@@ -415,6 +422,44 @@ paths:
         "500":
           description: ""
       summary: Replace dish. Requires admin rights.
+      tags:
+      - dish
+  /dishes/:id/upload:
+    patch:
+      consumes:
+      - multipart/form-data
+      operationId: dish-upload
+      parameters:
+      - description: Dish id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Dish image
+        in: formData
+        name: image
+        required: true
+        type: file
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Link to uploaded image
+          schema:
+            type: string
+        "400":
+          description: ""
+        "401":
+          description: ""
+        "404":
+          description: ""
+        "413":
+          description: ""
+        "415":
+          description: ""
+        "500":
+          description: ""
+      summary: Upload image for dish. Requires admin rights.
       tags:
       - dish
   /orders:

@@ -322,7 +322,7 @@ func TestDishes(t *testing.T) {
 		t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			_, c := testutils.LoginAsRandomAdmin(t)
-			resp := testutils.ReqWithCookie(http.MethodPut, "/dishes/some-random-id/upload")(c, "")
+			resp := testutils.ReqWithCookie(http.MethodPut, "/dishes/some-random-id")(c, "")
 			assert.Equal(t, http.StatusBadRequest, resp.Code)
 		})
 
@@ -330,7 +330,7 @@ func TestDishes(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			testutils.SetupDishesAndCategories(t)
 			_, c := testutils.LoginAsRandomAdmin(t)
-			resp := testutils.ReqWithCookie(http.MethodPut, "/dishes/69/upload")(c, "")
+			resp := testutils.ReqWithCookie(http.MethodPut, "/dishes/69")(c, "")
 			assert.Equal(t, http.StatusNotFound, resp.Code)
 		})
 
@@ -369,7 +369,7 @@ func TestDishes(t *testing.T) {
 		t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			_, c := testutils.LoginAsRandomAdmin(t)
-			resp := testutils.ReqWithCookie(http.MethodDelete, "/dishes/some-random-id/upload")(c, "")
+			resp := testutils.ReqWithCookie(http.MethodDelete, "/dishes/some-random-id")(c, "")
 			assert.Equal(t, http.StatusBadRequest, resp.Code)
 		})
 
@@ -377,7 +377,7 @@ func TestDishes(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			testutils.SetupDishesAndCategories(t)
 			_, c := testutils.LoginAsRandomAdmin(t)
-			resp := testutils.ReqWithCookie(http.MethodDelete, "/dishes/69/upload")(c, "")
+			resp := testutils.ReqWithCookie(http.MethodDelete, "/dishes/69")(c, "")
 			assert.Equal(t, http.StatusNotFound, resp.Code)
 		})
 

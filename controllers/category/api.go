@@ -139,6 +139,7 @@ func (api *API) Update(c *gin.Context) {
 // @ID category-upload
 // @Tags category
 // @Param id path integer true "Category id"
+// @Param image formData file true "Category image"
 // @Accept multipart/form-data
 // @Produce text/plain
 // @Success 200 {string} string "Link to uploaded image"

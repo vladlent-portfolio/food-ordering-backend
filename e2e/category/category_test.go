@@ -62,7 +62,16 @@ func TestCategories(t *testing.T) {
 
 		})
 
-		runFindByIDTests(t)
+		t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
+			resp := testutils.SendReq(http.MethodGet, "/categories/some-random-id")("")
+			assert.Equal(t, http.StatusBadRequest, resp.Code)
+		})
+
+		t.Run("should return 404 if category with provided id doesn't exist", func(t *testing.T) {
+			resp := testutils.SendReq(http.MethodGet, "/categories/69")("")
+			assert.Equal(t, http.StatusNotFound, resp.Code)
+		})
+
 	})
 
 	t.Run("POST /categories", func(t *testing.T) {
@@ -154,7 +163,7 @@ func TestCategories(t *testing.T) {
 					it.Equal(expectedName, path.Base(link.String()), "expected filename to be 'category_id'+'file_extension'")
 					resp, err := http.Get(link.String())
 
-					if it.NoError(err, "expected file to be served") {
+					if it.NoError(err, "expected image to be served") {
 						it.Contains(resp.Header.Get("Content-Type"), "image/png", "expected served image to have correct Content-Type")
 						it.Equal(stat.Size(), resp.ContentLength, "expected served image to be the same size as uploaded")
 					}
@@ -185,6 +194,21 @@ func TestCategories(t *testing.T) {
 
 			resp := upload(3, c, "photo.png", body)
 			assert.Equal(t, http.StatusRequestEntityTooLarge, resp.Code)
+		})
+
+		t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := testutils.ReqWithCookie(http.MethodPatch, "/categories/some-random-id/upload")(c, "")
+			assert.Equal(t, http.StatusBadRequest, resp.Code)
+		})
+
+		t.Run("should return 404 if category with provided id doesn't exist", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			testutils.SetupDishesAndCategories(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := testutils.ReqWithCookie(http.MethodPatch, "/categories/69/upload")(c, "")
+			assert.Equal(t, http.StatusNotFound, resp.Code)
 		})
 
 		testutils.RunAuthTests(t, http.MethodPatch, "/categories/1337/upload", true)
@@ -225,8 +249,22 @@ func TestCategories(t *testing.T) {
 			it.Equal(fmt.Sprintf(`{"id":%d,"title":"Sushi","removable":true}`, testCategory.ID), resp.Body.String())
 		})
 
+		t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := testutils.ReqWithCookie(http.MethodPut, "/categories/some-random-id")(c, "")
+			assert.Equal(t, http.StatusBadRequest, resp.Code)
+		})
+
+		t.Run("should return 404 if category with provided id doesn't exist", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			testutils.SetupDishesAndCategories(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := testutils.ReqWithCookie(http.MethodPatch, "/categories/69")(c, "")
+			assert.Equal(t, http.StatusNotFound, resp.Code)
+		})
+
 		testutils.RunAuthTests(t, http.MethodPut, "/categories/69", true)
-		runFindByIDTests(t)
 	})
 
 	t.Run("DELETE /categories/:id", func(t *testing.T) {
@@ -268,18 +306,21 @@ func TestCategories(t *testing.T) {
 			}
 		})
 
+		t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := testutils.ReqWithCookie(http.MethodDelete, "/categories/some-random-id")(c, "")
+			assert.Equal(t, http.StatusBadRequest, resp.Code)
+		})
+
+		t.Run("should return 404 if category with provided id doesn't exist", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			testutils.SetupDishesAndCategories(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := testutils.ReqWithCookie(http.MethodDelete, "/categories/69")(c, "")
+			assert.Equal(t, http.StatusNotFound, resp.Code)
+		})
+
 		testutils.RunAuthTests(t, http.MethodDelete, "/categories/69", true)
-	})
-}
-
-func runFindByIDTests(t *testing.T) {
-	t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
-		resp := testutils.SendReq(http.MethodGet, "/categories/some-random-id")("")
-		assert.Equal(t, http.StatusBadRequest, resp.Code)
-	})
-
-	t.Run("should return 404 if category with provided id doesn't exist", func(t *testing.T) {
-		resp := testutils.SendReq(http.MethodGet, "/categories/69")("")
-		assert.Equal(t, http.StatusNotFound, resp.Code)
 	})
 }

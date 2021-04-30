@@ -24,6 +24,7 @@ func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
 	router.GET("/:id", api.FindByID)
 	router.POST("", auth(true), api.Create)
 	router.PUT("/:id", auth(true), api.Update)
+	router.PATCH("/:id/upload", api.Upload)
 	router.DELETE("/:id", auth(true), api.Delete)
 }
 
@@ -125,6 +126,11 @@ func (api *API) Update(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, ToDTO(cat))
+}
+
+// Upload godoc
+func (api *API) Upload(c *gin.Context) {
+
 }
 
 // Delete godoc

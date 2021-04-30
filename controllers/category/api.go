@@ -205,7 +205,7 @@ func (api *API) Upload(c *gin.Context) {
 		return
 	}
 
-	c.String(http.StatusOK, common.HostURLResolver(path.Join(config.CategoriesImgDir, fName)))
+	c.String(http.StatusOK, PathToImg(fName))
 }
 
 // Delete godoc

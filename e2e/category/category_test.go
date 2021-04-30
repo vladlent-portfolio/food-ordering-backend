@@ -3,7 +3,6 @@ package category_test
 import (
 	"encoding/json"
 	"fmt"
-	"food_ordering_backend/common"
 	"food_ordering_backend/config"
 	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/database"
@@ -351,5 +350,5 @@ func TestCategories(t *testing.T) {
 }
 
 func imgURL(name string) string {
-	return common.HostURLResolver(path.Join(config.CategoriesImgDir, name))
+	return category.PathToImg(name)
 }

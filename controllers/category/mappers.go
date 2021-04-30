@@ -1,8 +1,6 @@
 package category
 
 import (
-	"food_ordering_backend/common"
-	"food_ordering_backend/config"
 	"path"
 )
 
@@ -26,9 +24,7 @@ func ToDTO(c Category) DTO {
 	image := c.Image
 
 	if image != nil {
-		uri := common.HostURLResolver(
-			path.Join(config.CategoriesImgDir, *image),
-		)
+		uri := PathToImg(*image)
 		image = &uri
 	}
 

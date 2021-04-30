@@ -20,7 +20,7 @@ var CategoriesImgDir = "static/categories/img"
 
 // DishesImgDir shows path to directory that contains dishes images
 // relative to main.go
-var DishesImgDir = "static/categories/img"
+var DishesImgDir = "static/dishes/img"
 
 // StaticDirAbs shows absolute path to project's "static" directory.
 var StaticDirAbs = filepath.Join(PathToMain(), StaticDir)

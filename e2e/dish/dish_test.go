@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"food_ordering_backend/common"
 	"food_ordering_backend/config"
+	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/controllers/dish"
 	"food_ordering_backend/database"
 	"food_ordering_backend/e2e/testutils"
@@ -32,12 +33,25 @@ func TestDishes(t *testing.T) {
 			it := assert.New(t)
 			resp := send("")
 
-			it.Equal(http.StatusOK, resp.Code)
-			it.Contains(resp.Header().Get("Content-Type"), "application/json")
-			it.Equal(
-				testutils.TestDishesJSON,
-				resp.Body.String(),
-			)
+			if it.Equal(http.StatusOK, resp.Code) {
+				it.Contains(resp.Header().Get("Content-Type"), "application/json")
+				var dtos []dish.DTO
+
+				if it.NoError(json.NewDecoder(resp.Body).Decode(&dtos)) {
+					it.Len(dtos, len(testutils.TestDishes))
+
+					for i, dto := range dtos {
+						d := testutils.TestDishes[i]
+						it.Equal(d.ID, dto.ID)
+						it.Equal(d.Title, dto.Title)
+						it.Equal(d.Price, dto.Price)
+						it.Equal(imgURL(*d.Image), *dto.Image)
+						it.Equal(d.CategoryID, dto.CategoryID)
+						it.Equal(category.ToDTO(d.Category), dto.Category)
+					}
+				}
+			}
+
 		})
 
 		t.Run("should return dishes filtered by provided category id", func(t *testing.T) {
@@ -65,6 +79,7 @@ func TestDishes(t *testing.T) {
 					it.Equal(d.Category.ID, dto.Category.ID)
 					it.Equal(d.Category.Title, dto.Category.Title)
 					it.Equal(d.Category.Removable, dto.Category.Removable)
+					it.Equal(category.PathToImg(*d.Category.Image), *dto.Category.Image)
 				}
 			}
 		})
@@ -92,19 +107,15 @@ func TestDishes(t *testing.T) {
 			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
 
-			for i, testDish := range testutils.TestDishes {
+			for _, testDish := range testutils.TestDishes {
 				resp := sendWithParam(testDish.ID)
-				testCat := testutils.TestCategories[i/2]
-				it.Equal(http.StatusOK, resp.Code)
-				it.Equal(
-					fmt.Sprintf(
-						`{"id":%d,"title":%q,"price":%v,"category_id":%d,"category":{"id":%d,"title":%q,"removable":%t}}`,
-						testDish.ID, testDish.Title, testDish.Price, testDish.CategoryID, testCat.ID, testCat.Title, testCat.Removable,
-					),
-					resp.Body.String(),
-				)
+				if it.Equal(http.StatusOK, resp.Code) {
+					var dto dish.DTO
+					if it.NoError(json.NewDecoder(resp.Body).Decode(&dto)) {
+						it.Equal(dish.ToDTO(testDish), dto)
+					}
+				}
 			}
-
 		})
 
 		t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
@@ -127,7 +138,12 @@ func TestDishes(t *testing.T) {
 			it := assert.New(t)
 			initialLen := len(testutils.TestDishes)
 			reqJSON := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2}`
-			respJSON := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2,"category":{"id":2,"title":"Burgers","removable":true}}`
+			testCategory := testutils.TestCategories[1]
+			categoryJSON, _ := json.Marshal(category.ToDTO(testCategory))
+			respJSON := fmt.Sprintf(
+				`{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2,"category":%s}`,
+				categoryJSON,
+			)
 
 			_, c := testutils.LoginAsRandomAdmin(t)
 			resp := send(c, reqJSON)
@@ -149,6 +165,7 @@ func TestDishes(t *testing.T) {
 			it.Equal(uint(2), last.Category.ID)
 			it.Equal("Burgers", last.Category.Title)
 			it.True(last.Category.Removable)
+			it.Equal(*testCategory.Image, *last.Category.Image)
 
 			db.Find(&dishes)
 			it.Len(dishes, initialLen+1)
@@ -229,8 +246,8 @@ func TestDishes(t *testing.T) {
 				}
 			}
 
-			if it.DirExists(config.CategoriesImgDirAbs) {
-				it.FileExists(filepath.Join(config.CategoriesImgDirAbs, expectedName))
+			if it.DirExists(config.DishesImgDirAbs) {
+				it.FileExists(filepath.Join(config.DishesImgDirAbs, expectedName))
 			}
 		})
 
@@ -284,39 +301,70 @@ func TestDishes(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
+			testCategory := testutils.TestCategories[1]
 			updateJSON := `{"title":"Double Cheeseburger","price":4.56,"category_id":2}`
-			respJSON := `{"id":4,"title":"Double Cheeseburger","price":4.56,"category_id":2,"category":{"id":2,"title":"Burgers","removable":true}}`
 			_, c := testutils.LoginAsRandomAdmin(t)
 
 			resp := sendWithParam(4, c, updateJSON)
-			it.Equal(http.StatusOK, resp.Code)
-			it.Equal(respJSON, resp.Body.String())
+			if it.Equal(http.StatusOK, resp.Code) {
+				var dto dish.DTO
+				if it.NoError(json.NewDecoder(resp.Body).Decode(&dto)) {
+					it.Equal(uint(4), dto.ID)
+					it.Equal("Double Cheeseburger", dto.Title)
+					it.Equal(4.56, dto.Price)
+					it.Equal(uint(2), dto.CategoryID)
+					it.Equal(imgURL("4.png"), *dto.Image)
+
+					it.Equal(category.ToDTO(testCategory), dto.Category)
+				}
+			}
 		})
 
 		t.Run("should ignore id in provided json", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
+			testCategory := testutils.TestCategories[1]
 			updateJSON := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2}`
-			respJSON := `{"id":4,"title":"Double Cheeseburger","price":4.56,"category_id":2,"category":{"id":2,"title":"Burgers","removable":true}}`
 			_, c := testutils.LoginAsRandomAdmin(t)
 
 			resp := sendWithParam(4, c, updateJSON)
-			it.Equal(http.StatusOK, resp.Code)
-			it.Equal(respJSON, resp.Body.String())
+			if it.Equal(http.StatusOK, resp.Code) {
+				var dto dish.DTO
+				if it.NoError(json.NewDecoder(resp.Body).Decode(&dto)) {
+					it.Equal(uint(4), dto.ID)
+					it.Equal("Double Cheeseburger", dto.Title)
+					it.Equal(4.56, dto.Price)
+					it.Equal(uint(2), dto.CategoryID)
+					it.Equal(imgURL("4.png"), *dto.Image)
+
+					it.Equal(category.ToDTO(testCategory), dto.Category)
+				}
+			}
 		})
 
 		t.Run("should correctly handle category change", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
+			testCategory := testutils.TestCategories[2]
 			updateJSON := `{"id":69,"title":"Meat Supreme","price":3.22,"category_id":3}`
-			respJSON := `{"id":4,"title":"Meat Supreme","price":3.22,"category_id":3,"category":{"id":3,"title":"Pizza","removable":true}}`
 			_, c := testutils.LoginAsRandomAdmin(t)
 
 			resp := sendWithParam(4, c, updateJSON)
-			it.Equal(http.StatusOK, resp.Code)
-			it.Equal(respJSON, resp.Body.String())
+			if it.Equal(http.StatusOK, resp.Code) {
+				var dto dish.DTO
+				if it.NoError(json.NewDecoder(resp.Body).Decode(&dto)) {
+					it.Equal(uint(4), dto.ID)
+					it.Equal("Meat Supreme", dto.Title)
+					it.Equal(3.22, dto.Price)
+					it.Equal(uint(3), dto.CategoryID)
+					it.Equal(imgURL("4.png"), *dto.Image)
+
+					it.Equal(category.ToDTO(testCategory), dto.Category)
+				}
+			}
+
 		})
 
 		t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
@@ -403,4 +451,8 @@ func negativePriceTest(t *testing.T, method string) {
 
 		it.Equal(http.StatusBadRequest, resp.Code)
 	})
+}
+
+func imgURL(name string) string {
+	return dish.PathToImg(name)
 }

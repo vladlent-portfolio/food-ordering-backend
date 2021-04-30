@@ -4,6 +4,8 @@ definitions:
     properties:
       id:
         type: integer
+      image:
+        type: string
       removable:
         type: boolean
       title:
@@ -253,6 +255,39 @@ paths:
         "500":
           description: ""
       summary: Replace category. Requires admin rights.
+      tags:
+      - category
+  /categories/:id/upload:
+    patch:
+      consumes:
+      - multipart/form-data
+      operationId: category-upload
+      parameters:
+      - description: Category id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Link to uploaded image
+          schema:
+            type: string
+        "400":
+          description: ""
+        "401":
+          description: ""
+        "404":
+          description: ""
+        "413":
+          description: ""
+        "415":
+          description: ""
+        "500":
+          description: ""
+      summary: Upload image for category. Requires admin rights.
       tags:
       - category
   /dishes:

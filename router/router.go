@@ -1,6 +1,8 @@
 package router
 
 import (
+	"fmt"
+	"food_ordering_backend/config"
 	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/controllers/dish"
 	"food_ordering_backend/controllers/order"
@@ -15,6 +17,10 @@ type Controller interface {
 
 func Setup(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
+
+	fmt.Println(config.StaticDirAbs)
+	r.Static("/static", config.StaticDirAbs)
+
 	routes := map[string]Controller{
 		"/categories": category.InitAPI(db),
 		"/dishes":     dish.InitAPI(db),

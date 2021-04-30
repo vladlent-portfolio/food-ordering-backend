@@ -1,11 +1,17 @@
 package category
 
 import (
+	"fmt"
 	"food_ordering_backend/common"
+	"food_ordering_backend/config"
 	"food_ordering_backend/controllers/user"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
+	"net/url"
+	"os"
+	"path"
+	"path/filepath"
 	"strconv"
 )
 
@@ -24,7 +30,7 @@ func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
 	router.GET("/:id", api.FindByID)
 	router.POST("", auth(true), api.Create)
 	router.PUT("/:id", auth(true), api.Update)
-	router.PATCH("/:id/upload", api.Upload)
+	router.PATCH("/:id/upload", auth(true), api.Upload)
 	router.DELETE("/:id", auth(true), api.Delete)
 }
 
@@ -129,8 +135,82 @@ func (api *API) Update(c *gin.Context) {
 }
 
 // Upload godoc
+// @Summary Upload image for category. Requires admin rights.
+// @ID category-upload
+// @Tags category
+// @Param id path integer true "Category id"
+// @Accept multipart/form-data
+// @Produce text/plain
+// @Success 200 {string} string "Link to uploaded image"
+// @Failure 400,401,404,413,415,500
+// @Router /categories/:id/upload [patch]
 func (api *API) Upload(c *gin.Context) {
+	cat, err := api.findByID(c)
 
+	if err != nil {
+		return
+	}
+
+	fileHeader, err := c.FormFile("image")
+
+	if err != nil {
+		fmt.Println("form file err:", err)
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if fileHeader.Size > config.MaxUploadFileSize {
+		c.Status(http.StatusRequestEntityTooLarge)
+		return
+	}
+
+	file, err := fileHeader.Open()
+
+	if err != nil {
+		fmt.Println("file header error:", err)
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	defer file.Close()
+
+	contentType, err := common.MIMEType(file)
+
+	if err != nil {
+		c.Status(http.StatusUnprocessableEntity)
+		return
+	}
+
+	if contentType != "image/png" && contentType != "image/jpeg" {
+		c.Status(http.StatusUnsupportedMediaType)
+		return
+	}
+
+	fPath := filepath.Join(config.CategoriesImgDirAbs, fmt.Sprintf("%d.%s", cat.ID, path.Base(contentType)))
+	if err := os.MkdirAll(filepath.Dir(fPath), os.ModeDir); err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	if err := c.SaveUploadedFile(fileHeader, fPath); err != nil {
+		fmt.Println("save err: ", err)
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	fName := path.Base(fPath)
+	cat.Image = &fName
+
+	cat, err = api.service.Save(cat)
+
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	imgDirPath, _ := url.Parse(path.Join(config.CategoriesImgDir, fName))
+
+	c.String(http.StatusOK, config.HostURL.ResolveReference(imgDirPath).String())
 }
 
 // Delete godoc

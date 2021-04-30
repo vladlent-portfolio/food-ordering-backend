@@ -1,7 +1,6 @@
 package category_test
 
 import (
-	"bytes"
 	"fmt"
 	"food_ordering_backend/config"
 	"food_ordering_backend/controllers/category"
@@ -161,39 +160,44 @@ func TestCategories(t *testing.T) {
 
 				if it.NoError(err, "expected valid link to image in response") {
 					it.Equal(expectedName, path.Base(link.String()), "expected filename to be 'category_id'+'file_extension'")
-					resp, err := http.Get(link.String())
+					resp := testutils.SendReq(http.MethodGet, link.String())("")
 
-					if it.NoError(err, "expected image to be served") {
-						it.Contains(resp.Header.Get("Content-Type"), "image/png", "expected served image to have correct Content-Type")
-						it.Equal(stat.Size(), resp.ContentLength, "expected served image to be the same size as uploaded")
+					if it.Equal(http.StatusOK, resp.Code) {
+						it.Contains(resp.Header().Get("Content-Type"), "image/png", "expected served image to have correct Content-Type")
+						it.Equal(stat.Size(), resp.Result().ContentLength, "expected served image to be the same size as uploaded")
 					}
 				}
 			}
 
 			if it.NoError(db.First(&c).Error) {
-				it.Equal(expectedName, c.Image, "expected filename to be 'category_id'+'file_extension'")
+				it.Equal(expectedName, *c.Image, "expected filename to be 'category_id'+'file_extension'")
 			}
 
-			if it.DirExists(config.CategoriesImgDir) {
-				it.FileExists(filepath.Join(config.CategoriesImgDir, expectedName))
+			if it.DirExists(config.CategoriesImgDirAbs) {
+				it.FileExists(filepath.Join(config.CategoriesImgDirAbs, expectedName))
 			}
 		})
 
 		t.Run("should return 415 if file type is not supported", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
+			testutils.SetupDishesAndCategories(t)
 			_, c := testutils.LoginAsRandomAdmin(t)
-			resp := upload(3, c, "img.json", strings.NewReader(""))
+			resp := upload(3, c, "img.json", strings.NewReader("{}"))
 			assert.Equal(t, http.StatusUnsupportedMediaType, resp.Code)
 		})
 
 		t.Run("should return 413 if file size is too big", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
-			body := &bytes.Buffer{}
-			body.Grow(config.MaxUploadFileSize + 1)
-			_, c := testutils.LoginAsRandomAdmin(t)
+			testutils.SetupDishesAndCategories(t)
+			t.Cleanup(testutils.CleanupStaticFolder)
+			img, err := os.Open(testutils.PathToFile("./img/big-image.jpg"))
 
-			resp := upload(3, c, "photo.png", body)
-			assert.Equal(t, http.StatusRequestEntityTooLarge, resp.Code)
+			if assert.NoError(t, err) {
+				_, c := testutils.LoginAsRandomAdmin(t)
+
+				resp := upload(3, c, "photo.png", img)
+				assert.Equal(t, http.StatusRequestEntityTooLarge, resp.Code)
+			}
 		})
 
 		t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {

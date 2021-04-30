@@ -226,6 +226,56 @@ var doc = `{
                 }
             }
         },
+        "/categories/:id/upload": {
+            "patch": {
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "category"
+                ],
+                "summary": "Upload image for category. Requires admin rights.",
+                "operationId": "category-upload",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Category id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Link to uploaded image",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "404": {
+                        "description": ""
+                    },
+                    "413": {
+                        "description": ""
+                    },
+                    "415": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/dishes": {
             "get": {
                 "produces": [
@@ -731,6 +781,9 @@ var doc = `{
             "properties": {
                 "id": {
                     "type": "integer"
+                },
+                "image": {
+                    "type": "string"
                 },
                 "removable": {
                     "type": "boolean"

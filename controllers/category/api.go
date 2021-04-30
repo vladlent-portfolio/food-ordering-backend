@@ -154,7 +154,6 @@ func (api *API) Upload(c *gin.Context) {
 	fileHeader, err := c.FormFile("image")
 
 	if err != nil {
-		fmt.Println("form file err:", err)
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
@@ -167,7 +166,6 @@ func (api *API) Upload(c *gin.Context) {
 	file, err := fileHeader.Open()
 
 	if err != nil {
-		fmt.Println("file header error:", err)
 		c.Status(http.StatusInternalServerError)
 		return
 	}
@@ -193,7 +191,6 @@ func (api *API) Upload(c *gin.Context) {
 	}
 
 	if err := c.SaveUploadedFile(fileHeader, fPath); err != nil {
-		fmt.Println("save err: ", err)
 		c.Status(http.StatusInternalServerError)
 		return
 	}

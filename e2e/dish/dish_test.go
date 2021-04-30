@@ -4,14 +4,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"food_ordering_backend/common"
+	"food_ordering_backend/config"
 	"food_ordering_backend/controllers/dish"
 	"food_ordering_backend/database"
 	"food_ordering_backend/e2e/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"os"
+	"path"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -100,7 +107,15 @@ func TestDishes(t *testing.T) {
 
 		})
 
-		runFindByIDTests(t)
+		t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
+			resp := testutils.SendReq(http.MethodGet, "/dishes/some-random-id")("")
+			assert.Equal(t, http.StatusBadRequest, resp.Code)
+		})
+
+		t.Run("should return 404 if dish with provided id doesn't exist", func(t *testing.T) {
+			resp := testutils.SendReq(http.MethodGet, "/dishes/69")("")
+			assert.Equal(t, http.StatusNotFound, resp.Code)
+		})
 	})
 
 	t.Run("POST /dishes", func(t *testing.T) {
@@ -168,13 +183,104 @@ func TestDishes(t *testing.T) {
 		negativePriceTest(t, http.MethodPost)
 	})
 
+	t.Run("PATCH /dishes/:id/upload", func(t *testing.T) {
+		upload := func(id uint, c *http.Cookie, fileName string, file io.Reader) *httptest.ResponseRecorder {
+			param := strconv.Itoa(int(id))
+			return testutils.UploadReqWithCookie(http.MethodPatch, "/dishes/"+param+"/upload", "image")(c, fileName, file)
+		}
+
+		t.Run("should upload an image, update dish in db and return a link to image", func(t *testing.T) {
+			testutils.SetupDishesAndCategories(t)
+			testutils.SetupUsersDB(t)
+			t.Cleanup(testutils.CleanupStaticFolder)
+			it := assert.New(t)
+			d := testutils.TestDishes[4]
+
+			img, err := os.Open(testutils.PathToFile("./img/pizza.png"))
+			require.NoError(t, err)
+			defer img.Close()
+
+			fileName := filepath.Base(img.Name())
+			stat, err := img.Stat()
+			require.NoError(t, err)
+			expectedName := fmt.Sprintf("%d.png", d.ID)
+
+			_, cookie := testutils.LoginAsRandomAdmin(t)
+
+			resp := upload(d.ID, cookie, fileName, img)
+
+			if it.Equal(http.StatusOK, resp.Code) {
+				link, err := url.Parse(resp.Body.String())
+
+				if it.NoError(err, "expected valid link to image in response") {
+					it.Equal(expectedName, path.Base(link.String()), "expected filename to be 'dish_id'+'file_extension'")
+					resp := testutils.SendReq(http.MethodGet, link.String())("")
+
+					if it.Equal(http.StatusOK, resp.Code) {
+						it.Contains(resp.Header().Get("Content-Type"), "image/png", "expected served image to have correct Content-Type")
+						it.Equal(stat.Size(), resp.Result().ContentLength, "expected served image to be the same size as uploaded")
+					}
+				}
+			}
+
+			if it.NoError(db.First(&d).Error) {
+				if it.NotNil(d.Image) {
+					it.Equal(expectedName, *d.Image, "expected filename to be 'dish_id'+'file_extension'")
+				}
+			}
+
+			if it.DirExists(config.CategoriesImgDirAbs) {
+				it.FileExists(filepath.Join(config.CategoriesImgDirAbs, expectedName))
+			}
+		})
+
+		t.Run("should return 415 if file type is not supported", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			testutils.SetupDishesAndCategories(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := upload(3, c, "img.json", strings.NewReader("{}"))
+			assert.Equal(t, http.StatusUnsupportedMediaType, resp.Code)
+		})
+
+		t.Run("should return 413 if file size is too big", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			testutils.SetupDishesAndCategories(t)
+			t.Cleanup(testutils.CleanupStaticFolder)
+			img, err := os.Open(testutils.PathToFile("./img/big-image.jpg"))
+
+			if assert.NoError(t, err) {
+				_, c := testutils.LoginAsRandomAdmin(t)
+
+				resp := upload(3, c, "photo.png", img)
+				assert.Equal(t, http.StatusRequestEntityTooLarge, resp.Code)
+			}
+		})
+
+		t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := testutils.ReqWithCookie(http.MethodPatch, "/dishes/some-random-id/upload")(c, "")
+			assert.Equal(t, http.StatusBadRequest, resp.Code)
+		})
+
+		t.Run("should return 404 if dishes with provided id doesn't exist", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			testutils.SetupDishesAndCategories(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := testutils.ReqWithCookie(http.MethodPatch, "/dishes/69/upload")(c, "")
+			assert.Equal(t, http.StatusNotFound, resp.Code)
+		})
+
+		testutils.RunAuthTests(t, http.MethodPatch, "/dishes/1337/upload", true)
+	})
+
 	t.Run("PUT /dishes/:id", func(t *testing.T) {
 		sendWithParam := func(id uint, c *http.Cookie, body string) *httptest.ResponseRecorder {
 			param := strconv.Itoa(int(id))
 			return testutils.ReqWithCookie(http.MethodPut, "/dishes/"+param)(c, body)
 		}
 
-		t.Run("should update category in db based on provided json", func(t *testing.T) {
+		t.Run("should update dish in db based on provided json", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
@@ -213,8 +319,22 @@ func TestDishes(t *testing.T) {
 			it.Equal(respJSON, resp.Body.String())
 		})
 
+		t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := testutils.ReqWithCookie(http.MethodPut, "/dishes/some-random-id/upload")(c, "")
+			assert.Equal(t, http.StatusBadRequest, resp.Code)
+		})
+
+		t.Run("should return 404 if category with provided id doesn't exist", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			testutils.SetupDishesAndCategories(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := testutils.ReqWithCookie(http.MethodPut, "/dishes/69/upload")(c, "")
+			assert.Equal(t, http.StatusNotFound, resp.Code)
+		})
+
 		testutils.RunAuthTests(t, http.MethodPut, "/dishes/1", true)
-		runFindByIDTests(t)
 		negativePriceTest(t, http.MethodPut)
 	})
 
@@ -246,19 +366,22 @@ func TestDishes(t *testing.T) {
 			}
 		})
 
+		t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := testutils.ReqWithCookie(http.MethodDelete, "/dishes/some-random-id/upload")(c, "")
+			assert.Equal(t, http.StatusBadRequest, resp.Code)
+		})
+
+		t.Run("should return 404 if dish with provided id doesn't exist", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			testutils.SetupDishesAndCategories(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := testutils.ReqWithCookie(http.MethodDelete, "/dishes/69/upload")(c, "")
+			assert.Equal(t, http.StatusNotFound, resp.Code)
+		})
+
 		testutils.RunAuthTests(t, http.MethodDelete, "/dishes/1", true)
-	})
-}
-
-func runFindByIDTests(t *testing.T) {
-	t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
-		resp := testutils.SendReq(http.MethodGet, "/dishes/some-random-id")("")
-		assert.Equal(t, http.StatusBadRequest, resp.Code)
-	})
-
-	t.Run("should return 404 if category with provided id doesn't exist", func(t *testing.T) {
-		resp := testutils.SendReq(http.MethodGet, "/dishes/69")("")
-		assert.Equal(t, http.StatusNotFound, resp.Code)
 	})
 }
 

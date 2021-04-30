@@ -15,14 +15,22 @@ var MaxUploadFileSize int64 = 512 * 1024 // 512 KiB
 // StaticDir shows path to "static" directory relative to main.go
 var StaticDir = "static"
 
-// CategoriesImgDir shows path to categories images directory relative to main.go
+// CategoriesImgDir shows path to directory that contains categories
+// images relative to main.go
 var CategoriesImgDir = "static/categories/img"
+
+// DishesImgDir shows path to directory that contains dishes images
+// relative to main.go
+var DishesImgDir = "static/categories/img"
 
 // StaticDirAbs shows absolute path to project's "static" directory.
 var StaticDirAbs = filepath.Join(PathToMain(), StaticDir)
 
 // CategoriesImgDirAbs shows absolute path for categories images.
 var CategoriesImgDirAbs = filepath.Join(PathToMain(), CategoriesImgDir)
+
+// DishesImgDirAbs shows absolute path for categories images.
+var DishesImgDirAbs = filepath.Join(PathToMain(), DishesImgDir)
 
 // PathToMain returns absolute path to project root.
 func PathToMain() string {

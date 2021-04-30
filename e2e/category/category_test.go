@@ -170,7 +170,9 @@ func TestCategories(t *testing.T) {
 			}
 
 			if it.NoError(db.First(&c).Error) {
-				it.Equal(expectedName, *c.Image, "expected filename to be 'category_id'+'file_extension'")
+				if it.NotNil(c.Image) {
+					it.Equal(expectedName, *c.Image, "expected filename to be 'category_id'+'file_extension'")
+				}
 			}
 
 			if it.DirExists(config.CategoriesImgDirAbs) {

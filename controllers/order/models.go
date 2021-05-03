@@ -22,7 +22,7 @@ type Order struct {
 	ID        uint `gorm:"primaryKey"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	Status    Status `gorm:"type:smallint"`
+	Status    Status `gorm:"type:smallint;check: status IS IN (0,1,2,3)"`
 	UserID    uint
 	User      user.User `gorm:"constraint:OnDelete:SET NULL,OnUpdate:CASCADE"`
 	Total     float64   `gorm:"check:total >= 0"`

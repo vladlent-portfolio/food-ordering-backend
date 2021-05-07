@@ -17,12 +17,7 @@ type Controller interface {
 func Setup(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
 
-	// TODO: Fix before production
-	r.Use(func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "http://localhost:4200")
-		c.Next()
-	})
-
+	r.Use(CORSMiddleware())
 	r.Static("/static", config.StaticDirAbs)
 
 	routes := map[string]Controller{
@@ -37,4 +32,18 @@ func Setup(db *gorm.DB) *gin.Engine {
 	}
 
 	return r
+}
+
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "http://localhost:4200")
+		c.Header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	}
 }

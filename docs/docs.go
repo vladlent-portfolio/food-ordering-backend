@@ -827,7 +827,10 @@ var doc = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/user.ResponseDTO"
+                        }
                     },
                     "403": {
                         "description": ""

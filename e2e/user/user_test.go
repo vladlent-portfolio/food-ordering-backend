@@ -137,7 +137,6 @@ func TestAPI(t *testing.T) {
 		})
 
 		t.Run("POST /users/signin", func(t *testing.T) {
-
 			t.Run("should sign in a user and add session to db", func(t *testing.T) {
 				testutils.SetupUsersDB(t)
 				it := assert.New(t)
@@ -145,25 +144,33 @@ func TestAPI(t *testing.T) {
 				for i, dto := range testutils.TestUsersDTOs {
 					resp := testutils.Login(dto)
 
-					it.Equal(http.StatusOK, resp.Code)
+					if it.Equal(http.StatusOK, resp.Code) {
+						c := testutils.FindCookieByName(resp.Result(), user.SessionCookieName)
+						var responseDTO user.ResponseDTO
+						if it.NoError(json.NewDecoder(resp.Body).Decode(&responseDTO)) {
+							it.Equal(dto.Email, responseDTO.Email)
+							it.NotZero(responseDTO.ID)
+							it.NotZero(responseDTO.CreatedAt)
+							it.False(responseDTO.IsAdmin)
+						}
 
-					c := testutils.FindCookieByName(resp.Result(), user.SessionCookieName)
+						if assert.NotNil(t, c) {
+							it.NotZero(t, c.Value)
+							it.True(c.HttpOnly)
+							it.Equal(http.SameSiteLaxMode, c.SameSite)
+							it.Equal("/", c.Path)
+							it.Equal(0, c.MaxAge)
+						}
 
-					if assert.NotNil(t, c) {
-						it.NotZero(t, c.Value)
-						it.True(c.HttpOnly)
-						it.Equal(http.SameSiteLaxMode, c.SameSite)
-						it.Equal("/", c.Path)
-						it.Equal(0, c.MaxAge)
+						var sessions []user.Session
+						db.Find(&sessions)
+
+						if it.Len(sessions, i+1) {
+							it.Equal(sessions[i].Token, c.Value)
+							it.False(sessions[i].CreatedAt.IsZero())
+						}
 					}
 
-					var sessions []user.Session
-					db.Find(&sessions)
-
-					if it.Len(sessions, i+1) {
-						it.Equal(sessions[i].Token, c.Value)
-						it.False(sessions[i].CreatedAt.IsZero())
-					}
 				}
 
 			})

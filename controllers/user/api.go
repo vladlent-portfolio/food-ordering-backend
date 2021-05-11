@@ -82,7 +82,7 @@ func (api *API) FindAll(c *gin.Context) {
 // @Tags user
 // @Accept json
 // @Param auth body AuthDTO true "User login data"
-// @Success 200
+// @Success 200 {object} ResponseDTO
 // @Failure 403,500
 // @Router /users/signin [post]
 func (api *API) Login(c *gin.Context) {
@@ -107,7 +107,7 @@ func (api *API) Login(c *gin.Context) {
 	cookie := SessionCookie(session.Token, 0)
 
 	http.SetCookie(c.Writer, cookie)
-	c.Status(http.StatusOK)
+	c.JSON(http.StatusOK, ToResponseDTO(session.User))
 }
 
 // Logout godoc

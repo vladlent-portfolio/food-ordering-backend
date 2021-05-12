@@ -175,7 +175,7 @@ func TestAPI(t *testing.T) {
 
 			})
 
-			t.Run("should return 403 if provided email or password is incorrect", func(t *testing.T) {
+			t.Run("should return 404 if provided email or password is incorrect", func(t *testing.T) {
 				testutils.SetupUsersDB(t)
 				it := assert.New(t)
 				u1 := testutils.TestUsersDTOs[common.RandomInt(len(testutils.TestUsersDTOs))]
@@ -184,11 +184,11 @@ func TestAPI(t *testing.T) {
 				u1.Email = "email@not.exist"
 
 				resp := testutils.Login(u1)
-				it.Equal(http.StatusForbidden, resp.Code)
+				it.Equal(http.StatusNotFound, resp.Code)
 
 				u2.Password = "some-random-pass"
 				resp = testutils.Login(u2)
-				it.Equal(http.StatusForbidden, resp.Code)
+				it.Equal(http.StatusNotFound, resp.Code)
 			})
 		})
 	})

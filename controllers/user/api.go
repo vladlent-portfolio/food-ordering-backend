@@ -83,7 +83,7 @@ func (api *API) FindAll(c *gin.Context) {
 // @Accept json
 // @Param auth body AuthDTO true "User login data"
 // @Success 200 {object} ResponseDTO
-// @Failure 403,500
+// @Failure 404,500
 // @Router /users/signin [post]
 func (api *API) Login(c *gin.Context) {
 	dto, err := api.bindAuthDTO(c)
@@ -97,7 +97,7 @@ func (api *API) Login(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, gorm.ErrRecordNotFound) || errors.Is(err, ErrInvalidPassword):
-			c.Status(http.StatusForbidden)
+			c.Status(http.StatusNotFound)
 		default:
 			c.Status(http.StatusInternalServerError)
 		}

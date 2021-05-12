@@ -832,7 +832,7 @@ var doc = `{
                             "$ref": "#/definitions/user.ResponseDTO"
                         }
                     },
-                    "403": {
+                    "404": {
                         "description": ""
                     },
                     "500": {

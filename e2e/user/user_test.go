@@ -90,50 +90,52 @@ func TestAPI(t *testing.T) {
 	})
 
 	t.Run("POST /users", func(t *testing.T) {
-		send := testutils.SendReq(http.MethodPost, "/users")
+		t.Run("POST /users/signup", func(t *testing.T) {
+			send := testutils.SendReq(http.MethodPost, "/users/signup")
 
-		t.Run("should create a user and return it", func(t *testing.T) {
-			testutils.SetupUsersDB(t)
-			it := assert.New(t)
-			resp := send(`{"email":"example@user.com", "password": "secretpass"}`)
+			t.Run("should create a user and return it", func(t *testing.T) {
+				testutils.SetupUsersDB(t)
+				it := assert.New(t)
+				resp := send(`{"email":"example@user.com", "password": "secretpass"}`)
 
-			require.Equal(t, http.StatusCreated, resp.Code)
-			var newUser user.ResponseDTO
-			err := json.NewDecoder(resp.Body).Decode(&newUser)
-			require.NoError(t, err)
+				require.Equal(t, http.StatusCreated, resp.Code)
+				var newUser user.ResponseDTO
+				err := json.NewDecoder(resp.Body).Decode(&newUser)
+				require.NoError(t, err)
 
-			it.Equal("example@user.com", newUser.Email)
-			it.NotZero(newUser.ID)
+				it.Equal("example@user.com", newUser.Email)
+				it.NotZero(newUser.ID)
 
-			var u user.User
-			if it.NoError(db.Last(&u).Error) {
-				it.NotEmpty(u.PasswordHash)
-				it.Equal(newUser.Email, u.Email)
-				it.False(u.CreatedAt.IsZero())
-				it.False(u.IsAdmin)
-			}
-		})
+				var u user.User
+				if it.NoError(db.Last(&u).Error) {
+					it.NotEmpty(u.PasswordHash)
+					it.Equal(newUser.Email, u.Email)
+					it.False(u.CreatedAt.IsZero())
+					it.False(u.IsAdmin)
+				}
+			})
 
-		t.Run("should return 422 if json is invalid", func(t *testing.T) {
-			it := assert.New(t)
-			resp := send(`{"email":"example@user.com", "password": "secretpass`)
-			it.Equal(http.StatusUnprocessableEntity, resp.Code)
+			t.Run("should return 422 if json is invalid", func(t *testing.T) {
+				it := assert.New(t)
+				resp := send(`{"email":"example@user.com", "password": "secretpass`)
+				it.Equal(http.StatusUnprocessableEntity, resp.Code)
 
-			resp = send(`{"email":"example@user.com", "password": "sec`)
-			it.Equal(http.StatusUnprocessableEntity, resp.Code)
+				resp = send(`{"email":"example@user.com", "password": "sec"}`)
+				it.Equal(http.StatusUnprocessableEntity, resp.Code)
 
-			resp = send(`{"email":"example", "password": "secretpass`)
-			it.Equal(http.StatusUnprocessableEntity, resp.Code)
-		})
+				resp = send(`{"email":"example", "password": "secretpass"}`)
+				it.Equal(http.StatusUnprocessableEntity, resp.Code)
+			})
 
-		t.Run("should return 409 if user with provided email already exists", func(t *testing.T) {
-			testutils.SetupUsersDB(t)
-			it := assert.New(t)
-			resp := send(`{"email":"example@user.com", "password": "secretpass"}`)
-			if it.Equal(http.StatusCreated, resp.Code) {
-				resp = send(`{"email":"example@user.com", "password": "secretpass"}`)
-				require.Equal(t, http.StatusConflict, resp.Code)
-			}
+			t.Run("should return 409 if user with provided email already exists", func(t *testing.T) {
+				testutils.SetupUsersDB(t)
+				it := assert.New(t)
+				resp := send(`{"email":"example@user.com", "password": "secretpass"}`)
+				if it.Equal(http.StatusCreated, resp.Code) {
+					resp = send(`{"email":"example@user.com", "password": "secretpass"}`)
+					require.Equal(t, http.StatusConflict, resp.Code)
+				}
+			})
 		})
 
 		t.Run("POST /users/signin", func(t *testing.T) {

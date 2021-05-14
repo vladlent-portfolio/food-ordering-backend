@@ -8,6 +8,7 @@ import (
 	"food_ordering_backend/controllers/user"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"strings"
 )
 
 type Controller interface {
@@ -36,9 +37,21 @@ func Setup(db *gorm.DB) *gin.Engine {
 
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		allowedHeaders := []string{
+			"Accept",
+			"Accept-Encoding",
+			"Accept-Language",
+			"Cache-Control",
+			"Connection",
+			"Content-Type",
+			"Content-Length",
+		}
+
 		c.Header("Access-Control-Allow-Origin", "http://localhost:4200")
 		c.Header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "*")
+		c.Header("Access-Control-Allow-Credentials", "true")
+		c.Header("Access-Control-Allow-Headers", strings.Join(allowedHeaders, ","))
+		c.Header("Access-Control", "true")
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)

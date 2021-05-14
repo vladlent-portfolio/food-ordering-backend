@@ -25,7 +25,7 @@ func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
 	router.GET("", auth(true), api.FindAll)
 	router.GET("/me", auth(false), api.Info)
 	router.GET("/logout", auth(false), api.Logout)
-	router.POST("", api.Create)
+	router.POST("/signup", api.Create)
 	router.POST("/signin", api.Login)
 }
 
@@ -38,7 +38,7 @@ func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
 // @Produce json
 // @Success 201 {object} ResponseDTO
 // @Failure 409,422
-// @Router /users [post]
+// @Router /users/signup [post]
 func (api *API) Create(c *gin.Context) {
 	dto, err := api.bindAuthDTO(c)
 

@@ -12,6 +12,7 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 type API struct {
@@ -126,7 +127,11 @@ func (api *API) Update(c *gin.Context) {
 	cat, err = api.service.Save(cat)
 
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		if common.IsDuplicateKeyErr(err) {
+			c.Status(http.StatusConflict)
+		} else {
+			c.Status(http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -195,7 +200,7 @@ func (api *API) Upload(c *gin.Context) {
 		return
 	}
 
-	fName := path.Base(fPath)
+	fName := filepath.Base(fPath)
 	cat.Image = &fName
 
 	cat, err = api.service.Save(cat)
@@ -247,6 +252,8 @@ func (api *API) bindJSON(c *gin.Context) (DTO, error) {
 		c.String(http.StatusBadRequest, err.Error())
 		return dto, err
 	}
+
+	dto.Title = strings.TrimSpace(dto.Title)
 
 	return dto, nil
 }

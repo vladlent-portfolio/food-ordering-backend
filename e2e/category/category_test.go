@@ -14,7 +14,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -91,7 +90,7 @@ func TestCategories(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
-			json := `{"id":69,"title":"Pizza","removable":false}`
+			json := `{"id":69,"title":"Seafood","removable":false}`
 			_, c := testutils.LoginAsRandomAdmin(t)
 
 			resp := send(c, json)
@@ -104,12 +103,26 @@ func TestCategories(t *testing.T) {
 
 			db.Last(&last)
 			it.False(last.Removable)
-			it.Equal(last.Title, "Pizza")
+			it.Equal(last.Title, "Seafood")
 			it.Equal(last.ID, uint(69))
 
 			var categories []category.Category
 			if it.NoError(db.Find(&categories).Error) {
 				it.Len(categories, len(testutils.TestCategories)+1)
+			}
+		})
+
+		t.Run("should trim title", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			testutils.SetupDishesAndCategories(t)
+			it := assert.New(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+
+			tests := []string{"  Pizza", "Pizza   ", "   Pizza   "}
+			for _, tc := range tests {
+				json := fmt.Sprintf(`{"title":%q}`, tc)
+				resp := send(c, json)
+				it.Equal(http.StatusConflict, resp.Code)
 			}
 		})
 
@@ -127,7 +140,7 @@ func TestCategories(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
-			json := `{"id":13,"title":"Salads","removable":false}`
+			json := `{"title":"Seafood","removable":false}`
 			_, c := testutils.LoginAsRandomAdmin(t)
 
 			resp := send(c, json)
@@ -170,7 +183,7 @@ func TestCategories(t *testing.T) {
 				link, err := url.Parse(resp.Body.String())
 
 				if it.NoError(err, "expected valid link to image in response") {
-					it.Equal(expectedName, path.Base(link.String()), "expected filename to be 'category_id'+'file_extension'")
+					it.Equal(expectedName, filepath.Base(link.String()), "expected filename to be 'category_id'+'file_extension'")
 					resp := testutils.SendReq(http.MethodGet, link.String())("")
 
 					if it.Equal(http.StatusOK, resp.Code) {
@@ -273,6 +286,20 @@ func TestCategories(t *testing.T) {
 			it.Equal(fmt.Sprintf(`{"id":%d,"title":"Sushi","removable":true,"image":%q}`, testCategory.ID, imgURL(*testCategory.Image)), resp.Body.String())
 		})
 
+		t.Run("should trim title", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			testutils.SetupDishesAndCategories(t)
+			it := assert.New(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+
+			tests := []string{"  Pizza", "Pizza   ", "   Pizza   "}
+			for _, tc := range tests {
+				json := fmt.Sprintf(`{"title":%q}`, tc)
+				resp := sendWithParam(2, json, c)
+				it.Equal(http.StatusConflict, resp.Code)
+			}
+		})
+
 		t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			_, c := testutils.LoginAsRandomAdmin(t)
@@ -347,6 +374,10 @@ func TestCategories(t *testing.T) {
 
 		testutils.RunAuthTests(t, http.MethodDelete, "/categories/69", true)
 	})
+}
+
+func testTitleTrim(t *testing.T) {
+
 }
 
 func imgURL(name string) string {

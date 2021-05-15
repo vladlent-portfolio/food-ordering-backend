@@ -12,6 +12,7 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 type API struct {
@@ -120,7 +121,7 @@ func (api *API) FindAll(c *gin.Context) {
 // @Param id path integer true "Dish id"
 // @Produce json
 // @Success 200 {object} DTO
-// @Failure 401,403,404,500
+// @Failure 401,403,404,409,500
 // @Router /dishes/:id [put]
 func (api *API) Update(c *gin.Context) {
 	dish, err := api.findByID(c)
@@ -143,7 +144,11 @@ func (api *API) Update(c *gin.Context) {
 	dish, err = api.service.Save(dish)
 
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		if common.IsDuplicateKeyErr(err) {
+			c.Status(http.StatusConflict)
+		} else {
+			c.Status(http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -212,7 +217,7 @@ func (api *API) Upload(c *gin.Context) {
 		return
 	}
 
-	fName := path.Base(fPath)
+	fName := filepath.Base(fPath)
 	dish.Image = &fName
 
 	dish, err = api.service.Save(dish)
@@ -259,6 +264,8 @@ func (api *API) bindJSON(c *gin.Context) (DTO, error) {
 		c.String(http.StatusBadRequest, err.Error())
 		return dto, err
 	}
+
+	dto.Title = strings.TrimSpace(dto.Title)
 
 	return dto, nil
 }

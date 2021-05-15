@@ -16,7 +16,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -171,6 +170,20 @@ func TestDishes(t *testing.T) {
 			it.Len(dishes, initialLen+1)
 		})
 
+		t.Run("should trim title", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			testutils.SetupDishesAndCategories(t)
+			it := assert.New(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+
+			tests := []string{"  Crunchy Cashew Salad", "Crunchy Cashew Salad   ", "   Crunchy Cashew Salad   "}
+			for _, tc := range tests {
+				json := fmt.Sprintf(`{"title":%q,"category_id":3,"price":2.28}`, tc)
+				resp := send(c, json)
+				it.Equal(http.StatusConflict, resp.Code)
+			}
+		})
+
 		t.Run("should return 400 if provided json isn't correct", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			it := assert.New(t)
@@ -186,7 +199,7 @@ func TestDishes(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
-			json := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2}`
+			json := `{"title":"Double Cheeseburger","price":4.56,"category_id":2}`
 			_, c := testutils.LoginAsRandomAdmin(t)
 
 			resp := send(c, json)
@@ -230,7 +243,7 @@ func TestDishes(t *testing.T) {
 				link, err := url.Parse(resp.Body.String())
 
 				if it.NoError(err, "expected valid link to image in response") {
-					it.Equal(expectedName, path.Base(link.String()), "expected filename to be 'dish_id'+'file_extension'")
+					it.Equal(expectedName, filepath.Base(link.String()), "expected filename to be 'dish_id'+'file_extension'")
 					resp := testutils.SendReq(http.MethodGet, link.String())("")
 
 					if it.Equal(http.StatusOK, resp.Code) {
@@ -367,6 +380,20 @@ func TestDishes(t *testing.T) {
 
 		})
 
+		t.Run("should trim title", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			testutils.SetupDishesAndCategories(t)
+			it := assert.New(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+
+			tests := []string{"  Crunchy Cashew Salad", "Crunchy Cashew Salad   ", "   Crunchy Cashew Salad   "}
+			for _, tc := range tests {
+				json := fmt.Sprintf(`{"title":%q,"category_id":3,"price":2.28}`, tc)
+				resp := sendWithParam(1, c, json)
+				it.Equal(http.StatusConflict, resp.Code)
+			}
+		})
+
 		t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			_, c := testutils.LoginAsRandomAdmin(t)
@@ -380,6 +407,15 @@ func TestDishes(t *testing.T) {
 			_, c := testutils.LoginAsRandomAdmin(t)
 			resp := testutils.ReqWithCookie(http.MethodPut, "/dishes/69")(c, "")
 			assert.Equal(t, http.StatusNotFound, resp.Code)
+		})
+
+		t.Run("should return 409 if dish with provided title already exists", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			testutils.SetupDishesAndCategories(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			json := fmt.Sprintf(`{"title":"Hamburger","category_id":3,"price":2.28}`)
+			resp := sendWithParam(5, c, json)
+			assert.Equal(t, http.StatusConflict, resp.Code)
 		})
 
 		testutils.RunAuthTests(t, http.MethodPut, "/dishes/1", true)

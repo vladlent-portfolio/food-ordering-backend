@@ -8,7 +8,7 @@ type Dishes []Dish
 
 type Dish struct {
 	ID         uint    `gorm:"primaryKey"`
-	Title      string  `gorm:"size:100"`
+	Title      string  `gorm:"size:100;unique;not null"`
 	Price      float64 `gorm:"check:price >= 0"`
 	Image      *string
 	CategoryID uint

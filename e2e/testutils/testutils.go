@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"bytes"
+	"food_ordering_backend/config"
 	"food_ordering_backend/database"
 	"food_ordering_backend/router"
 	"io"
@@ -90,7 +91,7 @@ func PathToFile(path string) string {
 }
 
 func CleanupStaticFolder() {
-	if err := os.RemoveAll(PathToFile("../../static")); err != nil {
+	if err := os.RemoveAll(config.StaticDirAbs); err != nil {
 		panic(err)
 	}
 }

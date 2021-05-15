@@ -15,12 +15,12 @@ var MaxUploadFileSize int64 = 512 * 1024 // 512 KiB
 var StaticDir = "static"
 
 // CategoriesImgDir shows path to directory that contains categories
-// images relative to main.go
-var CategoriesImgDir = "static/categories/img"
+// images relative to static folder
+var CategoriesImgDir = filepath.Join(StaticDir, "categories/img")
 
 // DishesImgDir shows path to directory that contains dishes images
-// relative to main.go
-var DishesImgDir = "static/dishes/img"
+// relative to static folder
+var DishesImgDir = filepath.Join(StaticDir, "dishes/img")
 
 // StaticDirAbs shows absolute path to project's "static" directory.
 var StaticDirAbs = filepath.Join(PathToMain(), StaticDir)

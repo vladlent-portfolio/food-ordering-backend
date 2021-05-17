@@ -1,14 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"food_ordering_backend/config"
 	"food_ordering_backend/database"
+	_ "food_ordering_backend/docs"
 	"food_ordering_backend/router"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"log"
-
-	_ "food_ordering_backend/docs"
 )
 
 // @title Food Ordering Backend
@@ -30,5 +30,6 @@ func main() {
 	url := ginSwagger.URL(config.HostRaw + "/swagger/doc.json") // The url pointing to API definition
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 
-	log.Panicln(r.Run(config.HostRaw))
+	var address = fmt.Sprintf("%s:%s", config.HostURL.Hostname(), config.HostURL.Port())
+	log.Panicln(r.Run(address))
 }

@@ -19,7 +19,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
 
 	r.Use(CORSMiddleware())
-	r.Static("/static", config.StaticDirAbs)
+	r.Static("/"+config.StaticDir, config.StaticDirAbs)
 
 	routes := map[string]Controller{
 		"/categories": category.InitAPI(db),

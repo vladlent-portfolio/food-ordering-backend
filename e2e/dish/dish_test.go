@@ -199,7 +199,7 @@ func TestDishes(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
-			json := `{"title":"Double Cheeseburger","price":4.56,"category_id":2}`
+			json := `{"title":"Royal Cheeseburger","price":4.56,"category_id":2}`
 			_, c := testutils.LoginAsRandomAdmin(t)
 
 			resp := send(c, json)

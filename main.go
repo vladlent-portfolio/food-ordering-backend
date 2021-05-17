@@ -1,6 +1,7 @@
 package main
 
 import (
+	"food_ordering_backend/config"
 	"food_ordering_backend/database"
 	"food_ordering_backend/router"
 	swaggerFiles "github.com/swaggo/files"
@@ -26,8 +27,8 @@ func main() {
 	db := database.MustGet()
 	r := router.Setup(db)
 
-	url := ginSwagger.URL("http://localhost:8080/swagger/doc.json") // The url pointing to API definition
+	url := ginSwagger.URL(config.HostRaw + "/swagger/doc.json") // The url pointing to API definition
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 
-	log.Panicln(r.Run())
+	log.Panicln(r.Run(config.HostRaw))
 }

@@ -5,6 +5,7 @@ import (
 	"food_ordering_backend/config"
 	"food_ordering_backend/database"
 	"food_ordering_backend/router"
+	"github.com/gin-gonic/gin"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -17,7 +18,18 @@ import (
 )
 
 var db = database.MustGetTest()
-var Router = router.Setup(db)
+var Router *gin.Engine
+
+func init() {
+	config.StaticDir = "test-static"
+	config.CategoriesImgDir = config.StaticDir + "/categories"
+	config.DishesImgDir = config.StaticDir + "/dishes"
+	config.StaticDirAbs = PathToFile(config.StaticDir)
+	config.CategoriesImgDirAbs = PathToFile(config.CategoriesImgDir)
+	config.DishesImgDirAbs = PathToFile(config.DishesImgDir)
+
+	Router = router.Setup(db)
+}
 
 func SendReq(method, target string) func(body string) *httptest.ResponseRecorder {
 	return func(body string) *httptest.ResponseRecorder {

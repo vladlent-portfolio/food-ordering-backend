@@ -23,10 +23,6 @@ import (
 var db = database.MustGetTest()
 
 func TestCategories(t *testing.T) {
-	// TODO: Check that this settings work
-	config.StaticDirAbs = testutils.PathToFile("test-static")
-	config.CategoriesImgDir = filepath.Join(config.StaticDirAbs, "categories")
-	config.CategoriesImgDirAbs = config.CategoriesImgDir
 
 	t.Run("GET /categories", func(t *testing.T) {
 		send := testutils.SendReq(http.MethodGet, "/categories")
@@ -189,7 +185,6 @@ func TestCategories(t *testing.T) {
 
 				if it.NoError(err, "expected valid link to image in response") {
 					it.Equal(expectedName, filepath.Base(link.String()), "expected filename to be 'category_id'+'file_extension'")
-					t.Log("link >>>>", link.String())
 					resp := testutils.SendReq(http.MethodGet, link.String())("")
 
 					if it.Equal(http.StatusOK, resp.Code) {

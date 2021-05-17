@@ -430,6 +430,9 @@ var doc = `{
                     "404": {
                         "description": ""
                     },
+                    "409": {
+                        "description": ""
+                    },
                     "500": {
                         "description": ""
                     }
@@ -724,44 +727,6 @@ var doc = `{
                         "description": ""
                     }
                 }
-            },
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "user"
-                ],
-                "summary": "Create new user",
-                "operationId": "user-create",
-                "parameters": [
-                    {
-                        "description": "User info",
-                        "name": "auth",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/user.AuthDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/user.ResponseDTO"
-                        }
-                    },
-                    "409": {
-                        "description": ""
-                    },
-                    "422": {
-                        "description": ""
-                    }
-                }
             }
         },
         "/users/logout": {
@@ -836,6 +801,46 @@ var doc = `{
                         "description": ""
                     },
                     "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/users/signup": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Create new user",
+                "operationId": "user-create",
+                "parameters": [
+                    {
+                        "description": "User info",
+                        "name": "auth",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.AuthDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/user.ResponseDTO"
+                        }
+                    },
+                    "409": {
+                        "description": ""
+                    },
+                    "422": {
                         "description": ""
                     }
                 }

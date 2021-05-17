@@ -419,6 +419,8 @@ paths:
           description: ""
         "404":
           description: ""
+        "409":
+          description: ""
         "500":
           description: ""
       summary: Replace dish. Requires admin rights.
@@ -590,31 +592,6 @@ paths:
       summary: Get all users. Requires admin rights.
       tags:
       - user
-    post:
-      consumes:
-      - application/json
-      operationId: user-create
-      parameters:
-      - description: User info
-        in: body
-        name: auth
-        required: true
-        schema:
-          $ref: '#/definitions/user.AuthDTO'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/user.ResponseDTO'
-        "409":
-          description: ""
-        "422":
-          description: ""
-      summary: Create new user
-      tags:
-      - user
   /users/logout:
     get:
       operationId: user-logout
@@ -663,6 +640,32 @@ paths:
         "500":
           description: ""
       summary: Sign in
+      tags:
+      - user
+  /users/signup:
+    post:
+      consumes:
+      - application/json
+      operationId: user-create
+      parameters:
+      - description: User info
+        in: body
+        name: auth
+        required: true
+        schema:
+          $ref: '#/definitions/user.AuthDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/user.ResponseDTO'
+        "409":
+          description: ""
+        "422":
+          description: ""
+      summary: Create new user
       tags:
       - user
 schemes:

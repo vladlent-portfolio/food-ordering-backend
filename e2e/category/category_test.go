@@ -377,10 +377,6 @@ func TestCategories(t *testing.T) {
 	})
 }
 
-func testTitleTrim(t *testing.T) {
-
-}
-
 func imgURL(name string) string {
 	return category.PathToImg(name)
 }

@@ -54,18 +54,10 @@ func ReqWithCookie(method, target string) func(c *http.Cookie, body string) *htt
 	}
 }
 
-func UploadReqWithCookie(method, target, formField string) func(c *http.Cookie, fileName string, file io.Reader) *httptest.ResponseRecorder {
+func UploadReqWithCookie(method, target string) func(c *http.Cookie, fileName string, file io.Reader) *httptest.ResponseRecorder {
 	return func(c *http.Cookie, fileName string, file io.Reader) *httptest.ResponseRecorder {
-		body := &bytes.Buffer{}
-		writer := multipart.NewWriter(body)
+		writer, body := MultipartWithFile(fileName, file)
 		recorder := httptest.NewRecorder()
-
-		fw, err := writer.CreateFormFile(formField, fileName)
-		noError(err)
-		_, err = io.Copy(fw, file)
-		noError(err)
-		writer.Close()
-
 		req := httptest.NewRequest(method, target, body)
 		req.Header.Set("Content-Type", writer.FormDataContentType())
 
@@ -76,6 +68,18 @@ func UploadReqWithCookie(method, target, formField string) func(c *http.Cookie, 
 		Router.ServeHTTP(recorder, req)
 		return recorder
 	}
+}
+
+func MultipartWithFile(fieldName string, file io.Reader) (*multipart.Writer, *bytes.Buffer) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	fw, err := writer.CreateFormFile(fieldName, "")
+	noError(err)
+	_, err = io.Copy(fw, file)
+	noError(err)
+	writer.Close()
+	return writer, body
 }
 
 func FindCookieByName(resp *http.Response, name string) *http.Cookie {

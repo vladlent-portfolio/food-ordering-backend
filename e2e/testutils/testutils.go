@@ -6,6 +6,10 @@ import (
 	"food_ordering_backend/database"
 	"food_ordering_backend/router"
 	"github.com/gin-gonic/gin"
+	"image"
+	"image/color"
+	"image/jpeg"
+	"image/png"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -54,9 +58,9 @@ func ReqWithCookie(method, target string) func(c *http.Cookie, body string) *htt
 	}
 }
 
-func UploadReqWithCookie(method, target string) func(c *http.Cookie, fileName string, file io.Reader) *httptest.ResponseRecorder {
+func UploadReqWithCookie(method, target, fieldName string) func(c *http.Cookie, fileName string, file io.Reader) *httptest.ResponseRecorder {
 	return func(c *http.Cookie, fileName string, file io.Reader) *httptest.ResponseRecorder {
-		writer, body := MultipartWithFile(fileName, file)
+		writer, body := MultipartWithFile(fieldName, fileName, file)
 		recorder := httptest.NewRecorder()
 		req := httptest.NewRequest(method, target, body)
 		req.Header.Set("Content-Type", writer.FormDataContentType())
@@ -70,16 +74,64 @@ func UploadReqWithCookie(method, target string) func(c *http.Cookie, fileName st
 	}
 }
 
-func MultipartWithFile(fieldName string, file io.Reader) (*multipart.Writer, *bytes.Buffer) {
+func MultipartWithFile(fieldName, fileName string, file io.Reader) (*multipart.Writer, *bytes.Buffer) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
-	fw, err := writer.CreateFormFile(fieldName, "")
+	fw, err := writer.CreateFormFile(fieldName, fileName)
 	noError(err)
 	_, err = io.Copy(fw, file)
 	noError(err)
 	writer.Close()
 	return writer, body
+}
+
+func CreateTextFile(size int) *bytes.Buffer {
+	f := &bytes.Buffer{}
+	f.Grow(size)
+	for i := 0; i < size; i++ {
+		f.WriteRune('a')
+	}
+	return f
+}
+
+func CreateImage(width, height int) *image.RGBA {
+	upLeft := image.Point{0, 0}
+	lowRight := image.Point{width, height}
+
+	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
+
+	for x := 0; x < width; x++ {
+		for y := 0; y < height; y++ {
+			img.Set(x, y, color.White)
+		}
+	}
+
+	return img
+}
+
+func CreateImagePNG(width, height int) *bytes.Buffer {
+	img := CreateImage(width, height)
+	b := &bytes.Buffer{}
+	b.Grow(len(img.Pix))
+
+	if err := png.Encode(b, img); err != nil {
+		panic(err)
+	}
+
+	return b
+}
+
+func CreateImageJPEG(width, height int) *bytes.Buffer {
+	img := CreateImage(width, height)
+	b := &bytes.Buffer{}
+	b.Grow(len(img.Pix))
+
+	if err := jpeg.Encode(b, img, nil); err != nil {
+		panic(err)
+	}
+
+	return b
 }
 
 func FindCookieByName(resp *http.Response, name string) *http.Cookie {

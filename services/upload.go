@@ -35,24 +35,26 @@ type Upload struct {
 //
 // The request will be aborted instantly, with appropriate status code,
 // on the first encountered error.
-func (s *Upload) ParseAndSave(c *gin.Context, name string) {
+//
+// Returns absolute path to saved file or empty string on error.
+func (s *Upload) ParseAndSave(c *gin.Context, name string) string {
 	fileHeader, err := c.FormFile(s.FormDataKey)
 
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
-		return
+		return ""
 	}
 
 	if fileHeader.Size > s.MaxFileSize {
 		c.Status(http.StatusRequestEntityTooLarge)
-		return
+		return ""
 	}
 
 	file, err := fileHeader.Open()
 
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
-		return
+		return ""
 	}
 
 	defer file.Close()
@@ -61,12 +63,12 @@ func (s *Upload) ParseAndSave(c *gin.Context, name string) {
 
 	if err != nil {
 		c.Status(http.StatusUnprocessableEntity)
-		return
+		return ""
 	}
 
 	if len(s.AllowedTypes) > 0 && !s.AllowedType(mimeType) {
 		c.Status(http.StatusUnsupportedMediaType)
-		return
+		return ""
 	}
 
 	ext := common.ExtensionByType(mimeType)
@@ -74,13 +76,15 @@ func (s *Upload) ParseAndSave(c *gin.Context, name string) {
 
 	if err := os.MkdirAll(filepath.Dir(fPath), os.ModeDir); err != nil {
 		c.Status(http.StatusInternalServerError)
-		return
+		return ""
 	}
 
 	if err := c.SaveUploadedFile(fileHeader, fPath); err != nil {
 		c.Status(http.StatusInternalServerError)
-		return
+		return ""
 	}
+
+	return fPath
 }
 
 // AllowedType checks if provided MIME-Type is in the list of allowed MIME-Types.

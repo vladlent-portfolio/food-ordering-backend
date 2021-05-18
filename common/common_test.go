@@ -1,8 +1,11 @@
-package common
+package common_test
 
 import (
+	"bytes"
 	"errors"
+	"food_ordering_backend/common"
 	"food_ordering_backend/config"
+	"food_ordering_backend/e2e/testutils"
 	"github.com/stretchr/testify/assert"
 	"net/url"
 	"os"
@@ -11,8 +14,8 @@ import (
 )
 
 func TestIsDuplicateKeyErr(t *testing.T) {
-	assert.True(t, IsDuplicateKeyErr(errors.New("ERROR: duplicate key value violates unique constraint \"categories_pkey\" (SQLSTATE 23505)")))
-	assert.False(t, IsDuplicateKeyErr(errors.New("92374283uasdfj")))
+	assert.True(t, common.IsDuplicateKeyErr(errors.New("ERROR: duplicate key value violates unique constraint \"categories_pkey\" (SQLSTATE 23505)")))
+	assert.False(t, common.IsDuplicateKeyErr(errors.New("92374283uasdfj")))
 }
 
 func TestMIMEType(t *testing.T) {
@@ -23,9 +26,23 @@ func TestMIMEType(t *testing.T) {
 		f, err := os.Open(filename)
 
 		if it.NoError(err) {
-			mime, err := MIMEType(f)
+			mime, err := common.MIMEType(f)
 			it.NoError(err)
 			it.Contains(mime, "text/plain")
+		}
+	})
+
+	t.Run("should correctly return mimetype for text files with size lees than 512 bytes", func(t *testing.T) {
+		it := assert.New(t)
+		sizes := []int{30, 69, 345, 510}
+
+		for _, size := range sizes {
+			file := testutils.CreateTextFile(size)
+			mimetype, err := common.MIMEType(bytes.NewReader(file.Bytes()))
+
+			if it.NoError(err) {
+				it.Equal("text/plain; charset=utf-8", mimetype)
+			}
 		}
 	})
 }
@@ -49,7 +66,7 @@ func TestHostURLResolver(t *testing.T) {
 		}
 
 		for _, tc := range tests {
-			uri := HostURLResolver(tc.ref)
+			uri := common.HostURLResolver(tc.ref)
 			it.Equal(tc.expected, uri)
 		}
 	})

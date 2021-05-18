@@ -32,7 +32,7 @@ func beforeEach(handle gin.HandlerFunc) {
 func TestUpload_ParseAndSave(t *testing.T) {
 	t.Run("should allow any file type if AllowedTypes is empty", func(t *testing.T) {
 		beforeEach(defaultHandle)
-		upload.AllowedTypes = []string{}
+		upload.AllowedTypes = nil
 		it := assert.New(t)
 		files := []io.Reader{testutils.CreateTextFile(100), testutils.CreateImagePNG(50, 50), testutils.CreateImageJPEG(35, 35)}
 

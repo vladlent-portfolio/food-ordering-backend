@@ -10,8 +10,9 @@ import (
 
 type Upload struct {
 	// AllowedTypes is a slice of supported MIME-Types. If type of uploaded
-	// file isn't in this list, the request will be rejected with http.StatusUnsupportedMediaType
-	// Empty list means that any MIME-Type is allowed.
+	// file isn't in this list, the request will be rejected with http.StatusUnsupportedMediaType.
+	//
+	// Nil slice means that any MIME-Type is allowed.
 	AllowedTypes []string
 
 	// MaxFileSize sets a limit for the size of uploaded file. If the file has
@@ -27,7 +28,7 @@ type Upload struct {
 }
 
 // ParseAndSave parses the request in order to find a file for upload
-// using Upload.FormDataKey. It will check file's size and MIMI-Type
+// using Upload.FormDataKey. It will check file's size and MIME-Type
 // using Upload.MaxFileSize and Upload.AllowedTypes respectively.
 //
 // If all checks are successful, the file will be saved with provided name.
@@ -87,7 +88,7 @@ func (s *Upload) ParseAndSave(c *gin.Context, name string) string {
 	return fPath
 }
 
-// AllowedType checks if provided MIME-Type is in the list of allowed MIME-Types.
+// AllowedType checks if provided MIME-Type is in the Upload.AllowedTypes list.
 func (s *Upload) AllowedType(mimetype string) bool {
 	for _, allowedType := range s.AllowedTypes {
 		if allowedType == mimetype {

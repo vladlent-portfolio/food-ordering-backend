@@ -20,11 +20,9 @@ func RandomInt(max int) int {
 
 // MIMEType returns MIME type for provided file using http.DetectContentType.
 func MIMEType(file io.ReadSeeker) (string, error) {
-	fileHeader := make([]byte, 512)
+	fileHeader := make([]byte, 0, 512)
 
-	read, err := file.Read(fileHeader)
-
-	if err != nil {
+	if _, err := file.Read(fileHeader); err != nil {
 		return "", err
 	}
 
@@ -32,9 +30,7 @@ func MIMEType(file io.ReadSeeker) (string, error) {
 		return "", err
 	}
 
-	// Here is an explanation of why we need to slice the file header.
-	// https://gist.github.com/rayrutjes/db9b9ea8e02255d62ce2#gistcomment-3418419
-	return http.DetectContentType(fileHeader[:read]), nil
+	return http.DetectContentType(fileHeader), nil
 }
 
 // HostURLResolver resolves reference from config.HostURL to provided relative path.

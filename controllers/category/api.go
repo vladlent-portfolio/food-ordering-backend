@@ -1,15 +1,13 @@
 package category
 
 import (
-	"fmt"
 	"food_ordering_backend/common"
 	"food_ordering_backend/config"
 	"food_ordering_backend/controllers/user"
+	"food_ordering_backend/services"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
-	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -17,10 +15,17 @@ import (
 
 type API struct {
 	service *Service
+	upload  *services.Upload
 }
 
 func ProvideAPI(s *Service) *API {
-	return &API{s}
+	upload := &services.Upload{
+		AllowedTypes: []string{"image/png", "image/jpeg"},
+		MaxFileSize:  config.MaxUploadFileSize,
+		Root:         config.CategoriesImgDirAbs,
+		FormDataKey:  "image",
+	}
+	return &API{s, upload}
 }
 
 func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
@@ -156,52 +161,14 @@ func (api *API) Upload(c *gin.Context) {
 		return
 	}
 
-	fileHeader, err := c.FormFile("image")
+	absPath := api.upload.ParseAndSave(c, strconv.Itoa(int(cat.ID)))
 
-	if err != nil {
-		c.String(http.StatusBadRequest, err.Error())
+	if absPath == "" {
 		return
 	}
 
-	if fileHeader.Size > config.MaxUploadFileSize {
-		c.Status(http.StatusRequestEntityTooLarge)
-		return
-	}
-
-	file, err := fileHeader.Open()
-
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	}
-
-	defer file.Close()
-
-	contentType, err := common.MIMEType(file)
-
-	if err != nil {
-		c.Status(http.StatusUnprocessableEntity)
-		return
-	}
-
-	if contentType != "image/png" && contentType != "image/jpeg" {
-		c.Status(http.StatusUnsupportedMediaType)
-		return
-	}
-
-	fPath := filepath.Join(config.CategoriesImgDirAbs, fmt.Sprintf("%d.%s", cat.ID, path.Base(contentType)))
-	if err := os.MkdirAll(filepath.Dir(fPath), os.ModeDir); err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	}
-
-	if err := c.SaveUploadedFile(fileHeader, fPath); err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	}
-
-	fName := filepath.Base(fPath)
-	cat.Image = &fName
+	name := filepath.Base(absPath)
+	cat.Image = &name
 
 	cat, err = api.service.Save(cat)
 
@@ -210,7 +177,7 @@ func (api *API) Upload(c *gin.Context) {
 		return
 	}
 
-	c.String(http.StatusOK, PathToImg(fName))
+	c.String(http.StatusOK, PathToImg(name))
 }
 
 // Delete godoc

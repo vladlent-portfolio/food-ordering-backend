@@ -23,11 +23,10 @@ import (
 var db = database.MustGetTest()
 
 func TestCategories(t *testing.T) {
-
 	t.Run("GET /categories", func(t *testing.T) {
 		send := testutils.SendReq(http.MethodGet, "/categories")
 
-		t.Run("should return JSON array of categories", func(t *testing.T) {
+		t.Run("should return sorted by id array of categories", func(t *testing.T) {
 			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
 			resp := send("")
@@ -39,8 +38,14 @@ func TestCategories(t *testing.T) {
 				if it.NoError(json.NewDecoder(resp.Body).Decode(&dtos)) {
 					it.Len(dtos, len(testutils.TestCategories))
 
+					ids := make([]uint, len(dtos))
 					for i, dto := range dtos {
-						c := testutils.TestCategories[i]
+						ids[i] = dto.ID
+					}
+					it.IsIncreasing(ids, "expected array to be sorted by id")
+
+					for _, dto := range dtos {
+						c := testutils.FindTestCategoryByID(dto.ID)
 						it.Equal(c.ID, dto.ID)
 						it.Equal(c.Title, dto.Title)
 						it.Equal(c.Removable, dto.Removable)
@@ -49,6 +54,7 @@ func TestCategories(t *testing.T) {
 				}
 			}
 		})
+
 	})
 
 	t.Run("GET /categories/:id", func(t *testing.T) {

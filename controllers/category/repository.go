@@ -28,7 +28,7 @@ func (r *Repository) FindByID(id uint) (Category, error) {
 
 func (r *Repository) FindAll() []Category {
 	var categories []Category
-	r.db.Find(&categories)
+	r.db.Order("id ASC").Find(&categories)
 	return categories
 }
 

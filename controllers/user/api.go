@@ -119,6 +119,8 @@ func (api *API) Login(c *gin.Context) {
 // @Router /users/logout [get]
 func (api *API) Logout(c *gin.Context) {
 	user := c.MustGet(ContextUserKey).(User)
+
+	// TODO: Delete only this exact session instead of all
 	err := api.service.Logout(user)
 
 	if err != nil {

@@ -17,6 +17,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -27,7 +28,7 @@ var db = database.MustGetTest()
 func TestDishes(t *testing.T) {
 	t.Run("GET /dishes", func(t *testing.T) {
 		send := testutils.SendReq(http.MethodGet, "/dishes")
-		t.Run("should return JSON array of dishes with their respective categories", func(t *testing.T) {
+		t.Run("should return sorted array of dishes with their respective categories", func(t *testing.T) {
 			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
 			resp := send("")
@@ -39,8 +40,16 @@ func TestDishes(t *testing.T) {
 				if it.NoError(json.NewDecoder(resp.Body).Decode(&dtos)) {
 					it.Len(dtos, len(testutils.TestDishes))
 
+					ids := make([]uint, len(dtos))
+
 					for i, dto := range dtos {
-						d := testutils.TestDishes[i]
+						ids[i] = dto.ID
+					}
+
+					it.IsIncreasing(ids, "expected dishes to be sorted by id")
+
+					for _, dto := range dtos {
+						d := testutils.FindTestDishByID(dto.ID)
 						it.Equal(d.ID, dto.ID)
 						it.Equal(d.Title, dto.Title)
 						it.Equal(d.Price, dto.Price)
@@ -57,8 +66,19 @@ func TestDishes(t *testing.T) {
 			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
 
-			for i, c := range testutils.TestCategories {
-				dishes := testutils.TestDishes[i*2 : i*2+2]
+			for _, c := range testutils.TestCategories {
+				var dishes []dish.Dish
+
+				for _, testDish := range testutils.TestDishes {
+					if testDish.CategoryID == c.ID {
+						dishes = append(dishes, testDish)
+					}
+				}
+
+				sort.Slice(dishes, func(i, j int) bool {
+					return dishes[i].ID < dishes[j].ID
+				})
+
 				resp := testutils.SendReq(http.MethodGet, fmt.Sprintf("/dishes?cid=%d", c.ID))("")
 
 				it.Equal(http.StatusOK, resp.Code)
@@ -137,7 +157,7 @@ func TestDishes(t *testing.T) {
 			it := assert.New(t)
 			initialLen := len(testutils.TestDishes)
 			reqJSON := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2}`
-			testCategory := testutils.TestCategories[1]
+			testCategory := testutils.FindTestCategoryByID(2)
 			categoryJSON, _ := json.Marshal(category.ToDTO(testCategory))
 			respJSON := fmt.Sprintf(
 				`{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2,"category":%s}`,
@@ -314,7 +334,7 @@ func TestDishes(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
-			testCategory := testutils.TestCategories[1]
+			testCategory := testutils.FindTestCategoryByID(2)
 			updateJSON := `{"title":"Double Cheeseburger","price":4.56,"category_id":2}`
 			_, c := testutils.LoginAsRandomAdmin(t)
 
@@ -337,7 +357,7 @@ func TestDishes(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
-			testCategory := testutils.TestCategories[1]
+			testCategory := testutils.FindTestCategoryByID(2)
 			updateJSON := `{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2}`
 			_, c := testutils.LoginAsRandomAdmin(t)
 
@@ -360,7 +380,7 @@ func TestDishes(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
-			testCategory := testutils.TestCategories[2]
+			testCategory := testutils.FindTestCategoryByID(3)
 			updateJSON := `{"id":69,"title":"Meat Supreme","price":3.22,"category_id":3}`
 			_, c := testutils.LoginAsRandomAdmin(t)
 

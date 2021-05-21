@@ -49,11 +49,12 @@ func (r *Repository) FindByIDs(ids []uint) ([]Dish, error) {
 
 func (r *Repository) FindAll(cid uint) []Dish {
 	var dishes []Dish
+	tx := r.preload().Order("id ASC")
 
 	if cid == 0 {
-		r.preload().Find(&dishes)
+		tx.Find(&dishes)
 	} else {
-		r.preload().Where("category_id = ?", cid).Find(&dishes)
+		tx.Where("category_id = ?", cid).Find(&dishes)
 	}
 
 	return dishes

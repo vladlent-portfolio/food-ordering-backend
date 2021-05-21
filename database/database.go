@@ -59,7 +59,9 @@ func initDB(connStr string) error {
 		return nil
 	}
 
-	db, err := gorm.Open(postgres.Open(connStr))
+	db, err := gorm.Open(postgres.Open(connStr), &gorm.Config{
+		SkipDefaultTransaction: true,
+	})
 
 	if err != nil {
 		return err

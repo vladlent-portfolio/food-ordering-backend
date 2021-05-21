@@ -300,6 +300,11 @@ paths:
   /dishes:
     get:
       operationId: dish-all
+      parameters:
+      - description: filter dishes by category id
+        in: query
+        name: cid
+        type: integer
       produces:
       - application/json
       responses:

@@ -293,6 +293,14 @@ var doc = `{
                 ],
                 "summary": "Get all dishes",
                 "operationId": "dish-all",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "filter dishes by category id",
+                        "name": "cid",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",

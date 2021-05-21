@@ -93,6 +93,7 @@ func (api *API) FindByID(c *gin.Context) {
 // @Summary Get all dishes
 // @ID dish-all
 // @Tags dish
+// @Param cid query integer false "filter dishes by category id"
 // @Produce json
 // @Success 200 {array} DTO
 // @Failure 403,404

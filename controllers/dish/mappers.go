@@ -19,6 +19,7 @@ func ToModel(dto DTO) Dish {
 		CategoryID: dto.CategoryID,
 		Price:      dto.Price,
 		Image:      image,
+		Removable:  dto.Removable,
 		Category:   category.ToModel(dto.Category),
 	}
 }
@@ -37,6 +38,7 @@ func ToDTO(d Dish) DTO {
 		Price:      d.Price,
 		CategoryID: d.CategoryID,
 		Image:      image,
+		Removable:  d.Removable,
 		Category:   category.ToDTO(d.Category),
 	}
 }

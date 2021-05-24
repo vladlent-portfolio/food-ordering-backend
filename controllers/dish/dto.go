@@ -7,6 +7,7 @@ type DTO struct {
 	Title      string       `json:"title"`
 	Price      float64      `json:"price" binding:"min=0"`
 	Image      *string      `json:"image,omitempty"`
+	Removable  bool         `json:"removable"`
 	CategoryID uint         `json:"category_id"`
 	Category   category.DTO `json:"category"`
 }

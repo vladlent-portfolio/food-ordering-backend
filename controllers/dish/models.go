@@ -11,6 +11,7 @@ type Dish struct {
 	Title      string  `gorm:"size:100;unique;not null"`
 	Price      float64 `gorm:"check:price >= 0"`
 	Image      *string
+	Removable  bool `gorm:"default:true"`
 	CategoryID uint
 	Category   category.Category `gorm:"constraint:OnDelete:CASCADE,OnUpdate:CASCADE"`
 }

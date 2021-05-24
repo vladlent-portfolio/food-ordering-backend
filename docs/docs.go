@@ -891,6 +891,9 @@ var doc = `{
                 "price": {
                     "type": "number"
                 },
+                "removable": {
+                    "type": "boolean"
+                },
                 "title": {
                     "type": "string"
                 }

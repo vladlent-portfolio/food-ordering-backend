@@ -54,6 +54,7 @@ func TestDishes(t *testing.T) {
 						it.Equal(d.Title, dto.Title)
 						it.Equal(d.Price, dto.Price)
 						it.Equal(imgURL(*d.Image), *dto.Image)
+						it.Equal(d.Removable, dto.Removable)
 						it.Equal(d.CategoryID, dto.CategoryID)
 						it.Equal(category.ToDTO(d.Category), dto.Category)
 					}
@@ -94,6 +95,7 @@ func TestDishes(t *testing.T) {
 					it.Equal(d.ID, dto.ID)
 					it.Equal(d.Title, dto.Title)
 					it.Equal(d.Price, dto.Price)
+					it.Equal(d.Removable, dto.Removable)
 					it.Equal(d.CategoryID, dto.CategoryID)
 					it.Equal(d.Category.ID, dto.Category.ID)
 					it.Equal(d.Category.Title, dto.Category.Title)
@@ -160,7 +162,7 @@ func TestDishes(t *testing.T) {
 			testCategory := testutils.FindTestCategoryByID(2)
 			categoryJSON, _ := json.Marshal(category.ToDTO(testCategory))
 			respJSON := fmt.Sprintf(
-				`{"id":69,"title":"Double Cheeseburger","price":4.56,"category_id":2,"category":%s}`,
+				`{"id":69,"title":"Double Cheeseburger","price":4.56,"removable":true,"category_id":2,"category":%s}`,
 				categoryJSON,
 			)
 

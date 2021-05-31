@@ -60,6 +60,12 @@ func (api *API) Create(c *gin.Context) {
 		return
 	}
 
+	_, err = api.authorize(c, dto)
+
+	if err != nil {
+		return
+	}
+
 	c.JSON(http.StatusCreated, ToResponseDTO(user))
 }
 
@@ -92,21 +98,12 @@ func (api *API) Login(c *gin.Context) {
 		return
 	}
 
-	session, err := api.service.Login(dto)
+	session, err := api.authorize(c, dto)
 
 	if err != nil {
-		switch {
-		case errors.Is(err, gorm.ErrRecordNotFound) || errors.Is(err, ErrInvalidPassword):
-			c.Status(http.StatusNotFound)
-		default:
-			c.Status(http.StatusInternalServerError)
-		}
 		return
 	}
 
-	cookie := SessionCookie(session.Token, 0)
-
-	http.SetCookie(c.Writer, cookie)
 	c.JSON(http.StatusOK, ToResponseDTO(session.User))
 }
 
@@ -153,6 +150,25 @@ func (api *API) bindAuthDTO(c *gin.Context) (AuthDTO, error) {
 		return dto, err
 	}
 	return dto, nil
+}
+
+func (api *API) authorize(c *gin.Context, dto AuthDTO) (Session, error) {
+	session, err := api.service.Login(dto)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, gorm.ErrRecordNotFound) || errors.Is(err, ErrInvalidPassword):
+			c.Status(http.StatusNotFound)
+		default:
+			c.Status(http.StatusInternalServerError)
+		}
+		return Session{}, err
+	}
+
+	cookie := SessionCookie(session.Token, 0)
+	http.SetCookie(c.Writer, cookie)
+
+	return session, nil
 }
 
 func SessionCookie(token string, maxAge int) *http.Cookie {

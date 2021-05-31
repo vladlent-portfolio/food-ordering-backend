@@ -115,6 +115,39 @@ func TestAPI(t *testing.T) {
 				}
 			})
 
+			t.Run("should immediately authorize user", func(t *testing.T) {
+				testutils.SetupUsersDB(t)
+				it := assert.New(t)
+				dto := user.AuthDTO{
+					Email:    "example@user.com",
+					Password: "secretpass",
+				}
+
+				data, err := json.Marshal(&dto)
+
+				it.NoError(err)
+
+				resp := send(string(data))
+
+				if it.Equal(http.StatusCreated, resp.Code) {
+					var responseDTO user.ResponseDTO
+					if it.NoError(json.NewDecoder(resp.Body).Decode(&responseDTO)) {
+						c := testutils.FindCookieByName(resp.Result(), user.SessionCookieName)
+						validateSessionCookie(t, c)
+
+						var session user.Session
+
+						query := db.Where("user_id = ?", responseDTO.ID).Joins("User").First(&session)
+
+						if it.NoError(query.Error) {
+							it.Equal(dto.Email, session.User.Email)
+							it.Equal(c.Value, session.Token)
+						}
+					}
+
+				}
+			})
+
 			t.Run("should return 422 if json is invalid", func(t *testing.T) {
 				it := assert.New(t)
 				resp := send(`{"email":"example@user.com", "password": "secretpass`)
@@ -147,7 +180,6 @@ func TestAPI(t *testing.T) {
 					resp := testutils.Login(dto)
 
 					if it.Equal(http.StatusOK, resp.Code) {
-						c := testutils.FindCookieByName(resp.Result(), user.SessionCookieName)
 						var responseDTO user.ResponseDTO
 						if it.NoError(json.NewDecoder(resp.Body).Decode(&responseDTO)) {
 							it.Equal(dto.Email, responseDTO.Email)
@@ -156,13 +188,8 @@ func TestAPI(t *testing.T) {
 							it.False(responseDTO.IsAdmin)
 						}
 
-						if assert.NotNil(t, c) {
-							it.NotZero(t, c.Value)
-							it.True(c.HttpOnly)
-							it.Equal(http.SameSiteLaxMode, c.SameSite)
-							it.Equal("/", c.Path)
-							it.Equal(0, c.MaxAge)
-						}
+						c := testutils.FindCookieByName(resp.Result(), user.SessionCookieName)
+						validateSessionCookie(t, c)
 
 						var sessions []user.Session
 						db.Find(&sessions)
@@ -195,4 +222,15 @@ func TestAPI(t *testing.T) {
 		})
 	})
 
+}
+
+func validateSessionCookie(t *testing.T, c *http.Cookie) {
+	it := assert.New(t)
+	if it.NotNil(c) {
+		it.NotZero(c.Value)
+		it.True(c.HttpOnly)
+		it.Equal(http.SameSiteLaxMode, c.SameSite)
+		it.Equal("/", c.Path)
+		it.Equal(0, c.MaxAge)
+	}
 }

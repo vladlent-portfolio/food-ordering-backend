@@ -302,6 +302,14 @@ func verifyResponse(t *testing.T, expectedLen int, resp *httptest.ResponseRecord
 		if it.NoError(json.NewDecoder(resp.Body).Decode(&orders)) {
 			it.Len(orders, expectedLen)
 
+			ids := make([]uint, len(orders))
+
+			for i, dto := range orders {
+				ids[i] = dto.ID
+			}
+
+			it.IsIncreasing(ids, "expected orders to be sorted by id")
+
 			for _, o := range orders {
 				it.NotZero(o.CreatedAt)
 				it.NotZero(o.UpdatedAt)

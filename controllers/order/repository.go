@@ -38,7 +38,7 @@ func (r *Repository) Save(o Order) (Order, error) {
 
 func (r *Repository) FindAll() ([]Order, error) {
 	var orders []Order
-	err := r.preload().Find(&orders).Error
+	err := r.preload().Order("id ASC").Find(&orders).Error
 	return orders, err
 }
 
@@ -50,7 +50,7 @@ func (r *Repository) FindByID(id uint) (Order, error) {
 
 func (r *Repository) FindByUID(uid uint) ([]Order, error) {
 	var orders []Order
-	err := r.preload().Where("user_id = ?", uid).Find(&orders).Error
+	err := r.preload().Where("user_id = ?", uid).Order("id ASC").Find(&orders).Error
 	return orders, err
 }
 

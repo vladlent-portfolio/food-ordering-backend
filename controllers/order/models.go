@@ -26,7 +26,7 @@ type Order struct {
 	UserID    uint
 	User      user.User `gorm:"constraint:OnDelete:SET NULL,OnUpdate:CASCADE"`
 	Total     float64   `gorm:"check:total >= 0"`
-	Items     []Item
+	Items     []Item    `gorm:"constraint:OnDelete:CASCADE,OnUpdate:CASCADE"`
 }
 
 type Item struct {

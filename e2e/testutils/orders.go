@@ -5,7 +5,9 @@ import (
 	"food_ordering_backend/controllers/user"
 	"github.com/stretchr/testify/require"
 	"log"
+	"math/rand"
 	"testing"
+	"time"
 )
 
 type orderGenerator struct {
@@ -51,6 +53,10 @@ func SetupOrdersDB(t *testing.T) {
 
 	SetupUsersDB(t)
 	SetupDishesAndCategories(t)
+
+	rand.New(rand.NewSource(time.Now().UnixNano())).Shuffle(len(TestOrders), func(i, j int) {
+		TestOrders[i], TestOrders[j] = TestOrders[j], TestOrders[i]
+	})
 
 	req.NoError(db.Create(&TestOrders).Error)
 	//req.NoError(db.Create(&TestOrderItems).Error)

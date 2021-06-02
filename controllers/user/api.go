@@ -115,19 +115,17 @@ func (api *API) Login(c *gin.Context) {
 // @Failure 401,500
 // @Router /users/logout [get]
 func (api *API) Logout(c *gin.Context) {
-	user := c.MustGet(ContextUserKey).(User)
+	// Skipping error because cookie was already checked in auth middleware.
+	cookie, _ := c.Request.Cookie(SessionCookieName)
 
-	// TODO: Delete only this exact session instead of all
-	err := api.service.Logout(user)
+	err := api.service.Logout(cookie.Value)
 
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
 	}
 
-	cookie := SessionCookie("", -1)
-
-	http.SetCookie(c.Writer, cookie)
+	http.SetCookie(c.Writer, SessionCookie("", -1))
 	c.Status(http.StatusOK)
 }
 

@@ -45,6 +45,10 @@ func (r *Repository) FindSessionByToken(token string) (Session, error) {
 	return session, err
 }
 
+func (r *Repository) DeleteSession(token string) error {
+	return r.db.Delete(&Session{}, "token = ?", token).Error
+}
+
 func (r *Repository) DeleteAllSessions(u User) error {
 	var s Session
 	return r.db.Where("user_id = ?", u.ID).Delete(&s).Error

@@ -64,10 +64,20 @@ func TestAPI(t *testing.T) {
 		t.Run("GET /users/logout", func(t *testing.T) {
 			logout := testutils.ReqWithCookie(http.MethodGet, "/users/logout")
 
-			t.Run("should remove auth cookie and remove all session for this user from db", func(t *testing.T) {
+			t.Run("should remove auth cookie and remove only current session for the user from db", func(t *testing.T) {
 				testutils.SetupUsersDB(t)
 				it := assert.New(t)
 				dto, c := testutils.LoginAsRandomUser(t)
+				totalSessions := 5
+
+				for i := 0; i < totalSessions-1; i++ {
+					resp := testutils.Login(dto)
+
+					if it.Equal(http.StatusOK, resp.Code) {
+						c = testutils.FindCookieByName(resp.Result(), user.SessionCookieName)
+					}
+				}
+
 				resp := logout(c, "")
 
 				if it.Equal(http.StatusOK, resp.Code) {
@@ -80,7 +90,11 @@ func TestAPI(t *testing.T) {
 					var sessions []user.Session
 
 					if it.NoError(db.Joins("User").Where("email = ?", dto.Email).Find(&sessions).Error) {
-						it.Len(sessions, 0)
+						it.Len(sessions, totalSessions-1, "expected to remove only current session")
+
+						for _, session := range sessions {
+							it.NotEqual(c.Value, session.Token)
+						}
 					}
 				}
 			})

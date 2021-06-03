@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"food_ordering_backend/controllers/dish"
 	"food_ordering_backend/controllers/order"
-	"food_ordering_backend/controllers/user"
 	"food_ordering_backend/database"
 	"food_ordering_backend/e2e/testutils"
 	"github.com/stretchr/testify/assert"
@@ -109,95 +108,72 @@ func TestOrders(t *testing.T) {
 	})
 
 	t.Run("PATCH /orders/:id", func(t *testing.T) {
-		sendWithParam := func(id uint, c *http.Cookie) *httptest.ResponseRecorder {
-			param := strconv.Itoa(int(id))
-			return testutils.ReqWithCookie(http.MethodPatch, "/orders/"+param+"/cancel")(c, "")
+		sendWithParam := func(c *http.Cookie, id uint, status order.Status) *httptest.ResponseRecorder {
+			uri := fmt.Sprintf("/orders/%d?status=%d", id, status)
+			return testutils.ReqWithCookie(http.MethodPatch, uri)(c, "")
 		}
 
-		t.Run("/orders/:id/cancel", func(t *testing.T) {
-			t.Run("should change orders status to 'canceled'", func(t *testing.T) {
-				testutils.SetupOrdersDB(t)
-				it := assert.New(t)
-				tests := []struct {
-					userDTO user.AuthDTO
-					orderID uint
-				}{
-					{testutils.TestUsersDTOs[0], 2},
-					{testutils.TestUsersDTOs[2], 4},
-					{testutils.TestUsersDTOs[0], 5},
+		t.Run("should change orders status", func(t *testing.T) {
+			testutils.SetupOrdersDB(t)
+			it := assert.New(t)
+			id := testutils.TestOrders[0].ID
+			_, c := testutils.LoginAsRandomAdmin(t)
+
+			for _, status := range order.Statuses {
+				resp := sendWithParam(c, id, status)
+
+				if it.Equal(http.StatusNoContent, resp.Code) {
+					verifyStatusChange(t, id, status)
 				}
-
-				for _, tc := range tests {
-					c := testutils.LoginAs(t, tc.userDTO)
-					resp := sendWithParam(tc.orderID, c)
-
-					if it.Equal(http.StatusOK, resp.Code) {
-						verifyStatusChange(t, tc.orderID, order.StatusCanceled)
-					}
-				}
-			})
-
-			t.Run("should return 200 if admin is changing status", func(t *testing.T) {
-				testutils.SetupOrdersDB(t)
-				it := assert.New(t)
-				_, c := testutils.LoginAsRandomAdmin(t)
-				resp := sendWithParam(4, c)
-
-				if it.Equal(http.StatusOK, resp.Code) {
-					verifyStatusChange(t, 4, order.StatusCanceled)
-				}
-			})
-
-			t.Run("should return 304 if order is already canceled or done", func(t *testing.T) {
-				testutils.SetupOrdersDB(t)
-				it := assert.New(t)
-				tests := []struct {
-					userDTO user.AuthDTO
-					orderID uint
-					status  order.Status
-				}{
-					{testutils.TestUsersDTOs[0], 1, order.StatusDone},
-					{testutils.TestUsersDTOs[1], 3, order.StatusCanceled},
-				}
-
-				for _, tc := range tests {
-					c := testutils.LoginAs(t, tc.userDTO)
-					resp := sendWithParam(tc.orderID, c)
-
-					if it.Equal(http.StatusNotModified, resp.Code) {
-						verifyStatusNotChange(t, tc.orderID, tc.status)
-					}
-				}
-			})
-
-			t.Run("should return 400 if order id is invalid", func(t *testing.T) {
-				testutils.SetupOrdersDB(t)
-				_, c := testutils.LoginAsRandomUser(t)
-				resp := testutils.ReqWithCookie(http.MethodPatch, "/orders/randomtext/cancel")(c, "")
-				assert.Equal(t, http.StatusBadRequest, resp.Code)
-			})
-
-			t.Run("should return 403 if user tries to change another users order", func(t *testing.T) {
-				testutils.SetupOrdersDB(t)
-				c := testutils.LoginAs(t, testutils.TestUsersDTOs[2])
-				resp := sendWithParam(5, c)
-				assert.Equal(t, http.StatusForbidden, resp.Code)
-				verifyStatusNotChange(t, 5, order.StatusCreated)
-			})
-
-			t.Run("should return 404 if order with provided id doesn't exist", func(t *testing.T) {
-				testutils.SetupOrdersDB(t)
-				it := assert.New(t)
-				_, c := testutils.LoginAsRandomUser(t)
-				resp := sendWithParam(1337, c)
-
-				if it.Equal(http.StatusNotFound, resp.Code) {
-					it.Contains(resp.Body.String(), "Order with id 1337 doesn't exist")
-				}
-			})
-
-			testutils.RunAuthTests(t, http.MethodPatch, "/orders/69/cancel", false)
+			}
 		})
+
+		t.Run("should return 304 if order hasn't been changed", func(t *testing.T) {
+			testutils.SetupOrdersDB(t)
+			it := assert.New(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+
+			for _, o := range testutils.TestOrders {
+				resp := sendWithParam(c, o.ID, o.Status)
+
+				if it.Equal(http.StatusNotModified, resp.Code) {
+					verifyStatusNotChange(t, o.ID, o.Status)
+				}
+			}
+		})
+
+		t.Run("should return 400 if order id is invalid", func(t *testing.T) {
+			testutils.SetupOrdersDB(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := testutils.ReqWithCookie(http.MethodPatch, "/orders/randomtext?status=1")(c, "")
+			assert.Equal(t, http.StatusBadRequest, resp.Code)
+		})
+
+		t.Run("should return 404 if order with provided id doesn't exist", func(t *testing.T) {
+			testutils.SetupOrdersDB(t)
+			it := assert.New(t)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := sendWithParam(c, 1337, order.StatusInProgress)
+
+			if it.Equal(http.StatusNotFound, resp.Code) {
+				it.Contains(resp.Body.String(), "Order with id 1337 doesn't exist")
+			}
+
+		})
+
+		t.Run("should return 422 is status is invalid", func(t *testing.T) {
+			testutils.SetupOrdersDB(t)
+			it := assert.New(t)
+			tests := []string{"-23", "-1", "4", "10", "45", "done", "create"}
+			_, c := testutils.LoginAsRandomAdmin(t)
+
+			for _, test := range tests {
+				resp := testutils.ReqWithCookie(http.MethodPatch, "/orders/randomtext?status="+test)(c, "")
+				it.Equal(http.StatusUnprocessableEntity, resp.Code)
+			}
+		})
+
+		testutils.RunAuthTests(t, http.MethodPatch, "/orders/69?status=1", true)
 	})
 
 	t.Run("PUT /orders/:id", func(t *testing.T) {

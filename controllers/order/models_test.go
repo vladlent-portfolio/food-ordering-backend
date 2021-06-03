@@ -72,3 +72,19 @@ func TestItems_IDs(t *testing.T) {
 		assert.Equal(t, []uint{23, 456, 10}, items.IDs())
 	})
 }
+
+func TestIsValidStatus(t *testing.T) {
+	t.Run("should return true if status is valid", func(t *testing.T) {
+		for _, status := range Statuses {
+			assert.Truef(t, IsValidStatus(int(status)), "expected %d status to be valid", status)
+		}
+
+	})
+
+	t.Run("should return false if status is invalid", func(t *testing.T) {
+		tests := []int{-123, -3, 4, 5, 7, 324, 6345646}
+		for _, test := range tests {
+			assert.Falsef(t, IsValidStatus(test), "expected %d status to be invalid", test)
+		}
+	})
+}

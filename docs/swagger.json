@@ -662,26 +662,24 @@
                         "description": ""
                     }
                 }
-            }
-        },
-        "/orders/:id/cancel": {
+            },
             "patch": {
                 "tags": [
                     "order"
                 ],
-                "summary": "Change order status to 'canceled'. Requires auth.",
-                "operationId": "order-cancel",
+                "summary": "Patch order. Requires admin rights.",
+                "operationId": "order-patch",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Order id",
-                        "name": "id",
-                        "in": "path",
+                        "description": "New order status",
+                        "name": "status",
+                        "in": "query",
                         "required": true
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "204": {
                         "description": ""
                     },
                     "401": {

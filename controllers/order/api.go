@@ -22,7 +22,7 @@ func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
 
 	router.GET("", auth(false), api.FindAll)
 	router.POST("", auth(false), api.Create)
-	router.PATCH("/:id/cancel", auth(false), api.Cancel)
+	router.PATCH("/:id", auth(true), api.Patch)
 	router.PUT("/:id", auth(true), api.Update)
 }
 
@@ -87,40 +87,40 @@ func (api *API) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, ToResponseDTO(o))
 }
 
-// Cancel godoc
-// @Summary Change order status to 'canceled'. Requires auth.
-// @ID order-cancel
+// Patch godoc
+// @Summary Patch order. Requires admin rights.
+// @ID order-patch
 // @Tags order
-// @Param id path integer true "Order id"
-// @Success 200
+// @Param status query integer true "New order status"
+// @Success 204
 // @Failure 401,403,404,500
-// @Router /orders/:id/cancel [patch]
-func (api *API) Cancel(c *gin.Context) {
+// @Router /orders/:id [patch]
+func (api *API) Patch(c *gin.Context) {
+	s := c.Query("status")
+	status, err := strconv.Atoi(s)
+
+	if err != nil || !IsValidStatus(status) {
+		c.Status(http.StatusUnprocessableEntity)
+		return
+	}
+
 	o, err := api.findByID(c)
 
 	if err != nil {
 		return
 	}
 
-	u := c.MustGet(user.ContextUserKey).(user.User)
-
-	if !u.IsAdmin && u.ID != o.UserID {
-		c.Status(http.StatusForbidden)
-		return
-	}
-
-	switch o.Status {
-	case StatusCanceled, StatusDone:
+	if o.Status == Status(status) {
 		c.Status(http.StatusNotModified)
 		return
 	}
 
-	if err := api.service.UpdateStatus(o.ID, StatusCanceled); err != nil {
+	if err := api.service.UpdateStatus(o.ID, Status(status)); err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
 	}
 
-	c.Status(http.StatusOK)
+	c.Status(http.StatusNoContent)
 }
 
 // Update godoc

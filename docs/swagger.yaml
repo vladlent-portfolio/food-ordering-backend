@@ -525,6 +525,28 @@ paths:
       tags:
       - order
   /orders/:id:
+    patch:
+      operationId: order-patch
+      parameters:
+      - description: New order status
+        in: query
+        name: status
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: ""
+        "401":
+          description: ""
+        "403":
+          description: ""
+        "404":
+          description: ""
+        "500":
+          description: ""
+      summary: Patch order. Requires admin rights.
+      tags:
+      - order
     put:
       consumes:
       - application/json
@@ -557,29 +579,6 @@ paths:
         "500":
           description: ""
       summary: Replace order. Requires admin rights.
-      tags:
-      - order
-  /orders/:id/cancel:
-    patch:
-      operationId: order-cancel
-      parameters:
-      - description: Order id
-        in: path
-        name: id
-        required: true
-        type: integer
-      responses:
-        "200":
-          description: ""
-        "401":
-          description: ""
-        "403":
-          description: ""
-        "404":
-          description: ""
-        "500":
-          description: ""
-      summary: Change order status to 'canceled'. Requires auth.
       tags:
       - order
   /users:

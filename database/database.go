@@ -13,7 +13,6 @@ import (
 type Paginator interface {
 	Page() int
 	Limit() int
-	Offset() int
 }
 
 var database *gorm.DB

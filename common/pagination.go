@@ -9,9 +9,8 @@ type QueryParser interface {
 }
 
 type Pagination struct {
-	page   int
-	limit  int
-	offset int
+	page  int
+	limit int
 }
 
 func (p *Pagination) Page() int {
@@ -22,15 +21,10 @@ func (p *Pagination) Limit() int {
 	return p.limit
 }
 
-func (p *Pagination) Offset() int {
-	return p.offset
-}
-
-func ExtractPagination(parser QueryParser, defaultLimit, defaultOffset int) *Pagination {
+func ExtractPagination(parser QueryParser, defaultLimit int) *Pagination {
 	return &Pagination{
-		page:   parseDefault(parser, "page", 0),
-		limit:  parseDefault(parser, "limit", defaultLimit),
-		offset: parseDefault(parser, "offset", defaultOffset),
+		page:  parseDefault(parser, "page", 0),
+		limit: parseDefault(parser, "limit", defaultLimit),
 	}
 }
 

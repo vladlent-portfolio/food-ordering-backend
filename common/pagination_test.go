@@ -9,19 +9,18 @@ import (
 func TestExtractPagination(t *testing.T) {
 	t.Run("should parse query and return Pagination instance", func(t *testing.T) {
 		it := assert.New(t)
-		tests := []struct{ limit, offset, page int }{
-			{1, 2, 3},
-			{34, 45, 657},
-			{23, 67, 90},
+		tests := []struct{ limit, page int }{
+			{1, 3},
+			{34, 657},
+			{23, 90},
 		}
 
 		for _, tc := range tests {
-			q := newQuery(tc.page, tc.limit, tc.offset)
-			p := ExtractPagination(q, 0, 0)
+			q := newQuery(tc.page, tc.limit)
+			p := ExtractPagination(q, 0)
 
 			it.Equal(tc.page, p.Page())
 			it.Equal(tc.limit, p.Limit())
-			it.Equal(tc.offset, p.Offset())
 		}
 
 	})
@@ -35,30 +34,11 @@ func TestExtractPagination(t *testing.T) {
 		}
 
 		for _, tc := range tests {
-			q := newQuery(tc.page, 0, tc.offset)
-			p := ExtractPagination(q, tc.defaultLimit, 0)
+			q := newQuery(tc.page, 0)
+			p := ExtractPagination(q, tc.defaultLimit)
 
 			it.Equal(tc.page, p.Page())
 			it.Equal(tc.defaultLimit, p.Limit())
-			it.Equal(tc.offset, p.Offset())
-		}
-	})
-
-	t.Run("should use default value for offset", func(t *testing.T) {
-		it := assert.New(t)
-		tests := []struct{ defaultOffset, limit, page int }{
-			{3, 23, 45},
-			{0, 1, 24},
-			{99, 45, 32},
-		}
-
-		for _, tc := range tests {
-			q := newQuery(tc.page, tc.limit, 0)
-			p := ExtractPagination(q, 0, tc.defaultOffset)
-
-			it.Equal(tc.page, p.Page())
-			it.Equal(tc.limit, p.Limit())
-			it.Equal(tc.defaultOffset, p.Offset())
 		}
 	})
 
@@ -71,12 +51,11 @@ func TestExtractPagination(t *testing.T) {
 		}
 
 		for _, tc := range tests {
-			q := newQuery(0, tc.limit, tc.offset)
-			p := ExtractPagination(q, 123, 346)
+			q := newQuery(0, tc.limit)
+			p := ExtractPagination(q, 123)
 
 			it.Equal(0, p.Page())
 			it.Equal(tc.limit, p.Limit())
-			it.Equal(tc.offset, p.Offset())
 		}
 
 	})
@@ -95,11 +74,6 @@ func (q query) limit() int {
 	return limit
 }
 
-func (q query) offset() int {
-	offset, _ := strconv.Atoi(q["offset"])
-	return offset
-}
-
 func (q query) page() int {
 	page, _ := strconv.Atoi(q["page"])
 	return page
@@ -109,10 +83,9 @@ func (q query) Query(key string) string {
 	return q[key]
 }
 
-func newQuery(page, limit, offset int) query {
+func newQuery(page, limit int) query {
 	q := query{}
 	q.setValue("page", page)
 	q.setValue("limit", limit)
-	q.setValue("offset", offset)
 	return q
 }

@@ -3,6 +3,7 @@ package order
 import (
 	"errors"
 	"fmt"
+	"food_ordering_backend/common"
 	"food_ordering_backend/controllers/dish"
 	"food_ordering_backend/controllers/user"
 	"gorm.io/gorm"
@@ -33,8 +34,8 @@ func ProvideService(repo *Repository, dishes *dish.Service) *Service {
 	return &Service{repo, dishes}
 }
 
-func (s *Service) FindAll() ([]Order, error) {
-	return s.repo.FindAll()
+func (s *Service) FindAll(p common.Paginator) ([]Order, error) {
+	return s.repo.FindAll(p)
 }
 
 func (s *Service) FindByID(id uint) (Order, error) {

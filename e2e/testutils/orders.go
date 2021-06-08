@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"log"
 	"math/rand"
+	"sort"
 	"testing"
 	"time"
 )
@@ -98,6 +99,12 @@ func FindTestOrderByID(id uint) order.Order {
 	}
 	log.Panicf("cannot find TestOrder with id %d\n", id)
 	return order.Order{}
+}
+
+func SortOrdersByID(orders []order.Order) {
+	sort.Slice(orders, func(i, j int) bool {
+		return orders[i].ID < orders[j].ID
+	})
 }
 
 func findOrderItemsByOrderID(id uint) []order.Item {

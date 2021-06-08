@@ -1,6 +1,7 @@
 package order
 
 import (
+	"food_ordering_backend/common"
 	"gorm.io/gorm"
 )
 
@@ -36,9 +37,15 @@ func (r *Repository) Save(o Order) (Order, error) {
 	return updated, nil
 }
 
-func (r *Repository) FindAll() ([]Order, error) {
+func (r *Repository) FindAll(p common.Paginator) ([]Order, error) {
 	var orders []Order
-	err := r.preload().Order("id ASC").Find(&orders).Error
+	tx := r.preload()
+
+	if p != nil {
+		tx.Scopes(common.WithPagination(p))
+	}
+
+	err := tx.Order("id ASC").Find(&orders).Error
 	return orders, err
 }
 

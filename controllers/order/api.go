@@ -2,6 +2,7 @@ package order
 
 import (
 	"errors"
+	"food_ordering_backend/common"
 	"food_ordering_backend/controllers/user"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -39,9 +40,10 @@ func (api *API) FindAll(c *gin.Context) {
 	var orders []Order
 	var err error
 	u := c.MustGet(user.ContextUserKey).(user.User)
+	p := common.ExtractPagination(c, 10)
 
 	if u.IsAdmin {
-		orders, err = api.service.FindAll()
+		orders, err = api.service.FindAll(p)
 	} else {
 		orders, err = api.service.FindByUID(u.ID)
 	}

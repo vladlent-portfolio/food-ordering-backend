@@ -33,6 +33,40 @@ func TestOrders(t *testing.T) {
 			verifyResponse(t, len(testutils.TestOrders), send(c, ""))
 		})
 
+		t.Run("should work with pagination", func(t *testing.T) {
+			it := assert.New(t)
+			testutils.SetupOrdersDB(t)
+
+			orders := make([]order.Order, len(testutils.TestOrders))
+			copy(orders, testutils.TestOrders)
+			testutils.SortOrdersByID(orders)
+
+			tests := []struct {
+				query    string
+				expected []order.Order
+			}{
+				{"limit=2", orders[:2]},
+				{"limit=3&page=2", orders[3:]},
+				{"page=2", nil},
+				{"", orders},
+			}
+			_, c := testutils.LoginAsRandomAdmin(t)
+
+			for _, tc := range tests {
+				resp := testutils.ReqWithCookie(http.MethodGet, "/orders?"+tc.query)(c, "")
+
+				if it.Equal(http.StatusOK, resp.Code) {
+					var dtos []order.ResponseDTO
+
+					if it.NoError(json.NewDecoder(resp.Body).Decode(&dtos)) {
+						for i, dto := range dtos {
+							isEqualOrder(t, tc.expected[i], dto)
+						}
+					}
+				}
+			}
+		})
+
 		testutils.RunAuthTests(t, http.MethodGet, "/orders", false)
 	})
 
@@ -292,18 +326,23 @@ func verifyResponse(t *testing.T, expectedLen int, resp *httptest.ResponseRecord
 
 				if it.NotZero(o.ID) {
 					testOrder := testutils.FindTestOrderByID(o.ID)
-					it.Equal(testOrder.UserID, o.UserID)
-					it.Equal(order.ToItemsResponseDTO(testOrder.Items), o.Items)
-					it.Equal(testOrder.Status, o.Status)
-					it.Equal(testOrder.Total, o.Total)
-					it.Equal(testOrder.User.ID, o.User.ID)
-					it.Equal(testOrder.User.Email, o.User.Email)
-					it.Equal(testOrder.User.IsAdmin, o.User.IsAdmin)
-					it.True(testutils.EqualTimestamps(testOrder.User.CreatedAt, o.User.CreatedAt))
+					isEqualOrder(t, testOrder, o)
 				}
 			}
 		}
 	}
+}
+
+func isEqualOrder(t *testing.T, o order.Order, dto order.ResponseDTO) {
+	it := assert.New(t)
+	it.Equal(o.UserID, dto.UserID)
+	it.Equal(order.ToItemsResponseDTO(o.Items), dto.Items)
+	it.Equal(o.Status, dto.Status)
+	it.Equal(o.Total, dto.Total)
+	it.Equal(o.User.ID, dto.User.ID)
+	it.Equal(o.User.Email, dto.User.Email)
+	it.Equal(o.User.IsAdmin, dto.User.IsAdmin)
+	it.True(testutils.EqualTimestamps(o.User.CreatedAt, dto.User.CreatedAt))
 }
 
 func verifyStatusChange(t *testing.T, orderID uint, newStatus order.Status) {

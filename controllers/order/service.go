@@ -34,8 +34,11 @@ func ProvideService(repo *Repository, dishes *dish.Service) *Service {
 	return &Service{repo, dishes}
 }
 
-func (s *Service) FindAll(p common.Paginator) ([]Order, error) {
-	return s.repo.FindAll(p)
+// FindAll returns all orders for user with specified user ID.
+// If user ID equals 0, return orders for all users instead.
+// If Paginator is not nil, it returns paginated result.
+func (s *Service) FindAll(uid uint, p common.Paginator) ([]Order, error) {
+	return s.repo.FindAll(uid, p)
 }
 
 func (s *Service) FindByID(id uint) (Order, error) {
@@ -50,10 +53,6 @@ func (s *Service) FindByID(id uint) (Order, error) {
 	}
 
 	return o, nil
-}
-
-func (s *Service) FindByUID(uid uint) ([]Order, error) {
-	return s.repo.FindByUID(uid)
 }
 
 func (s *Service) Create(itemsDTO []ItemCreateDTO, u user.User) (Order, error) {
@@ -128,4 +127,10 @@ func (s *Service) ItemsFromDTOs(itemsDTO []ItemCreateDTO) ([]Item, error) {
 	}
 
 	return items, nil
+}
+
+// CountAll returns total amount of orders for user with specified ID.
+// If ID equals 0, returns total amount of orders instead.
+func (s *Service) CountAll(uid uint) int {
+	return s.repo.CountAll(uid)
 }

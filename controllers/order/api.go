@@ -32,8 +32,10 @@ func (api *API) Register(router *gin.RouterGroup, db *gorm.DB) {
 // @Description If requester is admin, it returns all orders. Otherwise, it returns orders only for that user.
 // @ID order-all
 // @Tags order
+// @Param page query integer false "0-based page number"
+// @Param limit query integer false "amount of entries per page"
 // @Produce json
-// @Success 200 {array} ResponseDTO
+// @Success 200 {object} DTOsWithPagination
 // @Failure 401,403,404,500
 // @Router /orders [get]
 func (api *API) FindAll(c *gin.Context) {
@@ -43,17 +45,24 @@ func (api *API) FindAll(c *gin.Context) {
 	p := common.ExtractPagination(c, 10)
 
 	if u.IsAdmin {
-		orders, err = api.service.FindAll(p)
-	} else {
-		orders, err = api.service.FindByUID(u.ID)
+		u.ID = 0
 	}
+
+	orders, err = api.service.FindAll(u.ID, p)
 
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(http.StatusOK, ToResponseDTOs(orders))
+	c.JSON(http.StatusOK, DTOsWithPagination{
+		Orders: ToResponseDTOs(orders),
+		Pagination: common.PaginationDTO{
+			Page:  p.Page(),
+			Limit: p.Limit(),
+			Total: api.service.CountAll(u.ID),
+		},
+	})
 }
 
 // Create godoc

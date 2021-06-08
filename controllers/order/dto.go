@@ -1,6 +1,7 @@
 package order
 
 import (
+	"food_ordering_backend/common"
 	"food_ordering_backend/controllers/dish"
 	"food_ordering_backend/controllers/user"
 	"time"
@@ -24,6 +25,11 @@ type ResponseDTO struct {
 	User      user.ResponseDTO  `json:"user"`
 	Total     float64           `json:"total"`
 	Items     []ItemResponseDTO `json:"items"`
+}
+
+type DTOsWithPagination struct {
+	Orders     []ResponseDTO        `json:"orders"`
+	Pagination common.PaginationDTO `json:"pagination"`
 }
 
 type UpdateDTO struct {

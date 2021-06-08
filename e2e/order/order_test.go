@@ -42,13 +42,15 @@ func TestOrders(t *testing.T) {
 			testutils.SortOrdersByID(orders)
 
 			tests := []struct {
-				query    string
-				expected []order.Order
+				query          string
+				expectedOrders []order.Order
+				expectedPage   int
+				expectedLimit  int
 			}{
-				{"limit=2", orders[:2]},
-				{"limit=3&page=2", orders[3:]},
-				{"page=2", nil},
-				{"", orders},
+				{"limit=2", orders[:2], 0, 2},
+				{"limit=3&page=2", orders[3:], 2, 3},
+				{"page=2", nil, 2, 10},
+				{"", orders, 0, 10},
 			}
 			_, c := testutils.LoginAsRandomAdmin(t)
 
@@ -56,11 +58,15 @@ func TestOrders(t *testing.T) {
 				resp := testutils.ReqWithCookie(http.MethodGet, "/orders?"+tc.query)(c, "")
 
 				if it.Equal(http.StatusOK, resp.Code) {
-					var dtos []order.ResponseDTO
+					var dto order.DTOsWithPagination
 
-					if it.NoError(json.NewDecoder(resp.Body).Decode(&dtos)) {
-						for i, dto := range dtos {
-							isEqualOrder(t, tc.expected[i], dto)
+					if it.NoError(json.NewDecoder(resp.Body).Decode(&dto)) {
+						it.Equal(tc.expectedPage, dto.Pagination.Page)
+						it.Equal(tc.expectedLimit, dto.Pagination.Limit)
+						it.Equal(len(orders), dto.Pagination.Total)
+
+						for i, o := range dto.Orders {
+							isEqualOrder(t, tc.expectedOrders[i], o)
 						}
 					}
 				}
@@ -150,7 +156,7 @@ func TestOrders(t *testing.T) {
 		t.Run("should change orders status", func(t *testing.T) {
 			testutils.SetupOrdersDB(t)
 			it := assert.New(t)
-			id := testutils.TestOrders[0].ID
+			id := testutils.TestOrders[1].ID
 			_, c := testutils.LoginAsRandomAdmin(t)
 
 			for _, status := range order.Statuses {
@@ -308,19 +314,19 @@ func verifyResponse(t *testing.T, expectedLen int, resp *httptest.ResponseRecord
 	it := assert.New(t)
 	if it.Equal(http.StatusOK, resp.Code) {
 
-		var orders []order.ResponseDTO
-		if it.NoError(json.NewDecoder(resp.Body).Decode(&orders)) {
-			it.Len(orders, expectedLen)
+		var dto order.DTOsWithPagination
+		if it.NoError(json.NewDecoder(resp.Body).Decode(&dto)) {
+			it.Len(dto.Orders, expectedLen)
 
-			ids := make([]uint, len(orders))
+			ids := make([]uint, len(dto.Orders))
 
-			for i, dto := range orders {
-				ids[i] = dto.ID
+			for i, o := range dto.Orders {
+				ids[i] = o.ID
 			}
 
 			it.IsIncreasing(ids, "expected orders to be sorted by id")
 
-			for _, o := range orders {
+			for _, o := range dto.Orders {
 				it.NotZero(o.CreatedAt)
 				it.NotZero(o.UpdatedAt)
 

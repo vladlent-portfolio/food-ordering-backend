@@ -37,9 +37,16 @@ func (r *Repository) Save(o Order) (Order, error) {
 	return updated, nil
 }
 
-func (r *Repository) FindAll(p common.Paginator) ([]Order, error) {
+// FindAll returns all orders for user with specified user ID.
+// If user ID equals 0, return orders for all users instead.
+// If Paginator is not nil, it returns paginated result.
+func (r *Repository) FindAll(uid uint, p common.Paginator) ([]Order, error) {
 	var orders []Order
 	tx := r.preload()
+
+	if uid != 0 {
+		tx.Where("user_id = ?", uid)
+	}
 
 	if p != nil {
 		tx.Scopes(common.WithPagination(p))
@@ -55,12 +62,6 @@ func (r *Repository) FindByID(id uint) (Order, error) {
 	return order, err
 }
 
-func (r *Repository) FindByUID(uid uint) ([]Order, error) {
-	var orders []Order
-	err := r.preload().Where("user_id = ?", uid).Order("id ASC").Find(&orders).Error
-	return orders, err
-}
-
 func (r *Repository) UpdateStatus(id uint, status Status) error {
 	o := Order{
 		ID: id,
@@ -70,6 +71,20 @@ func (r *Repository) UpdateStatus(id uint, status Status) error {
 
 func (r *Repository) DeleteItemsByID(ids []uint) error {
 	return r.db.Delete(Item{}, ids).Error
+}
+
+// CountAll returns total amount of orders for user with specified ID.
+// If ID equals 0, returns total amount of orders instead.
+func (r *Repository) CountAll(uid uint) int {
+	var count int64
+	tx := r.db.Model(&Order{})
+
+	if uid != 0 {
+		tx.Where("user_id = ?", uid)
+	}
+
+	tx.Count(&count)
+	return int(count)
 }
 
 func (r *Repository) preload() *gorm.DB {

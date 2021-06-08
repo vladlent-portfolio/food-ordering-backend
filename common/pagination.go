@@ -16,6 +16,12 @@ type QueryParser interface {
 	Query(key string) string
 }
 
+type PaginationDTO struct {
+	Page  int `json:"page"`
+	Limit int `json:"limit"`
+	Total int `json:"total"`
+}
+
 type Pagination struct {
 	page  int
 	limit int

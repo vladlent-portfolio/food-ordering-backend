@@ -554,14 +554,25 @@ var doc = `{
                 ],
                 "summary": "Get all orders. Requires auth.",
                 "operationId": "order-all",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "0-based page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "amount of entries per page",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/order.ResponseDTO"
-                            }
+                            "$ref": "#/definitions/order.DTOsWithPagination"
                         }
                     },
                     "401": {
@@ -871,6 +882,20 @@ var doc = `{
                 }
             }
         },
+        "common.PaginationDTO": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "dish.DTO": {
             "type": "object",
             "properties": {
@@ -908,6 +933,20 @@ var doc = `{
                     "items": {
                         "$ref": "#/definitions/order.ItemCreateDTO"
                     }
+                }
+            }
+        },
+        "order.DTOsWithPagination": {
+            "type": "object",
+            "properties": {
+                "orders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/order.ResponseDTO"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/common.PaginationDTO"
                 }
             }
         },

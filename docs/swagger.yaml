@@ -11,6 +11,15 @@ definitions:
       title:
         type: string
     type: object
+  common.PaginationDTO:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+    type: object
   dish.DTO:
     properties:
       category:
@@ -36,6 +45,15 @@ definitions:
         type: array
     required:
     - items
+    type: object
+  order.DTOsWithPagination:
+    properties:
+      orders:
+        items:
+          $ref: '#/definitions/order.ResponseDTO'
+        type: array
+      pagination:
+        $ref: '#/definitions/common.PaginationDTO'
     type: object
   order.ItemCreateDTO:
     properties:
@@ -475,15 +493,22 @@ paths:
     get:
       description: If requester is admin, it returns all orders. Otherwise, it returns orders only for that user.
       operationId: order-all
+      parameters:
+      - description: 0-based page number
+        in: query
+        name: page
+        type: integer
+      - description: amount of entries per page
+        in: query
+        name: limit
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/order.ResponseDTO'
-            type: array
+            $ref: '#/definitions/order.DTOsWithPagination'
         "401":
           description: ""
         "403":

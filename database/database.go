@@ -10,11 +10,6 @@ import (
 	"log"
 )
 
-type Paginator interface {
-	Page() int
-	Limit() int
-}
-
 var database *gorm.DB
 
 // Init initializes db session.

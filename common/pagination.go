@@ -1,6 +1,14 @@
 package common
 
-import "strconv"
+import (
+	"gorm.io/gorm"
+	"strconv"
+)
+
+type Paginator interface {
+	Page() int
+	Limit() int
+}
 
 // QueryParser extracts query parameter from request by it's respective name
 // using Query method.
@@ -40,4 +48,10 @@ func parseDefault(parser QueryParser, key string, defaultVal int) int {
 	}
 
 	return defaultVal
+}
+
+func WithPagination(p Paginator) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Offset(p.Page() * p.Limit()).Limit(p.Limit())
+	}
 }

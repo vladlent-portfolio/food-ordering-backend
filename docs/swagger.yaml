@@ -127,6 +127,15 @@ definitions:
     - email
     - password
     type: object
+  user.DTOsWithPagination:
+    properties:
+      pagination:
+        $ref: '#/definitions/common.PaginationDTO'
+      users:
+        items:
+          $ref: '#/definitions/user.ResponseDTO'
+        type: array
+    type: object
   user.ResponseDTO:
     properties:
       created_at:
@@ -609,15 +618,22 @@ paths:
   /users:
     get:
       operationId: user-get-all
+      parameters:
+      - description: 0-based page number
+        in: query
+        name: page
+        type: integer
+      - description: amount of entries per page
+        in: query
+        name: limit
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/user.ResponseDTO'
-            type: array
+            $ref: '#/definitions/user.DTOsWithPagination'
         "401":
           description: ""
       summary: Get all users. Requires admin rights.

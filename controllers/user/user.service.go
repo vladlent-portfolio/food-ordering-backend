@@ -1,5 +1,7 @@
 package user
 
+import "food_ordering_backend/common"
+
 type Service struct {
 	jwtService *JWTService
 	repo       *Repository
@@ -14,8 +16,8 @@ func (s *Service) Create(dto AuthDTO) (User, error) {
 	return s.repo.Create(user)
 }
 
-func (s *Service) FindAll() []User {
-	return s.repo.FindAll()
+func (s *Service) FindAll(p common.Paginator) []User {
+	return s.repo.FindAll(p)
 }
 
 func (s *Service) FindByID(id uint) (User, error) {
@@ -51,4 +53,8 @@ func (s *Service) Logout(token string) error {
 
 func (s *Service) FindSessionByToken(token string) (Session, error) {
 	return s.repo.FindSessionByToken(token)
+}
+
+func (s *Service) CountAll() int {
+	return s.repo.CountAll()
 }

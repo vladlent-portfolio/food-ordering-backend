@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
+	"sort"
 	"testing"
 )
 
@@ -66,6 +67,12 @@ func SetupUsersDB(t *testing.T) {
 
 	req.NoError(db.Create(&TestUsers).Error)
 	req.NoError(db.Create(&TestAdmins).Error)
+}
+
+func SortUsersByID(users []user.User) {
+	sort.Slice(users, func(i, j int) bool {
+		return users[i].ID < users[j].ID
+	})
 }
 
 func RunAuthTests(t *testing.T, method, target string, adminOnly bool) {

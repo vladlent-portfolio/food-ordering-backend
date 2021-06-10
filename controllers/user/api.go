@@ -73,13 +73,23 @@ func (api *API) Create(c *gin.Context) {
 // @Summary Get all users. Requires admin rights.
 // @ID user-get-all
 // @Tags user
+// @Param page query integer false "0-based page number"
+// @Param limit query integer false "amount of entries per page"
 // @Produce json
-// @Success 200 {array} ResponseDTO
+// @Success 200 {object} DTOsWithPagination
 // @Failure 401
 // @Router /users [get]
 func (api *API) FindAll(c *gin.Context) {
-	users := api.service.FindAll()
-	c.JSON(http.StatusOK, ToResponseDTOs(users))
+	p := common.ExtractPagination(c, 10)
+	users := api.service.FindAll(p)
+	c.JSON(http.StatusOK, DTOsWithPagination{
+		Users: ToResponseDTOs(users),
+		Pagination: common.PaginationDTO{
+			Page:  p.Page(),
+			Limit: p.Limit(),
+			Total: api.service.CountAll(),
+		},
+	})
 }
 
 // Login godoc

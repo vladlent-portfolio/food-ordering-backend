@@ -1,6 +1,9 @@
 package user
 
-import "gorm.io/gorm"
+import (
+	"food_ordering_backend/common"
+	"gorm.io/gorm"
+)
 
 type Repository struct {
 	db *gorm.DB
@@ -29,9 +32,15 @@ func (r *Repository) FindByEmail(email string) (User, error) {
 	return u, err
 }
 
-func (r *Repository) FindAll() []User {
+func (r *Repository) FindAll(p common.Paginator) []User {
 	var users []User
-	r.db.Find(&users)
+	tx := r.db
+
+	if p != nil {
+		r.db.Scopes(common.WithPagination(p))
+	}
+
+	tx.Find(&users)
 	return users
 }
 
@@ -52,4 +61,10 @@ func (r *Repository) DeleteSession(token string) error {
 func (r *Repository) DeleteAllSessions(u User) error {
 	var s Session
 	return r.db.Where("user_id = ?", u.ID).Delete(&s).Error
+}
+
+func (r *Repository) CountAll() int {
+	var count int64
+	r.db.Model(&User{}).Count(&count)
+	return int(count)
 }

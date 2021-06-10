@@ -730,14 +730,25 @@ var doc = `{
                 ],
                 "summary": "Get all users. Requires admin rights.",
                 "operationId": "user-get-all",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "0-based page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "amount of entries per page",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/user.ResponseDTO"
-                            }
+                            "$ref": "#/definitions/user.DTOsWithPagination"
                         }
                     },
                     "401": {
@@ -1055,6 +1066,20 @@ var doc = `{
                 },
                 "password": {
                     "type": "string"
+                }
+            }
+        },
+        "user.DTOsWithPagination": {
+            "type": "object",
+            "properties": {
+                "pagination": {
+                    "$ref": "#/definitions/common.PaginationDTO"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/user.ResponseDTO"
+                    }
                 }
             }
         },

@@ -28,11 +28,54 @@ func TestAPI(t *testing.T) {
 
 			it.Equal(http.StatusOK, resp.Code)
 
-			var users []user.ResponseDTO
-			err := json.NewDecoder(resp.Body).Decode(&users)
+			var dtos user.DTOsWithPagination
+			err := json.NewDecoder(resp.Body).Decode(&dtos)
 			require.NoError(t, err)
 
-			it.Len(users, len(testUsers)+len(testAdmins))
+			it.Len(dtos.Users, len(testUsers)+len(testAdmins))
+		})
+
+		t.Run("should work with pagination", func(t *testing.T) {
+			testutils.SetupUsersDB(t)
+			it := assert.New(t)
+
+			users := make([]user.User, 0, len(testutils.TestUsers)+len(testutils.TestAdmins))
+			users = append(users, testutils.TestUsers...)
+			users = append(users, testutils.TestAdmins...)
+			testutils.SortUsersByID(users)
+
+			tests := []struct {
+				query          string
+				expectedOrders []user.User
+				expectedPage   int
+				expectedLimit  int
+			}{
+				{"limit=2", users[:2], 0, 2},
+				{"limit=3&page=2", users[3:], 2, 3},
+				{"page=2", nil, 2, 10},
+				{"", users, 0, 10},
+			}
+			_, c := testutils.LoginAsRandomAdmin(t)
+
+			for _, tc := range tests {
+				resp := testutils.ReqWithCookie(http.MethodGet, "/users?"+tc.query)(c, "")
+
+				if it.Equal(http.StatusOK, resp.Code) {
+					var dto user.DTOsWithPagination
+
+					if it.NoError(json.NewDecoder(resp.Body).Decode(&dto)) {
+						it.Equal(tc.expectedPage, dto.Pagination.Page)
+						it.Equal(tc.expectedLimit, dto.Pagination.Limit)
+						it.Equal(len(users), dto.Pagination.Total)
+
+						for i, u := range dto.Users {
+							it.Equal(users[i].ID, u.ID)
+							it.Equal(users[i].Email, u.Email)
+							it.Equal(users[i].IsAdmin, u.IsAdmin)
+						}
+					}
+				}
+			}
 		})
 
 		testutils.RunAuthTests(t, http.MethodGet, "/users", true)

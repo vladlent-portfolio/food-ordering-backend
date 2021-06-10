@@ -1,6 +1,9 @@
 package user
 
-import "time"
+import (
+	"food_ordering_backend/common"
+	"time"
+)
 
 type AuthDTO struct {
 	Email    string `json:"email" binding:"required,email,max=255"`
@@ -12,4 +15,9 @@ type ResponseDTO struct {
 	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"created_at"`
 	IsAdmin   bool      `json:"is_admin"`
+}
+
+type DTOsWithPagination struct {
+	Users      []ResponseDTO        `json:"users"`
+	Pagination common.PaginationDTO `json:"pagination"`
 }

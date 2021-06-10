@@ -97,7 +97,7 @@ func TestCategories(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			testutils.SetupDishesAndCategories(t)
 			it := assert.New(t)
-			json := `{"id":69,"title":"Seafood","removable":false}`
+			json := `{"id":69,"title":"Seafood","removable":true}`
 			_, c := testutils.LoginAsRandomAdmin(t)
 
 			resp := send(c, json)
@@ -109,7 +109,7 @@ func TestCategories(t *testing.T) {
 			var last category.Category
 
 			db.Last(&last)
-			it.False(last.Removable)
+			it.True(last.Removable)
 			it.Equal(last.Title, "Seafood")
 			it.Equal(last.ID, uint(69))
 

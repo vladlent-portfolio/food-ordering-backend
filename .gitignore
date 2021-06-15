@@ -7,6 +7,8 @@
 food_ordering_backend
 food_ordering_backend.exe
 
+#private files
+.env.production
 
 # IDEs and editors
 /.idea

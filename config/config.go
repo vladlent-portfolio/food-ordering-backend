@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"net/url"
@@ -12,19 +13,28 @@ func init() {
 	envFileName := ".env"
 
 	if IsProdMode {
-		envFileName = ".env.production"
+		envFileName = ".production.env"
 	}
 
 	viper.SetConfigFile(envFileName)
 	if err := viper.ReadInConfig(); err != nil {
 		panic(err)
 	}
+
+	HostRaw = viper.GetString("HOST_URL")
+	parsedURL, err := url.Parse(HostRaw)
+
+	if err != nil {
+		fmt.Println("error parsing host url:", err)
+	}
+
+	HostURL = parsedURL
 }
 
 var IsProdMode = gin.Mode() == "release"
 
-var HostRaw = "http://localhost:8080"
-var HostURL, _ = url.Parse(HostRaw)
+var HostRaw string
+var HostURL *url.URL
 
 var MaxUploadFileSize int64 = 512 * 1024 // 512 KiB
 

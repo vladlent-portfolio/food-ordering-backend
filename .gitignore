@@ -5,10 +5,11 @@
 /tmp
 /out-tsc
 food_ordering_backend
+food_ordering_api
 food_ordering_backend.exe
 
 #private files
-.env.production
+.production.env
 
 # IDEs and editors
 /.idea

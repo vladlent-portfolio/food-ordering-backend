@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"food_ordering_backend/config"
 	"food_ordering_backend/database"
 	_ "food_ordering_backend/docs"
@@ -30,6 +29,5 @@ func main() {
 	url := ginSwagger.URL(config.HostRaw + "/swagger/doc.json") // The url pointing to API definition
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 
-	var address = fmt.Sprintf("%s:%s", config.HostURL.Hostname(), config.HostURL.Port())
-	log.Panicln(r.Run(address))
+	log.Panicln(r.Run(":" + config.HostURL.Port()))
 }

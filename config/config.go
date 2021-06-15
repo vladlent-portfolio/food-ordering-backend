@@ -1,10 +1,27 @@
 package config
 
 import (
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"net/url"
 	"path/filepath"
 	"runtime"
 )
+
+func init() {
+	envFileName := ".env"
+
+	if IsProdMode {
+		envFileName = ".env.production"
+	}
+
+	viper.SetConfigFile(envFileName)
+	if err := viper.ReadInConfig(); err != nil {
+		panic(err)
+	}
+}
+
+var IsProdMode = gin.Mode() == "release"
 
 var HostRaw = "http://localhost:8080"
 var HostURL, _ = url.Parse(HostRaw)

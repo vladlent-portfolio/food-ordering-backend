@@ -1,10 +1,12 @@
 package database
 
 import (
+	"fmt"
 	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/controllers/dish"
 	"food_ordering_backend/controllers/order"
 	"food_ordering_backend/controllers/user"
+	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
@@ -15,7 +17,14 @@ var database *gorm.DB
 // Init initializes db session.
 // Successive calls to Init will do nothing if a successful connection has already been established.
 func Init() error {
-	connStr := "postgres://vlad:123@localhost:5432/food-ordering-local?sslmode=disable"
+	connStr := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		viper.GetString("DB_USERNAME"),
+		viper.GetString("DB_PASSWORD"),
+		viper.GetString("DB_HOSTNAME"),
+		viper.GetString("DB_PORT"),
+		viper.GetString("DB_NAME"),
+	)
 	return initDB(connStr)
 }
 

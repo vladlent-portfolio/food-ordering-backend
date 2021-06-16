@@ -16,7 +16,7 @@ func init() {
 		envFileName = ".production.env"
 	}
 
-	viper.SetConfigFile(envFileName)
+	viper.SetConfigFile(filepath.Join(PathToMain(), envFileName))
 	if err := viper.ReadInConfig(); err != nil {
 		panic(err)
 	}

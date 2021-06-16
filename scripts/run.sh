@@ -5,4 +5,4 @@ if [[ $(uname) == 'Windows' ]]; then
   filename="food_ordering_backend.exe"
 fi
 
-swag init && go build && GIN_MODE=release "$root"/"$filename"
+swag init && go build && "$root"/"$filename"

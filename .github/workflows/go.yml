@@ -39,4 +39,10 @@ jobs:
         source: "food_ordering_api"
         target: "~/src/api.food-ordering.app"
 
-
+    - name: Restart API
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.PROD_API }}
+        username: ${{ secrets.PROD_USERNAME }}
+        password: ${{ secrets.PROD_PASSWORD }}
+        script: sudo systemctl restart food_ordering_api

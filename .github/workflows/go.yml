@@ -45,4 +45,4 @@ jobs:
         host: ${{ secrets.PROD_API }}
         username: ${{ secrets.PROD_USERNAME }}
         password: ${{ secrets.PROD_PASSWORD }}
-        script: sudo systemctl restart food_ordering_api
+        script: sudo systemctl restart food_ordering_api.service

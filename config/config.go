@@ -5,18 +5,25 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"net/url"
+	"os"
 	"path/filepath"
 	"runtime"
 )
 
 func init() {
-	envFileName := ".env"
-
 	if IsProdMode {
-		envFileName = ".production.env"
+		ex, err := os.Executable()
+
+		if err != nil {
+			panic(err)
+		}
+
+		exDir := filepath.Dir(ex)
+		viper.SetConfigFile(filepath.Join(exDir, ".production.env"))
+	} else {
+		viper.SetConfigFile(filepath.Join(PathToMain(), ".env"))
 	}
 
-	viper.SetConfigFile(filepath.Join(PathToMain(), envFileName))
 	if err := viper.ReadInConfig(); err != nil {
 		panic(err)
 	}

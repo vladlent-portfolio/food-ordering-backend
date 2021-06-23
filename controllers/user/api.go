@@ -184,7 +184,9 @@ func SessionCookie(token string, maxAge int) *http.Cookie {
 		Name:     SessionCookieName,
 		Value:    token,
 		HttpOnly: true,
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
+		Domain:   "food-ordering.app",
 		Path:     "/",
 		MaxAge:   maxAge,
 	}

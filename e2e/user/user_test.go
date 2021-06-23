@@ -289,5 +289,7 @@ func validateSessionCookie(t *testing.T, c *http.Cookie) {
 		it.Equal(http.SameSiteLaxMode, c.SameSite)
 		it.Equal("/", c.Path)
 		it.Equal(0, c.MaxAge)
+		it.True(c.Secure, "expected cookie to be Secure")
+		it.Equal("food-ordering.app", c.Domain, "expected cookie to have a proper Domain")
 	}
 }

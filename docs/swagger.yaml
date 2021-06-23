@@ -147,13 +147,12 @@ definitions:
       is_admin:
         type: boolean
     type: object
-host: localhost:8080
 info:
   contact:
     email: vladlent.dev@gmail.com
     name: Vladlen Tereshchenko
     url: https://github.com/VladlenT
-  description: Golang backend for Food Ordering portfolio app.
+  description: Golang backend for Food Ordering app.
   license:
     name: MIT
   title: Food Ordering Backend
@@ -715,6 +714,4 @@ paths:
       summary: Create new user
       tags:
       - user
-schemes:
-- http
 swagger: "2.0"

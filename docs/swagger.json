@@ -1,10 +1,7 @@
 {
-    "schemes": [
-        "http"
-    ],
     "swagger": "2.0",
     "info": {
-        "description": "Golang backend for Food Ordering portfolio app.",
+        "description": "Golang backend for Food Ordering app.",
         "title": "Food Ordering Backend",
         "contact": {
             "name": "Vladlen Tereshchenko",
@@ -16,7 +13,6 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:8080",
     "basePath": "/",
     "paths": {
         "/categories": {

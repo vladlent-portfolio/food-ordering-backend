@@ -187,7 +187,7 @@ func SessionCookie(token string, maxAge int) *http.Cookie {
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
-		Domain:   config.FEDomain,
+		Domain:   config.ClientURL.Hostname(),
 		Path:     "/",
 		MaxAge:   maxAge,
 	}

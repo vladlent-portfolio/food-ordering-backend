@@ -291,6 +291,6 @@ func validateSessionCookie(t *testing.T, c *http.Cookie) {
 		it.Equal("/", c.Path)
 		it.Equal(0, c.MaxAge)
 		it.True(c.Secure, "expected cookie to be Secure")
-		it.Equal(config.FEDomain, c.Domain, "expected cookie to have a proper Domain")
+		it.Equal(config.ClientURL.Hostname(), c.Domain, "expected cookie to have a proper Domain")
 	}
 }

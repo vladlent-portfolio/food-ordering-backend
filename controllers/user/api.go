@@ -3,6 +3,7 @@ package user
 import (
 	"errors"
 	"food_ordering_backend/common"
+	"food_ordering_backend/config"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
@@ -186,7 +187,7 @@ func SessionCookie(token string, maxAge int) *http.Cookie {
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
-		Domain:   "food-ordering.app",
+		Domain:   config.FEDomain,
 		Path:     "/",
 		MaxAge:   maxAge,
 	}

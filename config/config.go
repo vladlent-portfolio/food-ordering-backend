@@ -36,12 +36,14 @@ func init() {
 	}
 
 	HostURL = parsedURL
+	FEDomain = viper.GetString("FE_DOMAIN")
 }
 
 var IsProdMode = gin.Mode() == "release"
 
 var HostRaw string
 var HostURL *url.URL
+var FEDomain string
 
 var MaxUploadFileSize int64 = 512 * 1024 // 512 KiB
 

@@ -3,6 +3,7 @@ package user_test
 import (
 	"encoding/json"
 	"food_ordering_backend/common"
+	"food_ordering_backend/config"
 	"food_ordering_backend/controllers/user"
 	"food_ordering_backend/database"
 	"food_ordering_backend/e2e/testutils"
@@ -290,6 +291,6 @@ func validateSessionCookie(t *testing.T, c *http.Cookie) {
 		it.Equal("/", c.Path)
 		it.Equal(0, c.MaxAge)
 		it.True(c.Secure, "expected cookie to be Secure")
-		it.Equal("food-ordering.app", c.Domain, "expected cookie to have a proper Domain")
+		it.Equal(config.FEDomain, c.Domain, "expected cookie to have a proper Domain")
 	}
 }

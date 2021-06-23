@@ -47,7 +47,7 @@ func CORSMiddleware() gin.HandlerFunc {
 			"Content-Length",
 		}
 
-		c.Header("Access-Control-Allow-Origin", "http://localhost:4200")
+		c.Header("Access-Control-Allow-Origin", config.FEDomain)
 		c.Header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
 		c.Header("Access-Control-Allow-Credentials", "true")
 		c.Header("Access-Control-Allow-Headers", strings.Join(allowedHeaders, ","))

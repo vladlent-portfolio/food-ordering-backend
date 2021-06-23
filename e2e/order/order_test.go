@@ -225,7 +225,7 @@ func TestOrders(t *testing.T) {
 		t.Run("should change order and return modified version", func(t *testing.T) {
 			testutils.SetupOrdersDB(t)
 			it := assert.New(t)
-			initialOrder := testutils.TestOrders[3]
+			initialOrder := testutils.FindTestOrderByID(4)
 			_, c := testutils.LoginAsRandomAdmin(t)
 			dto := order.UpdateDTO{
 				Status: order.StatusInProgress,

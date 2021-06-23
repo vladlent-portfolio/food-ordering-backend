@@ -28,7 +28,7 @@ jobs:
         username: ${{ secrets.PROD_USERNAME }}
         password: ${{ secrets.PROD_PASSWORD }}
         source: "docs/*"
-        target: "~/src/api.food-ordering.app/docs"
+        target: "/var/www/api.food-ordering.app/docs"
 
     - name: Upload API
       uses: appleboy/scp-action@master
@@ -37,7 +37,7 @@ jobs:
         username: ${{ secrets.PROD_USERNAME }}
         password: ${{ secrets.PROD_PASSWORD }}
         source: "food_ordering_api"
-        target: "~/src/api.food-ordering.app"
+        target: "/var/www/api.food-ordering.app"
 
     - name: Restart API
       uses: appleboy/ssh-action@master

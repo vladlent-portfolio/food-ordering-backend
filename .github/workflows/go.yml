@@ -28,6 +28,7 @@ jobs:
         username: ${{ secrets.PROD_USERNAME }}
         password: ${{ secrets.PROD_PASSWORD }}
         source: "docs/*"
+        strip_components: 1
         target: "/var/www/api.food-ordering.app/docs"
 
     - name: Upload API

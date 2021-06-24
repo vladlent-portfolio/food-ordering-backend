@@ -76,7 +76,7 @@ func (s *Upload) ParseAndSave(c *gin.Context, name string) string {
 	ext := common.ExtensionByType(mimeType)
 	fPath := filepath.Join(s.Root, name+ext)
 
-	if err := os.MkdirAll(filepath.Dir(fPath), os.ModeDir); err != nil {
+	if err := os.MkdirAll(filepath.Dir(fPath), os.ModePerm); err != nil {
 		log.Println("[Upload] Error creating directories:", err)
 		c.Status(http.StatusInternalServerError)
 		return ""

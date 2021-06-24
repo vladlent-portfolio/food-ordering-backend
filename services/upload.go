@@ -3,6 +3,7 @@ package services
 import (
 	"food_ordering_backend/common"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -76,11 +77,13 @@ func (s *Upload) ParseAndSave(c *gin.Context, name string) string {
 	fPath := filepath.Join(s.Root, name+ext)
 
 	if err := os.MkdirAll(filepath.Dir(fPath), os.ModeDir); err != nil {
+		log.Println("[Upload] Error creating directories:", err)
 		c.Status(http.StatusInternalServerError)
 		return ""
 	}
 
 	if err := c.SaveUploadedFile(fileHeader, fPath); err != nil {
+		log.Println("[Upload] Error saving uploaded file:", err)
 		c.Status(http.StatusInternalServerError)
 		return ""
 	}

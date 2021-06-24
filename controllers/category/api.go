@@ -7,6 +7,7 @@ import (
 	"food_ordering_backend/services"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"log"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -173,6 +174,7 @@ func (api *API) Upload(c *gin.Context) {
 	cat, err = api.service.Save(cat)
 
 	if err != nil {
+		log.Println("[Category] Image Upload Error:", err)
 		c.Status(http.StatusInternalServerError)
 		return
 	}

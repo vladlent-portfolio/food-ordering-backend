@@ -11,18 +11,21 @@ import (
 )
 
 func init() {
-	if IsProdMode {
-		ex, err := os.Executable()
-
-		if err != nil {
-			panic(err)
-		}
-
-		exDir := filepath.Dir(ex)
-		viper.SetConfigFile(filepath.Join(exDir, ".production.env"))
-	} else {
-		viper.SetConfigFile(filepath.Join(PathToMain(), ".env"))
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
 	}
+	ExecutableDir = filepath.Dir(ex)
+}
+
+func init() {
+	envFileName := ".env"
+
+	if IsProdMode {
+		envFileName = ".production.env"
+	}
+
+	viper.SetConfigFile(filepath.Join(PathToMain(), envFileName))
 
 	if err := viper.ReadInConfig(); err != nil {
 		panic(err)
@@ -38,6 +41,9 @@ func init() {
 	HostURL = parsedURL
 	ClientURL, _ = url.Parse(viper.GetString("FE_URL"))
 }
+
+// ExecutableDir points to the directory of os.Executable
+var ExecutableDir string
 
 var IsProdMode = gin.Mode() == "release"
 
@@ -68,7 +74,11 @@ var CategoriesImgDirAbs = filepath.Join(PathToMain(), CategoriesImgDir)
 var DishesImgDirAbs = filepath.Join(PathToMain(), DishesImgDir)
 
 // PathToMain returns absolute path to project root.
+// In prod. mode points to ExecutableDir.
 func PathToMain() string {
+	if IsProdMode {
+		return ExecutableDir
+	}
 	_, filename, _, _ := runtime.Caller(0)
 	return filepath.Join(filepath.Dir(filename), "../")
 }

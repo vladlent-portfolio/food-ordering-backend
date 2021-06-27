@@ -14,7 +14,7 @@ func ProvideRepository(db *gorm.DB) *Repository {
 }
 
 func (r *Repository) Create(o Order) (Order, error) {
-	err := r.db.Create(&o).Error
+	err := r.db.Omit("Items.Dish").Create(&o).Error
 
 	if err != nil {
 		return o, err

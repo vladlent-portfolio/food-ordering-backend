@@ -35,15 +35,15 @@ func main() {
 }
 
 func updateSwaggerDoc() {
-	host := config.HostRaw
+	hostURL := config.HostURL
 
 	if config.IsProdMode {
 		docs.SwaggerInfo.Schemes = []string{"https"}
-		docs.SwaggerInfo.Host = host
+		docs.SwaggerInfo.Host = hostURL.Hostname()
 		docs.SwaggerInfo.Description = `Golang backend for Food Ordering App.
 Frontend available here https://food-ordering.app`
 	} else {
 		docs.SwaggerInfo.Schemes = []string{"http"}
-		docs.SwaggerInfo.Host = fmt.Sprintf("%s:%s", host, viper.GetString("HOST_PORT"))
+		docs.SwaggerInfo.Host = fmt.Sprintf("%s:%s", hostURL.Hostname(), hostURL.Port())
 	}
 }

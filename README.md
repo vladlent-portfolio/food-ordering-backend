@@ -8,7 +8,9 @@
 
 ## Overview
 API for [Food Ordering App](https://github.com/vladlent-portfolio/food-ordering-frontend) written in Go.  
-**Schema and interaction are available via [Swagger](https://api.food-ordering.app/swagger/index.html).**
+**Schema and interaction are available via [Swagger](https://api.food-ordering.app/swagger/index.html).**  
+*Since Swagger doesn't support cookie-based authorizations you should **Sign In** [here](https://food-ordering.app) 
+(it already has ready-to-use users, available with a single click) to be able to interact with guarded routes.*
 
 
 ## Technologies

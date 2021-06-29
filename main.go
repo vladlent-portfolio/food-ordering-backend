@@ -40,10 +40,16 @@ func updateSwaggerDoc() {
 	if config.IsProdMode {
 		docs.SwaggerInfo.Schemes = []string{"https"}
 		docs.SwaggerInfo.Host = hostURL.Hostname()
-		docs.SwaggerInfo.Description = `Golang backend for Food Ordering App.
-Frontend available here https://food-ordering.app`
+
 	} else {
 		docs.SwaggerInfo.Schemes = []string{"http"}
 		docs.SwaggerInfo.Host = fmt.Sprintf("%s:%s", hostURL.Hostname(), hostURL.Port())
 	}
+
+	docs.SwaggerInfo.Description = fmt.Sprintf(`Golang backend for Food Ordering App.
+Frontend available [here](%s).
+
+*Since Swagger doesn't support cookie-based authorizations you should **Sign In** in the [frontend app](%s) and then comeback here to be able to interact with guarded routes.* `,
+		config.ClientURL.String(), config.ClientURL.String(),
+	)
 }

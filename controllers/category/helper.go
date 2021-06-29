@@ -3,6 +3,7 @@ package category
 import (
 	"food_ordering_backend/common"
 	"food_ordering_backend/config"
+	"path"
 	"path/filepath"
 )
 
@@ -10,6 +11,7 @@ import (
 // in config.CategoriesImgDir folder.
 func PathToImg(imgName string) string {
 	return common.HostURLResolver(
-		filepath.Join(config.CategoriesImgDir, imgName),
+		// To make sure that the path is correct even if running on Microsoft Windows
+		filepath.ToSlash(path.Join(config.CategoriesImgDir, imgName)),
 	)
 }

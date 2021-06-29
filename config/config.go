@@ -32,6 +32,11 @@ func init() {
 	}
 
 	HostRaw = viper.GetString("HOST_URL")
+
+	if !IsProdMode {
+		HostRaw = fmt.Sprintf("%s:%s", HostRaw, viper.GetString("HOST_PORT"))
+	}
+
 	parsedURL, err := url.Parse(HostRaw)
 
 	if err != nil {

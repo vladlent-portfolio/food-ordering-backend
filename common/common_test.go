@@ -61,6 +61,7 @@ func TestMIMEType(t *testing.T) {
 
 func TestHostURLResolver(t *testing.T) {
 	oldHost := config.HostRaw
+
 	config.HostRaw = "https://example.com"
 	config.HostURL, _ = url.Parse(config.HostRaw)
 
@@ -69,12 +70,42 @@ func TestHostURLResolver(t *testing.T) {
 		config.HostURL, _ = url.Parse(oldHost)
 	})
 
-	t.Run("should resolve to absolute reference", func(t *testing.T) {
+	t.Run("should resolve to absolute reference without port in prod mode", func(t *testing.T) {
+		config.IsProdMode = true
+
+		t.Cleanup(func() {
+			config.IsProdMode = false
+		})
+
 		it := assert.New(t)
 		tests := []struct{ ref, expected string }{
 			{"/docs/cv.pdf", "https://example.com/docs/cv.pdf"},
 			{"docs/cv.pdf", "https://example.com/docs/cv.pdf"},
 			{"./docs/cv.pdf", "https://example.com/docs/cv.pdf"},
+		}
+
+		for _, tc := range tests {
+			uri := common.HostURLResolver(tc.ref)
+			it.Equal(tc.expected, uri)
+		}
+	})
+
+	t.Run("should resolve to absolute reference with port in dev mode", func(t *testing.T) {
+		oldHost := config.HostRaw
+
+		config.HostRaw = config.HostRaw + ":" + "1234"
+		config.HostURL, _ = url.Parse(config.HostRaw)
+
+		t.Cleanup(func() {
+			config.HostRaw = oldHost
+			config.HostURL, _ = url.Parse(oldHost)
+		})
+
+		it := assert.New(t)
+		tests := []struct{ ref, expected string }{
+			{"/docs/cv.pdf", "https://example.com:1234/docs/cv.pdf"},
+			{"docs/cv.pdf", "https://example.com:1234/docs/cv.pdf"},
+			{"./docs/cv.pdf", "https://example.com:1234/docs/cv.pdf"},
 		}
 
 		for _, tc := range tests {

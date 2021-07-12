@@ -1,5 +1,7 @@
 # Backend for Food Ordering App
 
+![App Image](https://food-ordering.app/assets/img/sm_image.png) 
+
 ## Table of contents
 * [Overview](#overview)
 * [Technologies](#technologies)

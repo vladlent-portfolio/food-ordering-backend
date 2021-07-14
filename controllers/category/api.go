@@ -213,17 +213,10 @@ func (api *API) Delete(c *gin.Context) {
 		return
 	}
 
-	if cat.Image != nil {
-		err = api.upload.Remove(*cat.Image)
-		if err != nil {
-			log.Println("[Category] Error deleting image:", err)
-			c.Status(http.StatusInternalServerError)
-			return
-		}
-	}
+	dishImages, err := api.service.FindAllDishImages(cat.ID)
 
-	if err = api.service.DeleteDishImages(cat.ID); err != nil {
-		log.Println("[Category] Error deleting dishes images", err)
+	if err != nil {
+		log.Println("[Category] Error finding dish images:", err)
 		c.Status(http.StatusInternalServerError)
 		return
 	}
@@ -232,8 +225,29 @@ func (api *API) Delete(c *gin.Context) {
 
 	if err != nil {
 		log.Println("[Category] Error deleting category:", err)
+
+		if common.IsForeignKeyErr(err) {
+			c.String(http.StatusForbidden, "One of the dishes that corresponds to this category has already been used in the order.")
+			return
+		}
+
 		c.Status(http.StatusInternalServerError)
 		return
+	}
+
+	if err = api.service.DeleteDishImages(dishImages); err != nil {
+		log.Println("[Category] Error deleting dishes images", err)
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	if cat.Image != nil {
+		err = api.upload.Remove(*cat.Image)
+		if err != nil {
+			log.Println("[Category] Error deleting image:", err)
+			c.Status(http.StatusInternalServerError)
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, ToDTO(cat))

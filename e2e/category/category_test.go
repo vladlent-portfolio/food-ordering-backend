@@ -489,6 +489,21 @@ func TestCategories(t *testing.T) {
 			}
 		})
 
+		t.Run("should return 403 if the dish from corresponding category has already been used in some order", func(t *testing.T) {
+			testutils.SetupOrdersDB(t)
+			it := assert.New(t)
+			require.NoError(t, db.Exec("UPDATE categories SET image = NULL").Error)
+			require.NoError(t, db.Exec("UPDATE dishes SET image = NULL").Error)
+
+			cat := testutils.FindTestCategoryByID(1)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := sendWithParam(cat.ID, c)
+
+			if it.Equal(http.StatusForbidden, resp.Code) {
+				it.NotEmpty(resp.Body.String())
+			}
+		})
+
 		t.Run("should return 400 if provided id isn't valid", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			_, c := testutils.LoginAsRandomAdmin(t)

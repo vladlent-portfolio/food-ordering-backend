@@ -30,15 +30,13 @@ func (s *Service) FindAll() []Category {
 	return s.repo.FindAll()
 }
 
-func (s *Service) DeleteDishImages(categoryID uint) error {
-	dishImages, err := s.repo.FindAllDishImages(categoryID)
+func (s *Service) FindAllDishImages(categoryID uint) ([]string, error) {
+	return s.repo.FindAllDishImages(categoryID)
+}
 
-	if err != nil {
-		return err
-	}
-
+func (s *Service) DeleteDishImages(dishImages []string) error {
 	for _, image := range dishImages {
-		err = os.Remove(filepath.Join(config.DishesImgDirAbs, image))
+		err := os.Remove(filepath.Join(config.DishesImgDirAbs, image))
 
 		if err != nil {
 			return err

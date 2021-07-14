@@ -247,6 +247,8 @@ func TestDishes(t *testing.T) {
 			t.Cleanup(testutils.CleanupStaticFolder)
 			it := assert.New(t)
 			d := testutils.TestDishes[4]
+			d.Image = nil
+			require.NoError(t, db.Save(&d).Error)
 
 			img, err := os.Open(testutils.PathToFile("./img/pizza.png"))
 			require.NoError(t, err)
@@ -286,11 +288,53 @@ func TestDishes(t *testing.T) {
 			}
 		})
 
+		t.Run("should replace previous image with a new one", func(t *testing.T) {
+			testutils.SetupDishesAndCategories(t)
+			testutils.SetupUsersDB(t)
+			t.Cleanup(testutils.CleanupStaticFolder)
+			it := assert.New(t)
+			_, cookie := testutils.LoginAsRandomAdmin(t)
+
+			d := testutils.TestDishes[4]
+			d.Image = nil
+			require.NoError(t, db.Save(&d).Error)
+			img, err := os.Open(testutils.PathToFile("./img/pizza.png"))
+			require.NoError(t, err)
+			defer img.Close()
+
+			oldName := fmt.Sprintf("%d.png", d.ID)
+			resp := upload(d.ID, cookie, filepath.Base(img.Name()), img)
+
+			if it.Equal(http.StatusOK, resp.Code) && it.FileExists(filepath.Join(config.DishesImgDirAbs, oldName)) {
+				newImg, err := os.Open(testutils.PathToFile("./img/hawaiian.webp"))
+				require.NoError(t, err)
+				defer newImg.Close()
+				newName := fmt.Sprintf("%d.webp", d.ID)
+
+				resp = upload(d.ID, cookie, filepath.Base(newImg.Name()), newImg)
+
+				if it.Equal(http.StatusOK, resp.Code) {
+					it.NoFileExists(filepath.Join(config.DishesImgDirAbs, oldName))
+					it.FileExists(filepath.Join(config.DishesImgDirAbs, newName))
+				}
+
+				if it.NoError(db.First(&d).Error) {
+					if it.NotNil(d.Image) {
+						it.Equal(newName, *d.Image, "expected dish to have new image")
+					}
+				}
+			}
+		})
+
 		t.Run("should return 415 if file type is not supported", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			testutils.SetupDishesAndCategories(t)
+			d := testutils.TestDishes[4]
+			d.Image = nil
+			require.NoError(t, db.Save(&d).Error)
+
 			_, c := testutils.LoginAsRandomAdmin(t)
-			resp := upload(3, c, "img.json", strings.NewReader("{}"))
+			resp := upload(d.ID, c, "img.json", strings.NewReader("{}"))
 			assert.Equal(t, http.StatusUnsupportedMediaType, resp.Code)
 		})
 
@@ -298,12 +342,16 @@ func TestDishes(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			testutils.SetupDishesAndCategories(t)
 			t.Cleanup(testutils.CleanupStaticFolder)
+			d := testutils.TestDishes[4]
+			d.Image = nil
+			require.NoError(t, db.Save(&d).Error)
+
 			img, err := os.Open(testutils.PathToFile("./img/big-image.jpg"))
 
 			if assert.NoError(t, err) {
 				_, c := testutils.LoginAsRandomAdmin(t)
 
-				resp := upload(3, c, "photo.png", img)
+				resp := upload(d.ID, c, "photo.png", img)
 				assert.Equal(t, http.StatusRequestEntityTooLarge, resp.Code)
 			}
 		})

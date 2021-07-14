@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"food_ordering_backend/common"
 	"github.com/gin-gonic/gin"
 	"log"
@@ -64,6 +65,7 @@ func (s *Upload) ParseAndSave(c *gin.Context, name string) string {
 	mimeType, err := common.MIMEType(file)
 
 	if err != nil {
+		fmt.Println("MIME err:", err)
 		c.Status(http.StatusUnprocessableEntity)
 		return ""
 	}
@@ -89,6 +91,11 @@ func (s *Upload) ParseAndSave(c *gin.Context, name string) string {
 	}
 
 	return fPath
+}
+
+// Remove works the same way os.Remove does, except it resolves file path relative to Root.
+func (s *Upload) Remove(filename string) error {
+	return os.Remove(filepath.Join(s.Root, filename))
 }
 
 // AllowedType checks if provided MIME-Type is in the Upload.AllowedTypes list.

@@ -16,7 +16,13 @@ import (
 var fileName = "test-file"
 var upload *services.Upload
 var router *gin.Engine
-var defaultHandle = func(c *gin.Context) { upload.ParseAndSave(c, fileName) }
+var defaultHandle = func(c *gin.Context) {
+	fpath := upload.ParseAndSave(c, fileName)
+
+	if fpath != "" {
+		c.String(http.StatusOK, fpath)
+	}
+}
 
 func beforeEach(handle gin.HandlerFunc) {
 	upload = &services.Upload{
@@ -58,7 +64,8 @@ func TestUpload_ParseAndSave(t *testing.T) {
 			resp := sendFile(upload.FormDataKey, tc.file)
 
 			if it.Equal(http.StatusOK, resp.Code) {
-				it.FileExists(filepath.Join(upload.Root, fileName+"."+tc.ext))
+				fpath := resp.Body.String()
+				it.FileExists(fpath)
 			}
 		}
 	})
@@ -112,6 +119,45 @@ func TestUpload_ParseAndSave(t *testing.T) {
 		upload.AllowedTypes = []string{"image/png"}
 
 		sendFile(upload.FormDataKey, testutils.CreateTextFile(50))
+	})
+}
+
+func TestUpload_Remove(t *testing.T) {
+	t.Run("should remove file with provided file name", func(t *testing.T) {
+		beforeEach(defaultHandle)
+		it := assert.New(t)
+		files := []struct {
+			file io.Reader
+			ext  string
+		}{
+			{testutils.CreateTextFile(50), "txt"},
+			{testutils.CreateImagePNG(30, 30), "png"},
+			{testutils.CreateImageJPEG(30, 30), "jpeg"},
+		}
+
+		for _, f := range files {
+			resp := sendFile(upload.FormDataKey, f.file)
+
+			if it.Equal(http.StatusOK, resp.Code) {
+				fpath := resp.Body.String()
+				name := filepath.Base(fpath)
+				if it.NoError(upload.Remove(name)) {
+					it.NoFileExists(fpath)
+				}
+			}
+		}
+	})
+
+	t.Run("should return ErrNotExist if file with provided name doesn't exist", func(t *testing.T) {
+		it := assert.New(t)
+		names := []string{"image.png", "text.txt", "script.js", "asd.webp", "pizza.jpeg"}
+
+		for _, name := range names {
+			err := upload.Remove(name)
+			if it.Error(err) {
+				it.ErrorIs(err, os.ErrNotExist)
+			}
+		}
 	})
 }
 

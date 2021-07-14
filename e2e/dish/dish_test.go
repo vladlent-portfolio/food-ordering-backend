@@ -554,6 +554,20 @@ func TestDishes(t *testing.T) {
 			assert.Equal(t, http.StatusBadRequest, resp.Code)
 		})
 
+		t.Run("should return 403 if the dish has already been used in the order", func(t *testing.T) {
+			testutils.SetupOrdersDB(t)
+			it := assert.New(t)
+			require.NoError(t, db.Exec("UPDATE dishes SET image = NULL").Error)
+
+			d := testutils.FindTestDishByID(7)
+			_, c := testutils.LoginAsRandomAdmin(t)
+			resp := sendWithParam(d.ID, c)
+
+			if it.Equal(http.StatusForbidden, resp.Code) {
+				it.NotEmpty(resp.Body.String())
+			}
+		})
+
 		t.Run("should return 404 if dish with provided id doesn't exist", func(t *testing.T) {
 			testutils.SetupUsersDB(t)
 			testutils.SetupDishesAndCategories(t)

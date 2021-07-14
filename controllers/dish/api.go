@@ -228,6 +228,11 @@ func (api *API) Delete(c *gin.Context) {
 	dish, err = api.service.Delete(dish)
 
 	if err != nil {
+		if common.IsForeignKeyErr(err) {
+			c.String(http.StatusForbidden, "Can't delete a dish that has already been used in the order.")
+			return
+		}
+
 		c.Status(http.StatusInternalServerError)
 		return
 	}

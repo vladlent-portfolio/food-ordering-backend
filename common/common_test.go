@@ -20,6 +20,11 @@ func TestIsDuplicateKeyErr(t *testing.T) {
 	assert.False(t, common.IsDuplicateKeyErr(errors.New("92374283uasdfj")))
 }
 
+func TestIsForeignKeyErr(t *testing.T) {
+	assert.True(t, common.IsForeignKeyErr(errors.New("update or delete on table \"dishes\" violates foreign key constraint \"fk_order_items_dish\" on table \"order_items\" (SQLSTATE 23503)")))
+	assert.False(t, common.IsForeignKeyErr(errors.New("92374283uasdfj")))
+}
+
 func TestMIMEType(t *testing.T) {
 	t.Run("should return MIME Type for provided files", func(t *testing.T) {
 		it := assert.New(t)

@@ -58,6 +58,16 @@ func FindTestCategoryByID(id uint) category.Category {
 	return category.Category{}
 }
 
+func FindTestDishesByCategoryID(id uint) []dish.Dish {
+	var dishes []dish.Dish
+	for _, d := range TestDishes {
+		if d.CategoryID == id {
+			dishes = append(dishes, d)
+		}
+	}
+	return dishes
+}
+
 func strPointer(str string) *string {
 	return &str
 }

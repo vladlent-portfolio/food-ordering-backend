@@ -1,5 +1,11 @@
 package category
 
+import (
+	"food_ordering_backend/config"
+	"os"
+	"path/filepath"
+)
+
 type Service struct {
 	repo *Repository
 }
@@ -22,6 +28,24 @@ func (s *Service) FindByID(id uint) (Category, error) {
 
 func (s *Service) FindAll() []Category {
 	return s.repo.FindAll()
+}
+
+func (s *Service) DeleteDishImages(categoryID uint) error {
+	dishImages, err := s.repo.FindAllDishImages(categoryID)
+
+	if err != nil {
+		return err
+	}
+
+	for _, image := range dishImages {
+		err = os.Remove(filepath.Join(config.DishesImgDirAbs, image))
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *Service) Delete(c Category) (Category, error) {

@@ -385,6 +385,7 @@ func TestCategories(t *testing.T) {
 			testCat := testCategories[len(testCategories)/2]
 			testCat.Image = nil
 			require.NoError(t, db.Save(&testCat).Error)
+			require.NoError(t, db.Exec("UPDATE dishes SET image = NULL").Error)
 
 			_, c := testutils.LoginAsRandomAdmin(t)
 			resp := sendWithParam(testCat.ID, c)
@@ -409,6 +410,7 @@ func TestCategories(t *testing.T) {
 			cat := testutils.FindTestCategoryByID(3)
 			cat.Image = nil
 			require.NoError(t, db.Save(&cat).Error)
+			require.NoError(t, db.Exec("UPDATE dishes SET image = NULL").Error)
 
 			img, err := os.Open(testutils.PathToFile("./img/pizza.png"))
 			require.NoError(t, err)
@@ -424,6 +426,52 @@ func TestCategories(t *testing.T) {
 				resp = sendWithParam(cat.ID, cookie)
 				if it.Equal(http.StatusOK, resp.Code) {
 					it.NoFileExists(filepath.Join(config.CategoriesImgDirAbs, name))
+				}
+			}
+		})
+
+		t.Run("should delete images for all associated dishes", func(t *testing.T) {
+			testutils.SetupDishesAndCategories(t)
+			testutils.SetupUsersDB(t)
+			t.Cleanup(testutils.CleanupStaticFolder)
+			it := assert.New(t)
+			cat := testutils.FindTestCategoryByID(3)
+			cat.Image = nil
+			require.NoError(t, db.Save(&cat).Error)
+
+			img, err := os.Open(testutils.PathToFile("./img/pizza.png"))
+			require.NoError(t, err)
+			defer img.Close()
+			imgName := filepath.Base(img.Name())
+
+			_, cookie := testutils.LoginAsRandomAdmin(t)
+			resp := upload(cat.ID, cookie, imgName, img)
+
+			if it.Equal(http.StatusOK, resp.Code) {
+				img.Seek(0, 0)
+				catImageName := path.Base(resp.Body.String())
+
+				var dishesImages []string
+				dishes := testutils.FindTestDishesByCategoryID(cat.ID)
+
+				for _, d := range dishes {
+					d.Image = nil
+					if it.NoError(db.Save(&d).Error) {
+						resp = uploadDishImage(d.ID, cookie, imgName, img)
+						img.Seek(0, 0)
+						if it.Equal(http.StatusOK, resp.Code) {
+							dishesImages = append(dishesImages, path.Base(resp.Body.String()))
+						}
+					}
+				}
+
+				resp = sendWithParam(cat.ID, cookie)
+				if it.Equal(http.StatusOK, resp.Code) {
+					it.NoFileExists(filepath.Join(config.CategoriesImgDirAbs, catImageName))
+
+					for _, dishImage := range dishesImages {
+						it.NoFileExists(filepath.Join(config.DishesImgDirAbs, dishImage))
+					}
 				}
 			}
 		})
@@ -463,6 +511,11 @@ func TestCategories(t *testing.T) {
 func upload(id uint, c *http.Cookie, fileName string, file io.Reader) *httptest.ResponseRecorder {
 	param := strconv.Itoa(int(id))
 	return testutils.UploadReqWithCookie(http.MethodPatch, "/categories/"+param+"/upload", "image")(c, fileName, file)
+}
+
+func uploadDishImage(id uint, c *http.Cookie, fileName string, file io.Reader) *httptest.ResponseRecorder {
+	param := strconv.Itoa(int(id))
+	return testutils.UploadReqWithCookie(http.MethodPatch, "/dishes/"+param+"/upload", "image")(c, fileName, file)
 }
 
 func imgURL(name string) string {

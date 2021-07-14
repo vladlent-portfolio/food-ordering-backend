@@ -222,6 +222,12 @@ func (api *API) Delete(c *gin.Context) {
 		}
 	}
 
+	if err = api.service.DeleteDishImages(cat.ID); err != nil {
+		log.Println("[Category] Error deleting dishes images", err)
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
 	cat, err = api.service.Delete(cat)
 
 	if err != nil {

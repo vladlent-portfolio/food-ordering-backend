@@ -32,6 +32,32 @@ func (r *Repository) FindAll() []Category {
 	return categories
 }
 
+func (r *Repository) FindAllDishImages(categoryID uint) ([]string, error) {
+	var res []string
+	tx := r.db.Table("dishes").Select("image").Where("image IS NOT NULL")
+
+	if categoryID != 0 {
+		tx.Where("category_id = ?", categoryID)
+	}
+
+	rows, err := tx.Rows()
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var image string
+		if err = rows.Scan(&image); err != nil {
+			return nil, err
+		}
+		res = append(res, image)
+	}
+
+	return res, err
+}
+
 func (r *Repository) Delete(c Category) (Category, error) {
 	err := r.db.Delete(&c).Error
 	return c, err

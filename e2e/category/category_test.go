@@ -14,6 +14,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -161,10 +162,6 @@ func TestCategories(t *testing.T) {
 	})
 
 	t.Run("PATCH /categories/:id/upload", func(t *testing.T) {
-		upload := func(id uint, c *http.Cookie, fileName string, file io.Reader) *httptest.ResponseRecorder {
-			param := strconv.Itoa(int(id))
-			return testutils.UploadReqWithCookie(http.MethodPatch, "/categories/"+param+"/upload", "image")(c, fileName, file)
-		}
 
 		t.Run("should upload an image, update category in db and return a link to image", func(t *testing.T) {
 			testutils.SetupDishesAndCategories(t)
@@ -386,17 +383,48 @@ func TestCategories(t *testing.T) {
 			it := assert.New(t)
 			testCategories := testutils.TestCategories
 			testCat := testCategories[len(testCategories)/2]
+			testCat.Image = nil
+			require.NoError(t, db.Save(&testCat).Error)
+
 			_, c := testutils.LoginAsRandomAdmin(t)
 			resp := sendWithParam(testCat.ID, c)
 
-			it.Equal(http.StatusOK, resp.Code)
+			if it.Equal(http.StatusOK, resp.Code) {
+				var categories []category.Category
+				db.Find(&categories)
+				it.Len(categories, len(testCategories)-1)
 
-			var categories []category.Category
-			db.Find(&categories)
-			it.Len(categories, len(testCategories)-1)
+				for _, c := range categories {
+					it.NotEqual(c.ID, testCat.ID)
+				}
+			}
 
-			for _, c := range categories {
-				it.NotEqual(c.ID, testCat.ID)
+		})
+
+		t.Run("should delete image if category had one", func(t *testing.T) {
+			testutils.SetupDishesAndCategories(t)
+			testutils.SetupUsersDB(t)
+			t.Cleanup(testutils.CleanupStaticFolder)
+			it := assert.New(t)
+			cat := testutils.FindTestCategoryByID(3)
+			cat.Image = nil
+			require.NoError(t, db.Save(&cat).Error)
+
+			img, err := os.Open(testutils.PathToFile("./img/pizza.png"))
+			require.NoError(t, err)
+			defer img.Close()
+
+			_, cookie := testutils.LoginAsRandomAdmin(t)
+
+			resp := upload(cat.ID, cookie, filepath.Base(img.Name()), img)
+
+			if it.Equal(http.StatusOK, resp.Code) {
+				name := path.Base(resp.Body.String())
+
+				resp = sendWithParam(cat.ID, cookie)
+				if it.Equal(http.StatusOK, resp.Code) {
+					it.NoFileExists(filepath.Join(config.CategoriesImgDirAbs, name))
+				}
 			}
 		})
 
@@ -430,6 +458,11 @@ func TestCategories(t *testing.T) {
 
 		testutils.RunAuthTests(t, http.MethodDelete, "/categories/69", true)
 	})
+}
+
+func upload(id uint, c *http.Cookie, fileName string, file io.Reader) *httptest.ResponseRecorder {
+	param := strconv.Itoa(int(id))
+	return testutils.UploadReqWithCookie(http.MethodPatch, "/categories/"+param+"/upload", "image")(c, fileName, file)
 }
 
 func imgURL(name string) string {

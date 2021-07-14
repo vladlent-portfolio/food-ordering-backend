@@ -231,6 +231,7 @@ func (api *API) Delete(c *gin.Context) {
 	cat, err = api.service.Delete(cat)
 
 	if err != nil {
+		log.Println("[Category] Error deleting category:", err)
 		c.Status(http.StatusInternalServerError)
 		return
 	}

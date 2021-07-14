@@ -20,6 +20,7 @@ API for [Food Ordering App](https://github.com/vladlent-portfolio/food-ordering-
 * [GORM](https://gorm.io)
 * [PostgreSQL](https://postgresql.org)
 * [Wire](https://github.com/google/wire)
+* [Testify](https://github.com/stretchr/testify)
 
 ## Features
 * Full e2e test coverage.

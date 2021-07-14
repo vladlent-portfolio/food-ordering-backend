@@ -16,6 +16,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -236,10 +237,6 @@ func TestDishes(t *testing.T) {
 	})
 
 	t.Run("PATCH /dishes/:id/upload", func(t *testing.T) {
-		upload := func(id uint, c *http.Cookie, fileName string, file io.Reader) *httptest.ResponseRecorder {
-			param := strconv.Itoa(int(id))
-			return testutils.UploadReqWithCookie(http.MethodPatch, "/dishes/"+param+"/upload", "image")(c, fileName, file)
-		}
 
 		t.Run("should upload an image, update dish in db and return a link to image", func(t *testing.T) {
 			testutils.SetupDishesAndCategories(t)
@@ -505,18 +502,48 @@ func TestDishes(t *testing.T) {
 			testDishes := testutils.TestDishes
 			randomIndex := common.RandomInt(len(testDishes))
 			testDish := testDishes[randomIndex]
-			_, c := testutils.LoginAsRandomAdmin(t)
+			testDish.Image = nil
+			require.NoError(t, db.Save(&testDish).Error)
 
+			_, c := testutils.LoginAsRandomAdmin(t)
 			resp := sendWithParam(testDish.ID, c)
 
-			it.Equal(http.StatusOK, resp.Code)
-			var dishes []dish.Dish
+			if it.Equal(http.StatusOK, resp.Code) {
+				var dishes []dish.Dish
 
-			db.Find(&dishes)
-			it.Len(dishes, len(testDishes)-1)
+				db.Find(&dishes)
+				it.Len(dishes, len(testDishes)-1)
 
-			for _, d := range dishes {
-				it.NotEqual(d.ID, testDish.ID)
+				for _, d := range dishes {
+					it.NotEqual(d.ID, testDish.ID)
+				}
+			}
+		})
+
+		t.Run("should delete image if dish had one", func(t *testing.T) {
+			testutils.SetupDishesAndCategories(t)
+			testutils.SetupUsersDB(t)
+			t.Cleanup(testutils.CleanupStaticFolder)
+			it := assert.New(t)
+			d := testutils.FindTestDishByID(5)
+			d.Image = nil
+			require.NoError(t, db.Save(&d).Error)
+
+			img, err := os.Open(testutils.PathToFile("./img/pizza.png"))
+			require.NoError(t, err)
+			defer img.Close()
+
+			_, cookie := testutils.LoginAsRandomAdmin(t)
+
+			resp := upload(d.ID, cookie, filepath.Base(img.Name()), img)
+
+			if it.Equal(http.StatusOK, resp.Code) {
+				name := path.Base(resp.Body.String())
+
+				resp = sendWithParam(d.ID, cookie)
+				if it.Equal(http.StatusOK, resp.Code) {
+					it.NoFileExists(filepath.Join(config.DishesImgDirAbs, name))
+				}
 			}
 		})
 
@@ -557,6 +584,11 @@ func negativePriceTest(t *testing.T, method string) {
 
 		it.Equal(http.StatusBadRequest, resp.Code)
 	})
+}
+
+func upload(id uint, c *http.Cookie, fileName string, file io.Reader) *httptest.ResponseRecorder {
+	param := strconv.Itoa(int(id))
+	return testutils.UploadReqWithCookie(http.MethodPatch, "/dishes/"+param+"/upload", "image")(c, fileName, file)
 }
 
 func imgURL(name string) string {

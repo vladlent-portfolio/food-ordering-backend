@@ -225,6 +225,15 @@ func (api *API) Delete(c *gin.Context) {
 		return
 	}
 
+	if dish.Image != nil {
+		err = api.upload.Remove(*dish.Image)
+		if err != nil {
+			log.Println("[Dish] Error deleting image:", err)
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+	}
+
 	dish, err = api.service.Delete(dish)
 
 	if err != nil {

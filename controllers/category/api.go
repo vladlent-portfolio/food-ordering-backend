@@ -21,7 +21,7 @@ type API struct {
 
 func ProvideAPI(s *Service) *API {
 	upload := &services.Upload{
-		AllowedTypes: []string{"image/png", "image/jpeg"},
+		AllowedTypes: []string{"image/png", "image/jpeg", "image/webp"},
 		MaxFileSize:  config.MaxUploadFileSize,
 		Root:         config.CategoriesImgDirAbs,
 		FormDataKey:  "image",
@@ -160,6 +160,16 @@ func (api *API) Upload(c *gin.Context) {
 
 	if err != nil {
 		return
+	}
+
+	if cat.Image != nil {
+		err = api.upload.Remove(*cat.Image)
+
+		if err != nil {
+			log.Println("[Category] Error deleting previous image:", err)
+			c.Status(http.StatusInternalServerError)
+			return
+		}
 	}
 
 	absPath := api.upload.ParseAndSave(c, strconv.Itoa(int(cat.ID)))

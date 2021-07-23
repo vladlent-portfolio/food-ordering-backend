@@ -1,9 +1,9 @@
 root=$(dirname "$(dirname "$(realpath "$0")")")
 os="linux"
 arch="amd64"
-swagname="swag"
 outputname="food_ordering_api"
 
+swagname="swag"
 rundir="$(pwd)"
 
 cd "$root" || exit

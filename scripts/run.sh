@@ -11,7 +11,6 @@ fi
 cd "$root" || exit 1
 
 if [ -x "$(command -v $swagname)" ]; then
-  echo "$root"
   $swagname init
 else
   echo "Couldn't find $swagname in PATH."

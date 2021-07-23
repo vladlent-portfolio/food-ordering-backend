@@ -6,7 +6,7 @@ import (
 	"food_ordering_backend/config"
 	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/database"
-	"food_ordering_backend/e2e/testutils"
+	"food_ordering_backend/tests/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"

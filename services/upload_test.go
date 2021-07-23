@@ -1,8 +1,8 @@
 package services_test
 
 import (
-	"food_ordering_backend/e2e/testutils"
 	"food_ordering_backend/services"
+	"food_ordering_backend/tests/testutils"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"io"

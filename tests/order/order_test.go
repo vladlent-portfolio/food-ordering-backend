@@ -6,7 +6,7 @@ import (
 	"food_ordering_backend/controllers/dish"
 	"food_ordering_backend/controllers/order"
 	"food_ordering_backend/database"
-	"food_ordering_backend/e2e/testutils"
+	"food_ordering_backend/tests/testutils"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -156,14 +156,18 @@ func TestOrders(t *testing.T) {
 		t.Run("should change orders status", func(t *testing.T) {
 			testutils.SetupOrdersDB(t)
 			it := assert.New(t)
-			id := testutils.TestOrders[1].ID
+			o := testutils.TestOrders[0]
+			o.Status = order.StatusDone
+
 			_, c := testutils.LoginAsRandomAdmin(t)
 
-			for _, status := range order.Statuses {
-				resp := sendWithParam(c, id, status)
+			if it.NoError(db.Omit("User").Save(&o).Error) {
+				for _, status := range order.Statuses {
+					resp := sendWithParam(c, o.ID, status)
 
-				if it.Equal(http.StatusNoContent, resp.Code) {
-					verifyStatusChange(t, id, status)
+					if it.Equal(http.StatusNoContent, resp.Code) {
+						verifyStatusChange(t, o.ID, status)
+					}
 				}
 			}
 		})

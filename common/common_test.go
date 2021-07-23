@@ -5,7 +5,7 @@ import (
 	"errors"
 	"food_ordering_backend/common"
 	"food_ordering_backend/config"
-	"food_ordering_backend/e2e/testutils"
+	"food_ordering_backend/tests/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"

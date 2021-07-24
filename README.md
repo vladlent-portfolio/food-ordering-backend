@@ -27,6 +27,7 @@ API for [Food Ordering App](https://github.com/vladlent-portfolio/food-ordering-
 
 ## Features
 * Full integration testing coverage.
+* GitHub Actions for CI/CD.
 * Service-based architecture via Dependency Injection.
 * CRUD operations.
 * Database interactions via Repositories.

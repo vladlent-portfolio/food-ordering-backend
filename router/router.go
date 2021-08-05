@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"food_ordering_backend/config"
 	"food_ordering_backend/controllers/category"
 	"food_ordering_backend/controllers/dish"
@@ -16,9 +17,12 @@ type Controller interface {
 }
 
 func Setup(db *gorm.DB) *gin.Engine {
-	r := gin.Default()
+	r := gin.New()
 
+	r.Use(LogsFormatter())
+	r.Use(gin.Recovery())
 	r.Use(CORSMiddleware())
+
 	r.Static("/"+config.StaticDir, config.StaticDirAbs)
 
 	routes := map[string]Controller{
@@ -60,4 +64,17 @@ func CORSMiddleware() gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+func LogsFormatter() gin.HandlerFunc {
+	return gin.LoggerWithFormatter(func(params gin.LogFormatterParams) string {
+		return fmt.Sprintf("%s - %s %q %d %s %q \n",
+			params.ClientIP,
+			params.Method,
+			params.Path,
+			params.StatusCode,
+			params.Latency,
+			params.Request.UserAgent(),
+		)
+	})
 }

@@ -68,12 +68,12 @@ func CORSMiddleware() gin.HandlerFunc {
 
 func LogsFormatter() gin.HandlerFunc {
 	return gin.LoggerWithFormatter(func(params gin.LogFormatterParams) string {
-		return fmt.Sprintf("%s - %s %q %d %s %q \n",
+		return fmt.Sprintf("%s - %s %3d %10v  %q %q \n",
 			params.Request.Header.Get("X-Forwarded-For"),
 			params.Method,
-			params.Path,
 			params.StatusCode,
 			params.Latency,
+			params.Path,
 			params.Request.UserAgent(),
 		)
 	})

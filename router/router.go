@@ -40,21 +40,22 @@ func Setup(db *gorm.DB) *gin.Engine {
 }
 
 func CORSMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		allowedHeaders := []string{
-			"Accept",
-			"Accept-Encoding",
-			"Accept-Language",
-			"Cache-Control",
-			"Connection",
-			"Content-Type",
-			"Content-Length",
-		}
+	allowedHeaders := []string{
+		"Accept",
+		"Accept-Encoding",
+		"Accept-Language",
+		"Cache-Control",
+		"Connection",
+		"Content-Type",
+		"Content-Length",
+	}
+	joinedHeaders := strings.Join(allowedHeaders, ",")
 
+	return func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", config.ClientURL.String())
 		c.Header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
 		c.Header("Access-Control-Allow-Credentials", "true")
-		c.Header("Access-Control-Allow-Headers", strings.Join(allowedHeaders, ","))
+		c.Header("Access-Control-Allow-Headers", joinedHeaders)
 		c.Header("Access-Control", "true")
 
 		if c.Request.Method == "OPTIONS" {
